@@ -200,8 +200,8 @@ canvas {
 #controls {
     position: absolute;
     bottom: 20px;
-    left: 50%;
-    transform: translateX(-50%);
+    left: 20px;
+    transform: none;
     display: flex;
     gap: 8px;
     z-index: 10;

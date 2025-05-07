@@ -106,7 +106,7 @@ const CONFIG = {
         get ROTATION_SPEED() { return (2 * Math.PI) / (this.ROTATION_PERIOD_DAYS * 24 * 60 * 0.1); } // Sped up for visualization
     },
     STARFIELD: {
-        COUNT: 1000000*10, // Massively increased star count for a more realistic sky
+        COUNT: 10000000, // Massively increased star count for a more realistic sky
         RADIUS: 100000, // Increased radius for better depth perception
         MIN_SIZE: 0.3,  // Smaller minimum size for more variation
         MAX_SIZE: 2.0   // Maximum star size
