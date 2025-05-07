@@ -99,8 +99,14 @@ export class Sun extends CelestialBody {
                     finalColor += vec3(1.0, 0.7, 0.3) * 0.4 * (flareNoise - 0.75) * 4.0;
                 }
 
-                // Add glow effect
-                finalColor += baseColor * 0.2;
+                // Enhanced corona effect
+                float edgeGlow = pow(1.0 - viewAngleFactor, 4.0);
+                vec3 coronaColor = mix(vec3(1.0, 0.6, 0.2), vec3(1.0, 0.8, 0.4), viewAngleFactor);
+                finalColor += coronaColor * edgeGlow * 1.5;
+                
+                // Add overall glow and increase brightness
+                finalColor += baseColor * 0.4;
+                finalColor *= 1.5; // Increase overall brightness
 
                 gl_FragColor = vec4(finalColor, 1.0);
             }
@@ -146,8 +152,13 @@ export class Sun extends CelestialBody {
      * Creates a text label for the Sun
      */
     createLabel() {
-        // Create a more visible label with larger font size
-        this.label = LabelUtils.createLabel(this.name, this.radius, 18, 36, 0.9, 1.8);
+        // Create a more visible label with larger font size and better contrast
+        this.label = LabelUtils.createLabel(this.name, this.radius, 24, 48, 1.2, 2.0);
+        // Make the label always face the camera and be more visible
+        if (this.label.material) {
+            this.label.material.depthTest = false;
+            this.label.material.opacity = 0.9;
+        }
         this.objectGroup.add(this.label);
     }
 

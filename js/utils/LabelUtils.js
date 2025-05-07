@@ -31,20 +31,31 @@ export class LabelUtils {
         const fontSize = Math.round(baseFontSize / 2) * 2;
         
         // Draw text on the canvas with transparent background
-        context.clearRect(0, 0, canvas.width, canvas.height); // Clear with transparency
+        context.clearRect(0, 0, canvas.width, canvas.height);
         
-        // Set font properties
-        context.font = `${fontSize}px "Helvetica Neue", Arial, sans-serif`;
-        context.fillStyle = 'rgba(255, 255, 255, 0.8)';
-        context.strokeStyle = 'rgba(0, 0, 0, 0.2)';
-        context.lineWidth = 2;
+        // Set font properties for a more modern, visible look
+        context.font = `bold ${fontSize}px "Helvetica Neue", Arial, sans-serif`;
+        
+        // Draw multiple strokes for a stronger glow effect
+        context.strokeStyle = 'rgba(0, 0, 0, 0.8)';
+        context.lineWidth = 4;
         context.textAlign = 'center';
         context.textBaseline = 'middle';
         
-        // Draw text with semi-transparent outline
         const textX = canvas.width / 2;
         const textY = canvas.height / 2;
+        
+        // Draw outer glow
+        context.shadowColor = 'rgba(0, 0, 0, 0.8)';
+        context.shadowBlur = 8;
+        context.shadowOffsetX = 0;
+        context.shadowOffsetY = 0;
         context.strokeText(name, textX, textY);
+        
+        // Draw bright text
+        context.fillStyle = 'rgba(255, 255, 255, 1.0)';
+        context.shadowColor = 'rgba(255, 255, 255, 0.5)';
+        context.shadowBlur = 4;
         context.fillText(name, textX, textY);
         
         // Create a texture from the canvas
@@ -52,7 +63,10 @@ export class LabelUtils {
         const spriteMaterial = new THREE.SpriteMaterial({ 
             map: texture,
             transparent: true,
-            alphaTest: 0.1 // Helps with transparency rendering
+            alphaTest: 0.1,
+            depthTest: false, // Make labels always visible
+            depthWrite: false,
+            sizeAttenuation: true // Scale with distance
         });
         
         // Calculate sprite scale based on radius (logarithmic scale)
@@ -64,8 +78,8 @@ export class LabelUtils {
         const label = new THREE.Sprite(spriteMaterial);
         label.scale.set(baseScale, baseScale * 0.5, 1);
         
-        // Position above the celestial body
-        label.position.set(0, radius * 2, 0);
+        // Position above the celestial body with increased height for better visibility
+        label.position.set(0, radius * 2.5, 0);
         
         // Add property for label visibility toggling
         label.userData.isLabel = true;
