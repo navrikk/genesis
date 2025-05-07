@@ -232,6 +232,15 @@ canvas {
     transform: translateY(-2px);
 }
 
+.control-button.muted {
+    background-color: rgba(255, 100, 100, 0.3);
+}
+
+.control-button.muted:hover {
+    background-color: rgba(255, 100, 100, 0.7);
+    transform: translateY(-2px);
+}
+
 .control-button.active {
     background-color: rgba(251, 146, 60, 0.7);
     box-shadow: 0 0 10px rgba(251, 146, 60, 0.5);

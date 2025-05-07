@@ -58,6 +58,10 @@ export default class App {
         // Info panel state
         this.selectedBody = null;
         this.infoPanel = null;
+        
+        // Audio player state
+        this.soundtrack = null;
+        this.isMuted = false;
 
         this.init();
     }
@@ -279,6 +283,57 @@ export default class App {
             }
         });
         document.getElementById('controls').appendChild(toggleOrbitPathsButton);
+        
+        // Setup audio controls
+        this.soundtrack = document.getElementById('soundtrack');
+        const muteButton = document.getElementById('muteButton');
+        
+        // Initialize soundtrack to play when loaded
+        this.soundtrack.volume = 0.5; // Set initial volume to 50%
+        
+        // Play soundtrack when the page is loaded
+        // Using a promise to handle autoplay restrictions in modern browsers
+        const playPromise = this.soundtrack.play();
+        
+        if (playPromise !== undefined) {
+            playPromise.then(() => {
+                console.log('Soundtrack started playing');
+            }).catch(error => {
+                console.log('Autoplay prevented by browser. User interaction required to play audio.');
+                // We'll set a flag to try playing again after user interaction
+                this.soundtrack.setAttribute('data-autoplay-failed', 'true');
+            });
+        }
+        
+        // Setup mute button functionality
+        muteButton.addEventListener('click', () => {
+            this.isMuted = !this.isMuted;
+            
+            if (this.isMuted) {
+                this.soundtrack.pause();
+                muteButton.querySelector('i').className = 'fas fa-volume-mute';
+                muteButton.setAttribute('data-tooltip', 'Unmute Sound');
+                muteButton.classList.add('muted');
+            } else {
+                this.soundtrack.play().catch(error => {
+                    console.log('Failed to play audio:', error);
+                });
+                muteButton.querySelector('i').className = 'fas fa-volume-up';
+                muteButton.setAttribute('data-tooltip', 'Mute Sound');
+                muteButton.classList.remove('muted');
+            }
+        });
+        
+        // Try to play audio after first user interaction if autoplay was prevented
+        document.addEventListener('click', () => {
+            if (this.soundtrack.getAttribute('data-autoplay-failed') === 'true' && !this.isMuted) {
+                this.soundtrack.play().then(() => {
+                    this.soundtrack.removeAttribute('data-autoplay-failed');
+                }).catch(error => {
+                    console.log('Still unable to play audio after user interaction:', error);
+                });
+            }
+        }, { once: true });
         
         // Labels have been removed from the system
         
