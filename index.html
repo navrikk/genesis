@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive 3D Sun</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles/main.css">
+</head>
+<body>
+<div id="loadingScreen">
+    <div class="loader"></div>
+    <p>Initializing Solar System...</p>
+</div>
+
+<div id="webgl-compatibility"
+     class="hidden fixed inset-0 bg-red-800 text-white flex flex-col justify-center items-center text-center p-8">
+    <h2 class="text-2xl font-bold mb-4">WebGL Not Supported</h2>
+    <p>Your browser or device does not support WebGL, which is required for this 3D experience.</p>
+    <p>Please try a different browser (like Chrome or Firefox) or update your current browser.</p>
+</div>
+
+<div id="container"></div>
+
+<div id="controls">
+    <button id="resetCameraButton" class="control-button">Reset Camera</button>
+</div>
+
+<!--<script type="importmap">-->
+<!--    {-->
+<!--        "imports": {-->
+<!--            "three": "https://cdn.jsdelivr.net/npm/three@0.164.1/build/three.module.js",-->
+<!--            "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.164.1/examples/jsm/"-->
+<!--        }-->
+<!--    }-->
+<!--</script>-->
+<script type="module" src="js/main.js"></script>
+
+<script type="module" src="js/main.js"></script>
+</body>
+</html>
