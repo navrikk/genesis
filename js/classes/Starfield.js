@@ -22,21 +22,68 @@ export class Starfield {
         const baseColor = new THREE.Color();
 
         for (let i = 0; i < CONFIG.STARFIELD.COUNT; i++) {
-            // Position stars on a sphere
-            const phi = Math.acos(-1 + (2 * i) / CONFIG.STARFIELD.COUNT); // Distribute more evenly
-            const theta = Math.sqrt(CONFIG.STARFIELD.COUNT * Math.PI) * phi;
-
-            const x = CONFIG.STARFIELD.RADIUS * Math.sin(phi) * Math.cos(theta);
-            const y = CONFIG.STARFIELD.RADIUS * Math.sin(phi) * Math.sin(theta);
-            const z = CONFIG.STARFIELD.RADIUS * Math.cos(phi);
+            // Create a truly random distribution of stars
+            // Random point in a sphere using rejection sampling
+            let x, y, z;
+            let distanceFromCenter;
+            
+            do {
+                // Generate random coordinates in a cube
+                x = (Math.random() * 2 - 1) * CONFIG.STARFIELD.RADIUS;
+                y = (Math.random() * 2 - 1) * CONFIG.STARFIELD.RADIUS;
+                z = (Math.random() * 2 - 1) * CONFIG.STARFIELD.RADIUS;
+                
+                // Calculate distance from center
+                distanceFromCenter = Math.sqrt(x*x + y*y + z*z);
+            } while (distanceFromCenter > CONFIG.STARFIELD.RADIUS); // Reject if outside the sphere
+            
+            // Add some clustering effect by occasionally placing stars closer together
+            if (Math.random() < 0.3) {
+                // Create a cluster by placing this star near another random star
+                if (starVertices.length > 3) {
+                    const randomStarIndex = Math.floor(Math.random() * (i - 1)) * 3;
+                    const clusterRadius = CONFIG.STARFIELD.RADIUS * 0.05; // Small radius for clusters
+                    
+                    // Get a nearby position to an existing star
+                    x = starVertices[randomStarIndex] + (Math.random() * 2 - 1) * clusterRadius;
+                    y = starVertices[randomStarIndex + 1] + (Math.random() * 2 - 1) * clusterRadius;
+                    z = starVertices[randomStarIndex + 2] + (Math.random() * 2 - 1) * clusterRadius;
+                }
+            }
+            
             starVertices.push(x, y, z);
 
-            // Vary star colors slightly (e.g., from bluish to yellowish)
-            baseColor.setHSL(0.55 + Math.random() * 0.15, 0.8, 0.7 + Math.random() * 0.2); // HSL: Hue, Saturation, Lightness
+            // Vary star colors with more randomness
+            // Occasionally create red, blue, or white stars
+            const colorRoll = Math.random();
+            if (colorRoll < 0.7) {
+                // Standard bluish-white stars (majority)
+                baseColor.setHSL(0.55 + Math.random() * 0.15, 0.8, 0.7 + Math.random() * 0.2);
+            } else if (colorRoll < 0.85) {
+                // Reddish stars
+                baseColor.setHSL(0.05 + Math.random() * 0.05, 0.8, 0.6 + Math.random() * 0.2);
+            } else if (colorRoll < 0.95) {
+                // Blue stars
+                baseColor.setHSL(0.6 + Math.random() * 0.05, 0.9, 0.7 + Math.random() * 0.3);
+            } else {
+                // Pure white stars
+                baseColor.setHSL(0, 0, 0.9 + Math.random() * 0.1);
+            }
+            
             starColors.push(baseColor.r, baseColor.g, baseColor.b);
 
-            // Vary star sizes
-            starSizes.push(CONFIG.STARFIELD.MIN_SIZE + Math.random() * (CONFIG.STARFIELD.MAX_SIZE - CONFIG.STARFIELD.MIN_SIZE));
+            // Vary star sizes with more variation
+            const sizeVariation = Math.random();
+            if (sizeVariation < 0.8) {
+                // Most stars are small
+                starSizes.push(CONFIG.STARFIELD.MIN_SIZE + Math.random() * (CONFIG.STARFIELD.MAX_SIZE - CONFIG.STARFIELD.MIN_SIZE) * 0.5);
+            } else if (sizeVariation < 0.98) {
+                // Some medium stars
+                starSizes.push(CONFIG.STARFIELD.MIN_SIZE + Math.random() * (CONFIG.STARFIELD.MAX_SIZE - CONFIG.STARFIELD.MIN_SIZE) * 0.8);
+            } else {
+                // Few large stars
+                starSizes.push(CONFIG.STARFIELD.MAX_SIZE * (0.8 + Math.random() * 0.4));
+            }
         }
 
         const geometry = new THREE.BufferGeometry();
