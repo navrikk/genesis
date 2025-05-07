@@ -44,6 +44,7 @@ export class App {
         this.userControlTimeout = 5000; // 5 seconds timeout for user control
         this.userCameraPosition = null; // Store the camera position when user starts controlling
         this.userControlsTarget = null; // Store the controls target when user starts controlling
+        this.currentAnimation = null; // Store the current animation ID
 
         this.init();
     }
@@ -175,20 +176,83 @@ export class App {
         });
         document.getElementById('controls').appendChild(toggleLabelsButton);
         
-        // Create Focus on Mercury button
-        const focusMercuryButton = document.createElement('button');
-        focusMercuryButton.id = 'focusMercuryButton';
-        focusMercuryButton.className = 'control-button';
-        focusMercuryButton.textContent = 'Focus on Mercury';
-        focusMercuryButton.addEventListener('click', () => {
-            this.focusOnBody('Mercury');
+        // Create Focus dropdown
+        const focusContainer = document.createElement('div');
+        focusContainer.className = 'focus-container';
+        
+        const focusLabel = document.createElement('span');
+        focusLabel.textContent = 'Focus on: ';
+        focusLabel.className = 'focus-label';
+        focusContainer.appendChild(focusLabel);
+        
+        const focusDropdown = document.createElement('select');
+        focusDropdown.id = 'focusDropdown';
+        focusDropdown.className = 'focus-dropdown';
+        
+        // Add options for all celestial bodies
+        const defaultOption = document.createElement('option');
+        defaultOption.value = '';
+        defaultOption.textContent = 'Select a body';
+        focusDropdown.appendChild(defaultOption);
+        
+        // Add options for Sun and Mercury
+        const sunOption = document.createElement('option');
+        sunOption.value = 'Sun';
+        sunOption.textContent = 'Sun';
+        focusDropdown.appendChild(sunOption);
+        
+        const mercuryOption = document.createElement('option');
+        mercuryOption.value = 'Mercury';
+        mercuryOption.textContent = 'Mercury';
+        focusDropdown.appendChild(mercuryOption);
+        
+        // Add event listener to the dropdown
+        focusDropdown.addEventListener('change', (event) => {
+            const selectedBody = event.target.value;
+            if (selectedBody) {
+                this.focusOnBody(selectedBody);
+            }
         });
-        document.getElementById('controls').appendChild(focusMercuryButton);
+        
+        focusContainer.appendChild(focusDropdown);
+        document.getElementById('controls').appendChild(focusContainer);
+        
+        // Add some CSS for the dropdown
+        const style = document.createElement('style');
+        style.textContent = `
+            .focus-container {
+                display: inline-flex;
+                align-items: center;
+                margin-left: 10px;
+            }
+            .focus-label {
+                margin-right: 5px;
+                color: white;
+            }
+            .focus-dropdown {
+                padding: 5px;
+                border-radius: 4px;
+                background-color: #333;
+                color: white;
+                border: 1px solid #555;
+            }
+            .focus-dropdown option {
+                background-color: #333;
+                color: white;
+            }
+        `;
+        document.head.appendChild(style);
     }
     
     focusOnBody(bodyName) {
         const body = this.solarSystem.getBody(bodyName);
         if (body) {
+            // Cancel any ongoing animations
+            if (this.currentAnimation) {
+                cancelAnimationFrame(this.currentAnimation);
+                this.currentAnimation = null;
+            }
+            
             // Store the focused body for continuous tracking
             this.focusedBody = body;
             
@@ -197,8 +261,42 @@ export class App {
             this.userCameraPosition = null;
             this.userControlsTarget = null;
             
-            // Set initial camera position
-            this.updateCameraFocus(true); // Force immediate update
+            // Reset dropdown to default after selection (optional)
+            const dropdown = document.getElementById('focusDropdown');
+            if (dropdown) {
+                // Keep the selected value to show the current focus
+                dropdown.value = bodyName;
+            }
+            
+            // Use a common animation approach for all bodies
+            // This ensures consistent transitions between any bodies
+            const bodyPosition = body.getObject().position.clone();
+            
+            // Calculate a distance that shows the body at a reasonable zoom level
+            const fovRadians = THREE.MathUtils.degToRad(this.camera.fov);
+            
+            // Use different screen ratios for different bodies
+            let screenRatio;
+            if (bodyName === 'Sun') {
+                screenRatio = 0.4; // Sun occupies 40% of screen height
+            } else if (bodyName === 'Mercury') {
+                screenRatio = 0.6; // Mercury occupies 60% of screen height
+            } else {
+                screenRatio = 0.5; // Default for other bodies
+            }
+            
+            // Calculate the appropriate distance
+            const distance = (body.radius / screenRatio) / Math.tan(fovRadians / 2);
+            
+            // Set a position with appropriate offset
+            const targetPosition = new THREE.Vector3(
+                bodyPosition.x + distance * 0.2, // Offset for a wider view
+                bodyPosition.y + distance * 0.2, // Offset for a wider view
+                bodyPosition.z + distance
+            );
+            
+            // Animate to the new position
+            this.animateCameraToPosition(targetPosition, bodyPosition, 1500);
         }
     }
     
@@ -220,20 +318,26 @@ export class App {
         
         const bodyPosition = this.focusedBody.getObject().position.clone();
         
-        // Calculate the distance needed to make the body occupy ~99% of the screen
-        // Using the field of view and the body's radius to calculate the appropriate distance
+        // Calculate the distance needed to make the body occupy the appropriate screen space
         const fovRadians = THREE.MathUtils.degToRad(this.camera.fov);
-        const screenRatio = 0.99; // We want the body to occupy 99% of the screen height
+        
+        // Use different screen ratios for different bodies
+        let screenRatio;
+        if (this.focusedBody.name === 'Sun') {
+            screenRatio = 0.4; // Sun occupies 40% of screen height
+        } else if (this.focusedBody.name === 'Mercury') {
+            screenRatio = 0.6; // Mercury occupies 60% of screen height
+        } else {
+            screenRatio = 0.5; // Default for other bodies
+        }
         
         // Calculate distance based on the desired screen ratio and FOV
-        // tan(fov/2) = (radius/screenRatio) / distance
-        // distance = (radius/screenRatio) / tan(fov/2)
         const distance = (this.focusedBody.radius / screenRatio) / Math.tan(fovRadians / 2);
         
-        // Set a position that's extremely close to the body with minimal offset
+        // Set a position that's offset from the body
         const cameraPosition = new THREE.Vector3(
-            bodyPosition.x + distance * 0.005, // Extremely minimal offset for centered view
-            bodyPosition.y + distance * 0.005, // Extremely minimal offset for centered view
+            bodyPosition.x + distance * 0.2, // Wider offset for more context
+            bodyPosition.y + distance * 0.2, // Wider offset for more context
             bodyPosition.z + distance
         );
         
@@ -270,12 +374,71 @@ export class App {
     }
 
     resetCamera() {
-        this.controls.reset(); // Resets to the target and position when controls were first created
-        // For a more explicit reset:
-        this.camera.position.copy(CONFIG.CAMERA.INITIAL_POSITION);
-        this.camera.lookAt(CONFIG.CAMERA.LOOK_AT);
-        this.controls.target.copy(CONFIG.CAMERA.LOOK_AT);
-        this.controls.update();
+        // Clear the focused body
+        this.focusedBody = null;
+        this.userControlActive = false;
+        
+        // Reset dropdown selection
+        const dropdown = document.getElementById('focusDropdown');
+        if (dropdown) {
+            dropdown.value = '';
+        }
+        
+        // Calculate a position that can view the entire solar system
+        // Get the furthest planet's orbit radius
+        let maxOrbitRadius = 0;
+        this.solarSystem.celestialBodies.forEach(body => {
+            if (body.orbitRadius && body.orbitRadius > maxOrbitRadius) {
+                maxOrbitRadius = body.orbitRadius;
+            }
+        });
+        
+        // Add a buffer to ensure we can see everything
+        const viewRadius = maxOrbitRadius * 1.5;
+        
+        // Set camera to an elevated position to see the orbital plane
+        const resetPosition = new THREE.Vector3(
+            viewRadius * 0.5,  // Offset in X to get an angled view
+            viewRadius * 0.8,  // Elevated position to see the orbital plane
+            viewRadius         // Distance from origin
+        );
+        
+        // Animate to the reset position
+        this.animateCameraToPosition(resetPosition, new THREE.Vector3(0, 0, 0), 1500);
+    }
+    
+    animateCameraToPosition(targetPosition, targetLookAt, duration) {
+        // Start position and target
+        const startPosition = this.camera.position.clone();
+        const startTarget = this.controls.target.clone();
+        
+        // Animation variables
+        const startTime = Date.now();
+        
+        // Create the animation function
+        const animateReset = () => {
+            const elapsed = Date.now() - startTime;
+            const progress = Math.min(elapsed / duration, 1);
+            
+            if (progress < 1) {
+                // Smoothly interpolate position and target
+                this.camera.position.lerpVectors(startPosition, targetPosition, progress);
+                this.controls.target.lerpVectors(startTarget, targetLookAt, progress);
+                this.controls.update();
+                
+                // Continue animation
+                this.currentAnimation = requestAnimationFrame(animateReset);
+            } else {
+                // Animation complete, set final position
+                this.camera.position.copy(targetPosition);
+                this.controls.target.copy(targetLookAt);
+                this.controls.update();
+                this.currentAnimation = null; // Clear animation ID when complete
+            }
+        };
+        
+        // Start the animation
+        animateReset();
     }
 
     animate() {
