@@ -3,18 +3,18 @@ import CONFIG from '../config.js';
 import { CelestialBody } from './CelestialBody.js';
 
 /**
- * Mercury class representing the planet Mercury
+ * Venus class representing the planet Venus
  */
-export class Mercury extends CelestialBody {
+export class Venus extends CelestialBody {
     /**
      * @param {THREE.Vector3} sunPosition - Position of the sun
      */
     constructor(sunPosition = new THREE.Vector3(0, 0, 0)) {
-        super('Mercury', CONFIG.MERCURY.RADIUS, CONFIG.MERCURY.COLOR);
+        super('Venus', CONFIG.VENUS.RADIUS, CONFIG.VENUS.COLOR);
         this.sunPosition = sunPosition;
-        this.orbitRadius = CONFIG.MERCURY.ORBIT_RADIUS;
-        this.orbitSpeed = CONFIG.MERCURY.ORBIT_SPEED;
-        this.rotationSpeed = CONFIG.MERCURY.ROTATION_SPEED;
+        this.orbitRadius = CONFIG.VENUS.ORBIT_RADIUS;
+        this.orbitSpeed = CONFIG.VENUS.ORBIT_SPEED;
+        this.rotationSpeed = CONFIG.VENUS.ROTATION_SPEED;
         this.orbitAngle = Math.random() * Math.PI * 2; // Random starting position
         this.orbitPath = null;
         this.label = null;
@@ -22,10 +22,10 @@ export class Mercury extends CelestialBody {
         this.createLabel();
         this.updatePosition();
     }
-
+    
     createMesh() {
-        // Define Mercury's surface using a more realistic procedural shader
-        const mercuryVertexShader = `
+        // Define Venus's surface using a procedural shader for cloud cover
+        const venusVertexShader = `
             varying vec3 vNormal;
             varying vec2 vUv;
             varying vec3 vPosition;
@@ -38,13 +38,14 @@ export class Mercury extends CelestialBody {
             }
         `;
         
-        const mercuryFragmentShader = `
-            uniform vec3 mercuryColor;
+        const venusFragmentShader = `
+            uniform vec3 venusColor;
+            uniform float time;
             varying vec3 vNormal;
             varying vec2 vUv;
             varying vec3 vPosition;
             
-            // Improved noise functions for more realistic terrain
+            // Noise functions for cloud patterns
             float hash(float n) {
                 return fract(sin(n) * 43758.5453);
             }
@@ -87,86 +88,86 @@ export class Mercury extends CelestialBody {
                 vec3 lightDir = normalize(vec3(1.0, 0.2, 0.0));
                 float diffuse = max(0.0, dot(vNormal, lightDir));
                 
-                // Base color for Mercury (grayish-brown)
-                vec3 baseColor = mercuryColor;
+                // Base color for Venus (yellowish)
+                vec3 baseColor = venusColor;
                 
-                // Generate realistic craters and terrain
-                float crater = fbm(vPosition * 5.0) * 0.5 + 0.5;
-                float smallCraters = fbm(vPosition * 20.0) * 0.2;
-                float largeCraters = fbm(vPosition * 2.0) * 0.3;
+                // Generate cloud patterns that move slowly
+                float cloudPattern = fbm(vPosition * 2.0 + vec3(0.0, 0.0, time * 0.05));
+                float cloudDetail = fbm(vPosition * 5.0 + vec3(0.0, time * 0.02, 0.0));
                 
-                // Create highlands and lowlands
-                float terrain = fbm(vPosition * 3.0);
+                // Combine cloud patterns
+                float clouds = cloudPattern * cloudDetail;
                 
-                // Combine different terrain features
-                float terrainFeatures = crater * smallCraters * largeCraters;
+                // Create swirling cloud patterns
+                float swirl = fbm(vPosition * 3.0 + vec3(clouds * 0.5, clouds * 0.5, time * 0.01));
                 
-                // Create color variations based on terrain
-                vec3 craterColor = vec3(0.8, 0.75, 0.65); // Lighter for crater rims
-                vec3 lowlandColor = vec3(0.5, 0.45, 0.4); // Darker for lowlands
-                vec3 highlandColor = vec3(0.7, 0.65, 0.6); // Medium for highlands
+                // Create color variations for different cloud layers
+                vec3 cloudColor1 = vec3(0.95, 0.95, 0.8); // Light yellow
+                vec3 cloudColor2 = vec3(0.85, 0.75, 0.5); // Darker yellow-orange
                 
-                // Mix colors based on terrain features
-                vec3 surfaceColor = mix(
-                    mix(lowlandColor, highlandColor, terrain),
-                    craterColor,
-                    terrainFeatures
-                );
+                // Mix cloud colors based on patterns
+                vec3 cloudColor = mix(cloudColor2, cloudColor1, swirl);
                 
-                // Apply lighting
-                vec3 finalColor = surfaceColor * (diffuse * 0.8 + 0.2);
+                // Mix base color with cloud color
+                vec3 surfaceColor = mix(baseColor, cloudColor, clouds * 0.7);
                 
-                // Add subtle ambient occlusion in craters
-                finalColor *= 1.0 - (terrainFeatures * 0.2);
+                // Apply lighting with atmospheric scattering effect
+                float atmosphericEffect = pow(1.0 - abs(dot(vNormal, vec3(0.0, 0.0, 1.0))), 2.0);
+                vec3 atmosphereColor = vec3(0.9, 0.8, 0.6); // Yellowish atmosphere
+                
+                // Final color with lighting and atmosphere
+                vec3 finalColor = surfaceColor * (diffuse * 0.7 + 0.3);
+                finalColor = mix(finalColor, atmosphereColor, atmosphericEffect * 0.3);
                 
                 gl_FragColor = vec4(finalColor, 1.0);
             }
         `;
         
-        // Create Mercury geometry and material
+        // Create Venus geometry and material
         const geometry = new THREE.SphereGeometry(this.radius, 64, 64); // Higher resolution for more detail
         const material = new THREE.ShaderMaterial({
             uniforms: {
-                mercuryColor: { value: new THREE.Color(0xAA8866) }
+                venusColor: { value: new THREE.Color(this.primaryColor) },
+                time: { value: 0.0 } // Will be updated in the animation loop
             },
-            vertexShader: mercuryVertexShader,
-            fragmentShader: mercuryFragmentShader
+            vertexShader: venusVertexShader,
+            fragmentShader: venusFragmentShader
         });
         
         this.mesh = new THREE.Mesh(geometry, material);
         this.mesh.castShadow = true;
         this.mesh.receiveShadow = true;
+        this.mesh.name = this.name;
         this.objectGroup.add(this.mesh);
     }
-
-    /**
-     * Creates the orbit path visualization
-     * @param {THREE.Scene} scene - The scene to add the orbit path to
-     */
+    
     createOrbitPath(scene) {
         const orbitGeometry = new THREE.BufferGeometry();
-        const orbitMaterial = new THREE.LineBasicMaterial({ color: 0x666666, transparent: true, opacity: 0.5 });
+        const orbitMaterial = new THREE.LineBasicMaterial({ 
+            color: 0x888888,
+            transparent: true,
+            opacity: 0.5
+        });
         
         // Create a circle of points for the orbit
-        const orbitPoints = [];
+        const points = [];
         const segments = 128;
         for (let i = 0; i <= segments; i++) {
-            const theta = (i / segments) * Math.PI * 2;
-            orbitPoints.push(
-                Math.cos(theta) * this.orbitRadius,
-                0, // Keep orbit in the XZ plane
-                Math.sin(theta) * this.orbitRadius
-            );
+            const angle = (i / segments) * Math.PI * 2;
+            const x = Math.cos(angle) * this.orbitRadius;
+            const z = Math.sin(angle) * this.orbitRadius;
+            points.push(new THREE.Vector3(x, 0, z));
         }
         
-        orbitGeometry.setAttribute('position', new THREE.Float32BufferAttribute(orbitPoints, 3));
+        orbitGeometry.setFromPoints(points);
         this.orbitPath = new THREE.Line(orbitGeometry, orbitMaterial);
-        scene.add(this.orbitPath);
+        this.orbitPath.position.copy(this.sunPosition);
+        
+        if (scene) {
+            scene.add(this.orbitPath);
+        }
     }
-
-    /**
-     * Creates a text label for Mercury
-     */
+    
     createLabel() {
         // Create a canvas for the label
         const canvas = document.createElement('canvas');
@@ -174,73 +175,57 @@ export class Mercury extends CelestialBody {
         canvas.width = 256;
         canvas.height = 128;
         
-        // Clear the canvas with a transparent background
-        context.clearRect(0, 0, canvas.width, canvas.height);
-        
-        // Draw the text
-        context.font = 'Bold 40px Arial';
-        context.fillStyle = 'white';
+        // Draw text on the canvas with transparent background
+        context.clearRect(0, 0, canvas.width, canvas.height); // Clear canvas with transparency
+        context.font = '28px "Helvetica Neue", Arial, sans-serif';
+        context.fillStyle = 'rgba(255, 255, 255, 0.7)';
         context.textAlign = 'center';
-        context.textBaseline = 'middle';
         context.fillText(this.name, canvas.width / 2, canvas.height / 2);
         
         // Create a texture from the canvas
         const texture = new THREE.CanvasTexture(canvas);
         
-        // Create a sprite material with the texture
-        const spriteMaterial = new THREE.SpriteMaterial({
+        const spriteMaterial = new THREE.SpriteMaterial({ 
             map: texture,
             transparent: true
         });
         
-        // Create the sprite and position it above the planet
         this.label = new THREE.Sprite(spriteMaterial);
-        this.label.scale.set(2, 1, 1);
-        this.label.position.set(0, this.radius * 1.5, 0);
-        
-        // Add the label to the object
+        this.label.scale.set(1.5, 0.75, 1); // Smaller scale
+        this.label.position.set(0, this.radius * 2, 0);
         this.objectGroup.add(this.label);
     }
-
-    /**
-     * Updates Mercury's position based on its orbit
-     */
+    
+    update(deltaTime) {
+        // Update orbit position
+        this.orbitAngle += this.orbitSpeed * deltaTime;
+        
+        // Update rotation
+        this.mesh.rotation.y += this.rotationSpeed * deltaTime;
+        
+        // Update cloud animation time
+        if (this.mesh && this.mesh.material && this.mesh.material.uniforms) {
+            this.mesh.material.uniforms.time.value += deltaTime;
+        }
+        
+        // Update position
+        this.updatePosition();
+    }
+    
     updatePosition() {
+        // Position on the orbit
         const x = Math.cos(this.orbitAngle) * this.orbitRadius;
         const z = Math.sin(this.orbitAngle) * this.orbitRadius;
-        this.setPosition(x + this.sunPosition.x, 0, z + this.sunPosition.z);
+        
+        this.objectGroup.position.set(x, 0, z);
     }
-
-    /**
-     * Update method for animations, rotations, etc.
-     * @param {number} deltaTime - Time since last frame in seconds
-     * @param {boolean} animate - Whether to animate the planet
-     */
-    update(deltaTime, animate = true) {
-        if (animate) {
-            // Update orbit position
-            this.orbitAngle += this.orbitSpeed * deltaTime;
-            this.updatePosition();
-            
-            // Rotate Mercury
-            this.mesh.rotation.y += this.rotationSpeed * deltaTime;
-        }
-    }
-
-    /**
-     * Toggle the visibility of the orbit path
-     * @param {boolean} visible - Whether the orbit path should be visible
-     */
+    
     toggleOrbitPath(visible) {
         if (this.orbitPath) {
             this.orbitPath.visible = visible;
         }
     }
-
-    /**
-     * Toggle the visibility of the label
-     * @param {boolean} visible - Whether the label should be visible
-     */
+    
     toggleLabel(visible) {
         if (this.label) {
             this.label.visible = visible;

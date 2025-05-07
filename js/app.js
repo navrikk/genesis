@@ -9,6 +9,8 @@ import { isWebGLAvailable } from './utils/webgl-check.js';
 import { SolarSystem } from './classes/SolarSystem.js';
 import { Sun } from './classes/Sun.js';
 import { Mercury } from './classes/Mercury.js';
+import { Venus } from './classes/Venus.js';
+import { Earth } from './classes/Earth.js';
 import { Starfield } from './classes/Starfield.js';
 
 /**
@@ -99,8 +101,9 @@ export class App {
             if (sun.mesh.geometry) this.geometriesToDispose.push(sun.mesh.geometry);
         }
         
-        // Create Mercury
-        const mercury = new Mercury();
+        // Create Mercury with Sun's position
+        const sunPosition = this.solarSystem.getBody('Sun') ? this.solarSystem.getBody('Sun').getObject().position : new THREE.Vector3(0, 0, 0);
+        const mercury = new Mercury(sunPosition);
         this.solarSystem.addBody(mercury);
         // Create Mercury's orbit path after adding it to the scene
         mercury.createOrbitPath(this.scene);
@@ -108,6 +111,28 @@ export class App {
         if (mercury.mesh) {
             if (mercury.mesh.material) this.materialsToDispose.push(mercury.mesh.material);
             if (mercury.mesh.geometry) this.geometriesToDispose.push(mercury.mesh.geometry);
+        }
+
+        // Create Venus
+        const venus = new Venus(sunPosition);
+        this.solarSystem.addBody(venus);
+        // Create Venus's orbit path after adding it to the scene
+        venus.createOrbitPath(this.scene);
+        // Collect materials and geometries for disposal
+        if (venus.mesh) {
+            if (venus.mesh.material) this.materialsToDispose.push(venus.mesh.material);
+            if (venus.mesh.geometry) this.geometriesToDispose.push(venus.mesh.geometry);
+        }
+
+        // Create Earth
+        const earth = new Earth(sunPosition);
+        this.solarSystem.addBody(earth);
+        // Create Earth's orbit path after adding it to the scene
+        earth.createOrbitPath(this.scene);
+        // Collect materials and geometries for disposal
+        if (earth.mesh) {
+            if (earth.mesh.material) this.materialsToDispose.push(earth.mesh.material);
+            if (earth.mesh.geometry) this.geometriesToDispose.push(earth.mesh.geometry);
         }
 
         // Create Starfield
@@ -195,7 +220,7 @@ export class App {
         defaultOption.textContent = 'Select a body';
         focusDropdown.appendChild(defaultOption);
         
-        // Add options for Sun and Mercury
+        // Add options for Sun, Mercury, Venus, and Earth
         const sunOption = document.createElement('option');
         sunOption.value = 'Sun';
         sunOption.textContent = 'Sun';
@@ -205,6 +230,16 @@ export class App {
         mercuryOption.value = 'Mercury';
         mercuryOption.textContent = 'Mercury';
         focusDropdown.appendChild(mercuryOption);
+        
+        const venusOption = document.createElement('option');
+        venusOption.value = 'Venus';
+        venusOption.textContent = 'Venus';
+        focusDropdown.appendChild(venusOption);
+        
+        const earthOption = document.createElement('option');
+        earthOption.value = 'Earth';
+        earthOption.textContent = 'Earth';
+        focusDropdown.appendChild(earthOption);
         
         // Add event listener to the dropdown
         focusDropdown.addEventListener('change', (event) => {
@@ -281,6 +316,10 @@ export class App {
                 screenRatio = 0.4; // Sun occupies 40% of screen height
             } else if (bodyName === 'Mercury') {
                 screenRatio = 0.6; // Mercury occupies 60% of screen height
+            } else if (bodyName === 'Venus') {
+                screenRatio = 0.6; // Venus occupies 60% of screen height
+            } else if (bodyName === 'Earth') {
+                screenRatio = 0.6; // Earth occupies 60% of screen height
             } else {
                 screenRatio = 0.5; // Default for other bodies
             }
@@ -327,6 +366,10 @@ export class App {
             screenRatio = 0.4; // Sun occupies 40% of screen height
         } else if (this.focusedBody.name === 'Mercury') {
             screenRatio = 0.6; // Mercury occupies 60% of screen height
+        } else if (this.focusedBody.name === 'Venus') {
+            screenRatio = 0.6; // Venus occupies 60% of screen height
+        } else if (this.focusedBody.name === 'Earth') {
+            screenRatio = 0.6; // Earth occupies 60% of screen height
         } else {
             screenRatio = 0.5; // Default for other bodies
         }
@@ -374,9 +417,14 @@ export class App {
     }
 
     resetCamera() {
+        // Cancel any ongoing animations
+        if (this.currentAnimation) {
+            cancelAnimationFrame(this.currentAnimation);
+            this.currentAnimation = null;
+        }
+        
         // Clear the focused body
         this.focusedBody = null;
-        this.userControlActive = false;
         
         // Reset dropdown selection
         const dropdown = document.getElementById('focusDropdown');
@@ -384,8 +432,8 @@ export class App {
             dropdown.value = '';
         }
         
-        // Calculate a position that can view the entire solar system
-        // Get the furthest planet's orbit radius
+        // Calculate a position that shows all planets
+        // Find the furthest planet's orbit radius
         let maxOrbitRadius = 0;
         this.solarSystem.celestialBodies.forEach(body => {
             if (body.orbitRadius && body.orbitRadius > maxOrbitRadius) {
@@ -393,17 +441,11 @@ export class App {
             }
         });
         
-        // Add a buffer to ensure we can see everything
+        // Set the camera far enough to see all planets
         const viewRadius = maxOrbitRadius * 1.5;
+        const resetPosition = new THREE.Vector3(viewRadius * 0.5, viewRadius * 0.5, viewRadius);
         
-        // Set camera to an elevated position to see the orbital plane
-        const resetPosition = new THREE.Vector3(
-            viewRadius * 0.5,  // Offset in X to get an angled view
-            viewRadius * 0.8,  // Elevated position to see the orbital plane
-            viewRadius         // Distance from origin
-        );
-        
-        // Animate to the reset position
+        // Animate camera to the reset position
         this.animateCameraToPosition(resetPosition, new THREE.Vector3(0, 0, 0), 1500);
     }
     
