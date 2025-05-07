@@ -391,6 +391,11 @@ export default class App {
         const raycaster = new THREE.Raycaster();
         const mouse = new THREE.Vector2();
         
+        // Variables for tracking double-click
+        let lastClickTime = 0;
+        let lastClickedBody = null;
+        const doubleClickThreshold = 300; // milliseconds
+        
         // Add click event listener
         window.addEventListener('click', (event) => {
             // Calculate mouse position in normalized device coordinates
@@ -418,9 +423,20 @@ export default class App {
                 const selectedBody = celestialBodies.find(body => body.mesh === selectedMesh);
                 
                 if (selectedBody) {
-                    this.showBodyInfo(selectedBody.name);
-                    // Automatically focus on the selected body
-                    this.focusOnBody(selectedBody.name);
+                    const currentTime = new Date().getTime();
+                    const timeDiff = currentTime - lastClickTime;
+                    
+                    // Check if this is a double-click on the same body
+                    if (timeDiff < doubleClickThreshold && lastClickedBody === selectedBody.name) {
+                        // Double-click detected
+                        this.showBodyInfo(selectedBody.name);
+                        // Focus on the selected body
+                        this.focusOnBody(selectedBody.name);
+                    }
+                    
+                    // Update tracking variables for next click
+                    lastClickTime = currentTime;
+                    lastClickedBody = selectedBody.name;
                 }
             }
         });
