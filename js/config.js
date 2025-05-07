@@ -10,6 +10,18 @@ const CONFIG = {
         get RADIUS() { return (this.DIAMETER_KM / 2) / CONFIG.SCALE_FACTOR; },
         get ROTATION_SPEED() { return (2 * Math.PI) / (this.ROTATION_PERIOD_DAYS * 24 * 60 * 0.1); } // Sped up for visualization (0.1 = 10x faster than 1 min)
     },
+    MERCURY: {
+        NAME: 'Mercury',
+        DIAMETER_KM: 4879 * 50, // Massively increased size for extreme visibility
+        DISTANCE_FROM_SUN_KM: 57909000, // Average distance
+        ORBITAL_PERIOD_DAYS: 88,
+        ROTATION_PERIOD_DAYS: 58.6,
+        COLOR: 0xAA8866, // Brownish-gray color
+        get RADIUS() { return (this.DIAMETER_KM / 2) / CONFIG.SCALE_FACTOR; },
+        get ORBIT_RADIUS() { return this.DISTANCE_FROM_SUN_KM / CONFIG.SCALE_FACTOR; },
+        get ORBIT_SPEED() { return (2 * Math.PI) / (this.ORBITAL_PERIOD_DAYS * 24 * 60 * 0.1); }, // Sped up for visualization
+        get ROTATION_SPEED() { return (2 * Math.PI) / (this.ROTATION_PERIOD_DAYS * 24 * 60 * 0.1); } // Sped up for visualization
+    },
     CAMERA: {
         FOV: 45,
         NEAR: 0.1,
@@ -28,6 +40,9 @@ const CONFIG = {
         strength: 1.2, // Adjusted for a more pronounced glow
         radius: 0.8,
         threshold: 0.1
+    },
+    ANIMATION: {
+        enabled: true // Default state for animation
     }
 };
 

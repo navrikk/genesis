@@ -8,6 +8,7 @@ export class SolarSystem {
     constructor(scene) {
         this.scene = scene;
         this.celestialBodies = [];
+        this.animationEnabled = true;
     }
 
     /**
@@ -39,7 +40,15 @@ export class SolarSystem {
      * @param {number} deltaTime - Time since last frame in seconds
      */
     update(deltaTime) {
-        this.celestialBodies.forEach(body => body.update(deltaTime));
+        this.celestialBodies.forEach(body => {
+            if (body.update.length > 1) {
+                // If the body's update method accepts an animation parameter
+                body.update(deltaTime, this.animationEnabled);
+            } else {
+                // For backward compatibility with bodies that don't have the animation parameter
+                body.update(deltaTime);
+            }
+        });
     }
 
     /**
@@ -49,5 +58,37 @@ export class SolarSystem {
      */
     getBody(name) {
         return this.celestialBodies.find(b => b.name === name);
+    }
+    
+    /**
+     * Toggle animation state for all celestial bodies
+     * @param {boolean} enabled - Whether animation should be enabled
+     */
+    toggleAnimation(enabled) {
+        this.animationEnabled = enabled;
+    }
+    
+    /**
+     * Toggle visibility of orbit paths for all planets
+     * @param {boolean} visible - Whether orbit paths should be visible
+     */
+    toggleOrbitPaths(visible) {
+        this.celestialBodies.forEach(body => {
+            if (body.toggleOrbitPath) {
+                body.toggleOrbitPath(visible);
+            }
+        });
+    }
+    
+    /**
+     * Toggle visibility of labels for all celestial bodies
+     * @param {boolean} visible - Whether labels should be visible
+     */
+    toggleLabels(visible) {
+        this.celestialBodies.forEach(body => {
+            if (body.toggleLabel) {
+                body.toggleLabel(visible);
+            }
+        });
     }
 }
