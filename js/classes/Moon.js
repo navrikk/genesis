@@ -19,14 +19,15 @@ export class Moon extends CelestialBody {
         this.orbitAngle = Math.random() * Math.PI * 2; // Random starting position
         this.orbitPath = null;
         this.label = null;
-        this.sunPosition = new THREE.Vector3(0, 0, 0); // Initialize sun position
+        this.sunLight = null;
+        this.sunPosition = null;
         this.createMesh();
         this.createLabel();
         this.updatePosition();
     }
     
     createMesh() {
-        // Load textures
+        // Load high-resolution textures
         const textureLoader = new THREE.TextureLoader();
         const moonTexture = textureLoader.load('assets/textures/moon_8k.jpg');
         const moonNormalMap = textureLoader.load('assets/textures/moon_normal_8k.jpg');
@@ -34,126 +35,52 @@ export class Moon extends CelestialBody {
         // Create Moon geometry
         const geometry = new THREE.SphereGeometry(this.radius, 64, 64);
         
-        // Create custom shader for Moon
-        const moonVertexShader = `
-            varying vec2 vUv;
-            varying vec3 vNormal;
-            varying vec3 vSunDirection;
-            varying vec3 vViewDirection;
-            
-            uniform vec3 sunPosition;
-            
-            void main() {
-                vUv = uv;
-                vNormal = normalize(normalMatrix * normal);
-                
-                // Calculate world position
-                vec4 worldPosition = modelMatrix * vec4(position, 1.0);
-                
-                // Calculate direction to the sun in world space
-                vSunDirection = normalize(sunPosition - worldPosition.xyz);
-                
-                // Calculate view direction for specular highlights
-                vViewDirection = normalize(cameraPosition - worldPosition.xyz);
-                
-                gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-            }
-        `;
-        
-        const moonFragmentShader = `
-            uniform sampler2D moonTexture;
-            uniform sampler2D normalMap;
-            uniform vec3 sunPosition;
-            
-            varying vec2 vUv;
-            varying vec3 vNormal;
-            varying vec3 vSunDirection;
-            varying vec3 vViewDirection;
-            
-            void main() {
-                // Sample textures
-                vec4 texColor = texture2D(moonTexture, vUv);
-                vec3 normalMapColor = texture2D(normalMap, vUv).xyz * 2.0 - 1.0;
-                
-                // Apply normal mapping for better crater detail
-                vec3 normal = normalize(vNormal + normalMapColor * 0.5);
-                
-                // Calculate lighting
-                float sunDiffuse = max(0.0, dot(normal, vSunDirection));
-                
-                // Moon has a sharp transition between lit and unlit sides (no atmosphere)
-                float lightIntensity = smoothstep(-0.1, 0.1, dot(normal, vSunDirection));
-                
-                // Ambient light (dark side is barely visible)
-                float ambient = 0.03;
-                
-                // Add subtle specular highlight for minerals on the surface
-                vec3 halfVector = normalize(vSunDirection + vViewDirection);
-                float specular = pow(max(0.0, dot(normal, halfVector)), 32.0) * 0.2;
-                
-                // Final color with lighting
-                vec3 finalColor = texColor.rgb * (ambient + lightIntensity * 0.97);
-                finalColor += vec3(1.0, 0.98, 0.9) * specular * lightIntensity;
-                
-                gl_FragColor = vec4(finalColor, 1.0);
-            }
-        `;
-        
-        const material = new THREE.ShaderMaterial({
-            uniforms: {
-                moonTexture: { value: moonTexture },
-                normalMap: { value: moonNormalMap },
-                sunPosition: { value: this.sunPosition.clone() }
-            },
-            vertexShader: moonVertexShader,
-            fragmentShader: moonFragmentShader
+        // Create material with lighting
+        const material = new THREE.MeshPhongMaterial({
+            map: moonTexture,
+            normalMap: moonNormalMap,
+            normalScale: new THREE.Vector2(0.04, 0.04),
+            shininess: 2, // Low shininess for rocky surface
+            specular: new THREE.Color(0x111111) // Low specular for rocky surface
         });
-        
-        // Fallback material in case shader fails
-        material.onError = () => {
-            console.warn('Moon shader failed to compile, using fallback material');
-            this.mesh.material = new THREE.MeshStandardMaterial({
-                map: moonTexture,
-                normalMap: moonNormalMap,
-                normalScale: new THREE.Vector2(0.5, 0.5),
-                metalness: 0.1,
-                roughness: 0.9
-            });
-        };
         
         this.mesh = new THREE.Mesh(geometry, material);
         this.mesh.castShadow = true;
         this.mesh.receiveShadow = true;
         this.mesh.name = this.name;
         this.objectGroup.add(this.mesh);
+        
+        // Add directional light to simulate sunlight
+        this.sunLight = new THREE.DirectionalLight(0xffffff, 1.5);
+        this.sunLight.position.set(1, 0, 0); // Will be updated in setSunPosition
+        this.objectGroup.add(this.sunLight);
     }
     
     createOrbitPath(scene) {
         const orbitGeometry = new THREE.BufferGeometry();
         const orbitMaterial = new THREE.LineBasicMaterial({ 
-            color: 0x888888,
-            transparent: true,
-            opacity: 0.3
+            color: this.primaryColor,
+            opacity: 0.5,
+            transparent: true
         });
         
-        // Create a circle of points for the orbit
+        // Create a circle in 3D space with proper inclination
+        const inclination = 5.1 * Math.PI / 180;
         const points = [];
-        const segments = 64;
+        const segments = 128;
+        
         for (let i = 0; i <= segments; i++) {
-            const angle = (i / segments) * Math.PI * 2;
-            const x = Math.cos(angle) * this.orbitRadius;
-            const z = Math.sin(angle) * this.orbitRadius;
-            points.push(new THREE.Vector3(x, 0, z));
+            const theta = (i / segments) * Math.PI * 2;
+            const x = Math.cos(theta) * this.orbitRadius;
+            const y = Math.sin(theta) * this.orbitRadius * Math.sin(inclination);
+            const z = Math.sin(theta) * this.orbitRadius * Math.cos(inclination);
+            points.push(new THREE.Vector3(x, y, z));
         }
         
         orbitGeometry.setFromPoints(points);
         this.orbitPath = new THREE.Line(orbitGeometry, orbitMaterial);
         this.orbitPath.position.copy(this.parentPosition);
-        this.orbitPath.userData.isOrbit = true; // Add property for orbit visibility toggling
-        
-        if (scene) {
-            scene.add(this.orbitPath);
-        }
+        scene.add(this.orbitPath);
     }
     
     createLabel() {
@@ -162,25 +89,31 @@ export class Moon extends CelestialBody {
         this.objectGroup.add(this.label);
     }
     
+    updateOrbitPath() {
+        if (this.orbitPath) {
+            this.orbitPath.position.copy(this.parentPosition);
+        }
+    }
+    
     update(deltaTime, animate = true) {
         if (animate) {
             // Update orbit position
             this.orbitAngle += this.orbitSpeed * deltaTime;
             
-            // Update rotation
+            // Update rotation - the Moon is tidally locked to Earth
             this.mesh.rotation.y += this.rotationSpeed * deltaTime;
-            
-            // Update shader uniforms for lighting
-            if (this.mesh && this.mesh.material && this.mesh.material.uniforms) {
-                this.mesh.material.uniforms.sunPosition.value.copy(this.sunPosition);
-            }
             
             // Update position
             this.updatePosition();
             
             // Update orbit path position
-            if (this.orbitPath) {
-                this.orbitPath.position.copy(this.parentPosition);
+            this.updateOrbitPath();
+            
+            // Update sunlight direction
+            if (this.sunLight && this.sunPosition) {
+                const sunDirection = this.sunPosition.clone().sub(this.objectGroup.position).normalize();
+                this.sunLight.position.copy(sunDirection);
+                this.sunLight.target = this.mesh;
             }
         }
     }
@@ -212,6 +145,16 @@ export class Moon extends CelestialBody {
         }
     }
     
+    setSunPosition(position) {
+        this.sunPosition = position.clone();
+        
+        // Update the directional light position to match sun direction
+        if (this.sunLight) {
+            const sunDirection = this.sunPosition.clone().sub(this.objectGroup.position).normalize();
+            this.sunLight.position.copy(sunDirection);
+        }
+    }
+    
     toggleOrbitPath(visible) {
         if (this.orbitPath) {
             this.orbitPath.visible = visible;
@@ -221,16 +164,6 @@ export class Moon extends CelestialBody {
     toggleLabel(visible) {
         if (this.label) {
             this.label.visible = visible;
-        }
-    }
-    
-    // Set the sun position for lighting calculations
-    setSunPosition(sunPosition) {
-        this.sunPosition = sunPosition.clone();
-        
-        // Update shader uniforms if available
-        if (this.mesh && this.mesh.material && this.mesh.material.uniforms) {
-            this.mesh.material.uniforms.sunPosition.value.copy(sunPosition);
         }
     }
 }

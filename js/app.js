@@ -32,7 +32,9 @@ export default class App {
         this.container = document.getElementById('container');
         this.scene = new THREE.Scene();
         this.camera = new THREE.PerspectiveCamera(CONFIG.CAMERA.FOV, window.innerWidth / window.innerHeight, CONFIG.CAMERA.NEAR, CONFIG.CAMERA.FAR);
-        this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true }); 
+        this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        this.renderer.shadowMap.enabled = true;
+        this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
         this.controls = null;
         this.solarSystem = new SolarSystem(this.scene);
         this.starfield = null;
@@ -66,12 +68,20 @@ export default class App {
         this.camera.lookAt(CONFIG.CAMERA.LOOK_AT);
         this.scene.add(this.camera);
 
-        // Lighting (Ambient for overall visibility, Directional for some definition if needed)
-        const ambientLight = new THREE.AmbientLight(0x404040, 1); 
+        // Very minimal ambient light to prevent complete darkness
+        const ambientLight = new THREE.AmbientLight(0x404040, 0.05); 
         this.scene.add(ambientLight);
-        const directionalLight = new THREE.DirectionalLight(0xffffff, 0.2);
-        directionalLight.position.set(5, 10, 7.5);
-        this.scene.add(directionalLight);
+        
+        // Main sunlight (strong directional light from the Sun's position)
+        const sunLight = new THREE.DirectionalLight(0xffffff, 3);
+        sunLight.position.set(0, 0, 0); // Will be at Sun's position (origin)
+        sunLight.castShadow = true;
+        sunLight.shadow.mapSize.width = 2048;
+        sunLight.shadow.mapSize.height = 2048;
+        sunLight.shadow.camera.near = 0.1;
+        sunLight.shadow.camera.far = 1000;
+        sunLight.shadow.bias = -0.001; // Reduce shadow artifacts
+        this.scene.add(sunLight);
 
         // OrbitControls setup
         this.controls = new OrbitControls(this.camera, this.renderer.domElement);

@@ -20,6 +20,8 @@ export class Venus extends CelestialBody {
         this.orbitPath = null;
         this.label = null; // Add moon support
         this.moon = null; 
+        this.cloudsMesh = null;
+        this.sunLight = null;
         this.createMesh();
         this.createLabel();
         this.updatePosition();
@@ -28,9 +30,10 @@ export class Venus extends CelestialBody {
     setSunPosition(position) {
         this.sunPosition = position.clone();
         
-        // Update shader uniforms if available
-        if (this.mesh && this.mesh.material && this.mesh.material.uniforms) {
-            this.mesh.material.uniforms.sunPosition.value.copy(position);
+        // Update the directional light position to match sun direction
+        if (this.sunLight) {
+            const sunDirection = this.sunPosition.clone().sub(this.objectGroup.position).normalize();
+            this.sunLight.position.copy(sunDirection);
         }
     }
 
@@ -43,155 +46,102 @@ export class Venus extends CelestialBody {
         // Create Venus geometry with high detail
         const geometry = new THREE.SphereGeometry(this.radius, 64, 64);
         
-        // Create custom shader for Venus
-        const venusVertexShader = `
-            varying vec2 vUv;
-            varying vec3 vNormal;
-            varying vec3 vSunDirection;
-            varying vec3 vViewDirection;
-            
-            uniform vec3 sunPosition;
-            
-            void main() {
-                vUv = uv;
-                vNormal = normalize(normalMatrix * normal);
-                
-                // Calculate world position
-                vec4 worldPosition = modelMatrix * vec4(position, 1.0);
-                
-                // Calculate direction to the sun in world space
-                vSunDirection = normalize(sunPosition - worldPosition.xyz);
-                
-                // Calculate view direction for specular highlights
-                vViewDirection = normalize(cameraPosition - worldPosition.xyz);
-                
-                gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-            }
-        `;
-        
-        const venusFragmentShader = `
-            uniform sampler2D venusTexture;
-            uniform sampler2D venusCloudsTexture;
-            uniform vec3 sunPosition;
-            
-            varying vec2 vUv;
-            varying vec3 vNormal;
-            varying vec3 vSunDirection;
-            varying vec3 vViewDirection;
-            
-            void main() {
-                // Sample textures
-                vec4 surfaceColor = texture2D(venusTexture, vUv);
-                vec4 cloudsColor = texture2D(venusCloudsTexture, vUv);
-                
-                // Calculate lighting
-                float sunDiffuse = max(0.0, dot(vNormal, vSunDirection));
-                
-                // Venus has a thick atmosphere that scatters light
-                // This creates a smoother transition from day to night
-                float atmosphericScattering = smoothstep(-0.3, 0.6, dot(vNormal, vSunDirection)) * 0.8 + 0.2;
-                
-                // Ambient light (Venus is never completely dark due to atmospheric scattering)
-                float ambient = 0.15;
-                
-                // Blend surface and clouds based on lighting
-                // Clouds are more visible on the day side
-                float cloudsMix = mix(0.3, 0.7, atmosphericScattering);
-                vec4 blendedColor = mix(surfaceColor, cloudsColor, cloudsMix);
-                
-                // Apply lighting
-                vec3 finalColor = blendedColor.rgb * (ambient + atmosphericScattering * 0.85);
-                
-                // Add subtle atmospheric glow on the edges
-                float rimLight = 1.0 - max(0.0, dot(vNormal, vViewDirection));
-                float atmosphereGlow = pow(rimLight, 3.0) * 0.3;
-                finalColor += vec3(0.9, 0.7, 0.3) * atmosphereGlow;
-                
-                gl_FragColor = vec4(finalColor, 1.0);
-            }
-        `;
-        
-        const material = new THREE.ShaderMaterial({
-            uniforms: {
-                venusTexture: { value: venusTexture },
-                venusCloudsTexture: { value: venusCloudsTexture },
-                sunPosition: { value: this.sunPosition.clone() }
-            },
-            vertexShader: venusVertexShader,
-            fragmentShader: venusFragmentShader
+        // Create material with lighting
+        const material = new THREE.MeshPhongMaterial({
+            map: venusTexture,
+            bumpMap: venusTexture,
+            bumpScale: 0.005, // Subtle bump mapping
+            shininess: 10,
+            specular: new THREE.Color(0x333333)
         });
-        
-        // Fallback material in case shader fails
-        material.onError = () => {
-            console.warn('Venus shader failed to compile, using fallback material');
-            this.mesh.material = new THREE.MeshStandardMaterial({
-                map: venusTexture,
-                emissive: new THREE.Color(0x221100),
-                emissiveIntensity: 0.1,
-                metalness: 0.1,
-                roughness: 0.8
-            });
-        };
         
         this.mesh = new THREE.Mesh(geometry, material);
         this.mesh.castShadow = true;
         this.mesh.receiveShadow = true;
         this.mesh.name = this.name;
         this.objectGroup.add(this.mesh);
+        
+        // Add cloud layer as a slightly larger sphere
+        const cloudsGeometry = new THREE.SphereGeometry(this.radius * 1.01, 64, 64);
+        const cloudsMaterial = new THREE.MeshPhongMaterial({
+            map: venusCloudsTexture,
+            transparent: true,
+            opacity: 0.7,
+            shininess: 5,
+            specular: new THREE.Color(0x222222),
+            blending: THREE.AdditiveBlending
+        });
+        
+        this.cloudsMesh = new THREE.Mesh(cloudsGeometry, cloudsMaterial);
+        this.cloudsMesh.name = this.name + "Clouds";
+        this.objectGroup.add(this.cloudsMesh);
+        
+        // Add directional light to simulate sunlight
+        this.sunLight = new THREE.DirectionalLight(0xffffff, 1.5);
+        this.sunLight.position.copy(this.sunPosition.clone().normalize());
+        this.objectGroup.add(this.sunLight);
     }
-    
+
     createOrbitPath(scene) {
         const orbitGeometry = new THREE.BufferGeometry();
         const orbitMaterial = new THREE.LineBasicMaterial({ 
-            color: 0x888888,
-            transparent: true,
-            opacity: 0.5
+            color: this.primaryColor,
+            opacity: 0.5,
+            transparent: true
         });
         
-        // Create a circle of points for the orbit
+        // Create a circle in 3D space with proper inclination
+        const inclination = 3.4 * Math.PI / 180;
         const points = [];
         const segments = 128;
+        
         for (let i = 0; i <= segments; i++) {
-            const angle = (i / segments) * Math.PI * 2;
-            const x = Math.cos(angle) * this.orbitRadius;
-            const z = Math.sin(angle) * this.orbitRadius;
-            points.push(new THREE.Vector3(x, 0, z));
+            const theta = (i / segments) * Math.PI * 2;
+            const x = Math.cos(theta) * this.orbitRadius;
+            const y = Math.sin(theta) * this.orbitRadius * Math.sin(inclination);
+            const z = Math.sin(theta) * this.orbitRadius * Math.cos(inclination);
+            points.push(new THREE.Vector3(x, y, z));
         }
         
         orbitGeometry.setFromPoints(points);
         this.orbitPath = new THREE.Line(orbitGeometry, orbitMaterial);
         this.orbitPath.position.copy(this.sunPosition);
-        
-        if (scene) {
-            scene.add(this.orbitPath);
-        }
+        scene.add(this.orbitPath);
     }
-    
+
     createLabel() {
         // Create a more visible label with larger font size
         this.label = LabelUtils.createLabel(this.name, this.radius, 14, 26, 0.6, 1.2);
         this.objectGroup.add(this.label);
     }
     
+    updateOrbitPath() {
+        if (this.orbitPath) {
+            this.orbitPath.position.copy(this.sunPosition);
+        }
+    }
+
     update(deltaTime, animate = true) {
         if (animate) {
-            // Update orbit position
-            this.orbitAngle += this.orbitSpeed * deltaTime;
-            
             // Update rotation
             this.mesh.rotation.y += this.rotationSpeed * deltaTime;
             
-            // Update shader uniforms
-            if (this.mesh && this.mesh.material && this.mesh.material.uniforms) {
-                this.mesh.material.uniforms.sunPosition.value.copy(this.sunPosition);
+            // Rotate clouds slightly faster for dynamic effect
+            if (this.cloudsMesh) {
+                this.cloudsMesh.rotation.y += this.rotationSpeed * 1.1 * deltaTime;
             }
             
             // Update position
             this.updatePosition();
             
             // Update orbit path position
-            if (this.orbitPath) {
-                this.orbitPath.position.set(0, 0, 0);
+            this.updateOrbitPath();
+            
+            // Update sunlight direction
+            if (this.sunLight) {
+                const sunDirection = this.sunPosition.clone().sub(this.objectGroup.position).normalize();
+                this.sunLight.position.copy(sunDirection);
+                this.sunLight.target = this.mesh;
             }
         }
     }
@@ -206,6 +156,10 @@ export class Venus extends CelestialBody {
         const z = Math.sin(this.orbitAngle) * this.orbitRadius * Math.cos(inclination);
         
         this.setPosition(x + this.sunPosition.x, y, z + this.sunPosition.z);
+    }
+    
+    setPosition(x, y, z) {
+        this.objectGroup.position.set(x, y, z);
     }
     
     toggleOrbitPath(visible) {
