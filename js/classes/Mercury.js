@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import CONFIG from '../config.js';
 import { CelestialBody } from './CelestialBody.js';
+import { LabelUtils } from '../utils/LabelUtils.js';
 
 /**
  * Mercury class representing the planet Mercury
@@ -18,116 +19,76 @@ export class Mercury extends CelestialBody {
         this.orbitAngle = Math.random() * Math.PI * 2; // Random starting position
         this.orbitPath = null;
         this.label = null;
+        this.moon = null;
         this.createMesh();
         this.createLabel();
         this.updatePosition();
     }
 
     createMesh() {
-        // Define Mercury's surface using a more realistic procedural shader
+        // Load high-resolution textures
+        const textureLoader = new THREE.TextureLoader();
+        const mercuryTexture = textureLoader.load('assets/textures/mercury_8k.jpg');
+        
+        // Create Mercury geometry
+        const geometry = new THREE.SphereGeometry(this.radius, 64, 64);
+        
+        // Create Mercury material with custom shader
         const mercuryVertexShader = `
-            varying vec3 vNormal;
             varying vec2 vUv;
-            varying vec3 vPosition;
+            varying vec3 vNormal;
+            varying vec3 vSunDirection;
+            
+            uniform vec3 sunPosition;
             
             void main() {
-                vNormal = normalize(normalMatrix * normal);
                 vUv = uv;
-                vPosition = position;
+                vNormal = normalize(normalMatrix * normal);
+                
+                // Calculate direction to the sun in world space
+                vec4 worldPosition = modelMatrix * vec4(position, 1.0);
+                vSunDirection = normalize(sunPosition - worldPosition.xyz);
+                
                 gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
             }
         `;
         
         const mercuryFragmentShader = `
-            uniform vec3 mercuryColor;
-            varying vec3 vNormal;
+            uniform sampler2D mercuryTexture;
+            uniform vec3 sunPosition;
+            
             varying vec2 vUv;
-            varying vec3 vPosition;
-            
-            // Improved noise functions for more realistic terrain
-            float hash(float n) {
-                return fract(sin(n) * 43758.5453);
-            }
-            
-            float noise(vec3 x) {
-                vec3 p = floor(x);
-                vec3 f = fract(x);
-                f = f * f * (3.0 - 2.0 * f);
-                
-                float n = p.x + p.y * 57.0 + p.z * 113.0;
-                return mix(
-                    mix(
-                        mix(hash(n), hash(n + 1.0), f.x),
-                        mix(hash(n + 57.0), hash(n + 58.0), f.x),
-                        f.y
-                    ),
-                    mix(
-                        mix(hash(n + 113.0), hash(n + 114.0), f.x),
-                        mix(hash(n + 170.0), hash(n + 171.0), f.x),
-                        f.y
-                    ),
-                    f.z
-                );
-            }
-            
-            float fbm(vec3 p) {
-                float f = 0.0;
-                float amplitude = 0.5;
-                float frequency = 1.0;
-                for (int i = 0; i < 6; i++) {
-                    f += amplitude * noise(p * frequency);
-                    amplitude *= 0.5;
-                    frequency *= 2.0;
-                }
-                return f;
-            }
+            varying vec3 vNormal;
+            varying vec3 vSunDirection;
             
             void main() {
-                // Normalized light direction (from the sun)
-                vec3 lightDir = normalize(vec3(1.0, 0.2, 0.0));
-                float diffuse = max(0.0, dot(vNormal, lightDir));
+                // Sample texture
+                vec4 texColor = texture2D(mercuryTexture, vUv);
                 
-                // Base color for Mercury (grayish-brown)
-                vec3 baseColor = mercuryColor;
+                // Calculate lighting
+                float sunDiffuse = max(0.0, dot(vNormal, vSunDirection));
                 
-                // Generate realistic craters and terrain
-                float crater = fbm(vPosition * 5.0) * 0.5 + 0.5;
-                float smallCraters = fbm(vPosition * 20.0) * 0.2;
-                float largeCraters = fbm(vPosition * 2.0) * 0.3;
+                // Create smooth transition between lit and unlit sides
+                float lightIntensity = smoothstep(-0.2, 0.3, dot(vNormal, vSunDirection));
                 
-                // Create highlands and lowlands
-                float terrain = fbm(vPosition * 3.0);
+                // Ambient light (dark side is still slightly visible)
+                float ambient = 0.1;
                 
-                // Combine different terrain features
-                float terrainFeatures = crater * smallCraters * largeCraters;
+                // Final color with lighting
+                vec3 finalColor = texColor.rgb * (ambient + lightIntensity * 0.9);
                 
-                // Create color variations based on terrain
-                vec3 craterColor = vec3(0.8, 0.75, 0.65); // Lighter for crater rims
-                vec3 lowlandColor = vec3(0.5, 0.45, 0.4); // Darker for lowlands
-                vec3 highlandColor = vec3(0.7, 0.65, 0.6); // Medium for highlands
-                
-                // Mix colors based on terrain features
-                vec3 surfaceColor = mix(
-                    mix(lowlandColor, highlandColor, terrain),
-                    craterColor,
-                    terrainFeatures
-                );
-                
-                // Apply lighting
-                vec3 finalColor = surfaceColor * (diffuse * 0.8 + 0.2);
-                
-                // Add subtle ambient occlusion in craters
-                finalColor *= 1.0 - (terrainFeatures * 0.2);
+                // Add subtle heat glow on the day side (Mercury is very hot on the sun side)
+                float heatGlow = pow(max(0.0, dot(vNormal, vSunDirection)), 4.0) * 0.2;
+                finalColor += vec3(0.8, 0.5, 0.2) * heatGlow;
                 
                 gl_FragColor = vec4(finalColor, 1.0);
             }
         `;
         
-        // Create Mercury geometry and material
-        const geometry = new THREE.SphereGeometry(this.radius, 64, 64); // Higher resolution for more detail
         const material = new THREE.ShaderMaterial({
             uniforms: {
-                mercuryColor: { value: new THREE.Color(0xAA8866) }
+                mercuryTexture: { value: mercuryTexture },
+                sunPosition: { value: this.sunPosition.clone() }
             },
             vertexShader: mercuryVertexShader,
             fragmentShader: mercuryFragmentShader
@@ -136,6 +97,7 @@ export class Mercury extends CelestialBody {
         this.mesh = new THREE.Mesh(geometry, material);
         this.mesh.castShadow = true;
         this.mesh.receiveShadow = true;
+        this.mesh.name = this.name;
         this.objectGroup.add(this.mesh);
     }
 
@@ -164,41 +126,8 @@ export class Mercury extends CelestialBody {
         scene.add(this.orbitPath);
     }
 
-    /**
-     * Creates a text label for Mercury
-     */
     createLabel() {
-        // Create a canvas for the label
-        const canvas = document.createElement('canvas');
-        const context = canvas.getContext('2d');
-        canvas.width = 256;
-        canvas.height = 128;
-        
-        // Clear the canvas with a transparent background
-        context.clearRect(0, 0, canvas.width, canvas.height);
-        
-        // Draw the text
-        context.font = 'Bold 40px Arial';
-        context.fillStyle = 'white';
-        context.textAlign = 'center';
-        context.textBaseline = 'middle';
-        context.fillText(this.name, canvas.width / 2, canvas.height / 2);
-        
-        // Create a texture from the canvas
-        const texture = new THREE.CanvasTexture(canvas);
-        
-        // Create a sprite material with the texture
-        const spriteMaterial = new THREE.SpriteMaterial({
-            map: texture,
-            transparent: true
-        });
-        
-        // Create the sprite and position it above the planet
-        this.label = new THREE.Sprite(spriteMaterial);
-        this.label.scale.set(2, 1, 1);
-        this.label.position.set(0, this.radius * 1.5, 0);
-        
-        // Add the label to the object
+        this.label = LabelUtils.createLabel(this.name, this.radius, 12, 20, 0.5, 0.9);
         this.objectGroup.add(this.label);
     }
 
@@ -220,10 +149,22 @@ export class Mercury extends CelestialBody {
         if (animate) {
             // Update orbit position
             this.orbitAngle += this.orbitSpeed * deltaTime;
+            
+            // Update rotation
+            this.mesh.rotation.y += this.rotationSpeed * deltaTime;
+            
+            // Update shader uniforms
+            if (this.mesh && this.mesh.material && this.mesh.material.uniforms) {
+                this.mesh.material.uniforms.sunPosition.value.copy(this.sunPosition);
+            }
+            
+            // Update position
             this.updatePosition();
             
-            // Rotate Mercury
-            this.mesh.rotation.y += this.rotationSpeed * deltaTime;
+            // Update orbit path position
+            if (this.orbitPath) {
+                this.orbitPath.position.set(0, 0, 0);
+            }
         }
     }
 

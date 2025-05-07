@@ -61,6 +61,14 @@ export class SolarSystem {
     }
     
     /**
+     * Get all celestial bodies in the solar system
+     * @returns {Array} Array of all celestial bodies
+     */
+    getBodies() {
+        return this.celestialBodies;
+    }
+    
+    /**
      * Toggle animation state for all celestial bodies
      * @param {boolean} enabled - Whether animation should be enabled
      */
@@ -90,5 +98,13 @@ export class SolarSystem {
                 body.toggleLabel(visible);
             }
         });
+    }
+    
+    /**
+     * Get the Sun object from the celestial bodies
+     * @returns {CelestialBody|undefined} The Sun object or undefined if not found
+     */
+    getSun() {
+        return this.getBody('Sun');
     }
 }

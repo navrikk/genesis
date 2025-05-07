@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import CONFIG from '../config.js';
 import { CelestialBody } from './CelestialBody.js';
+import { LabelUtils } from '../utils/LabelUtils.js';
 
 /**
  * Sun class with advanced shader-based visualization
@@ -127,29 +128,7 @@ export class Sun extends CelestialBody {
      * Creates a text label for the Sun
      */
     createLabel() {
-        // Create a canvas for the label
-        const canvas = document.createElement('canvas');
-        const context = canvas.getContext('2d');
-        canvas.width = 256;
-        canvas.height = 128;
-        
-        // Draw text on the canvas with transparent background
-        context.clearRect(0, 0, canvas.width, canvas.height); // Clear canvas with transparency
-        context.font = '28px "Helvetica Neue", Arial, sans-serif';
-        context.fillStyle = 'rgba(255, 255, 255, 0.7)';
-        context.textAlign = 'center';
-        context.fillText(this.name, canvas.width / 2, canvas.height / 2);
-        
-        // Create a texture from the canvas
-        const texture = new THREE.CanvasTexture(canvas);
-        const spriteMaterial = new THREE.SpriteMaterial({ 
-            map: texture,
-            transparent: true
-        });
-        
-        this.label = new THREE.Sprite(spriteMaterial);
-        this.label.scale.set(1.5, 0.75, 1); // Smaller scale
-        this.label.position.set(0, this.radius * 1.5, 0);
+        this.label = LabelUtils.createLabel(this.name, this.radius, 16, 32, 0.8, 1.5);
         this.objectGroup.add(this.label);
     }
 

@@ -1,6 +1,6 @@
-import { App } from './app.js';
+import App from './app.js';
 
-// Wait for the DOM to be fully loaded before initializing the app
+// Initialize the application when the DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
     window.app = new App();
 });

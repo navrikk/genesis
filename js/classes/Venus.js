@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import CONFIG from '../config.js';
 import { CelestialBody } from './CelestialBody.js';
+import { LabelUtils } from '../utils/LabelUtils.js';
 
 /**
  * Venus class representing the planet Venus
@@ -17,118 +18,94 @@ export class Venus extends CelestialBody {
         this.rotationSpeed = CONFIG.VENUS.ROTATION_SPEED;
         this.orbitAngle = Math.random() * Math.PI * 2; // Random starting position
         this.orbitPath = null;
-        this.label = null;
+        this.label = null; // Add moon support
+        this.moon = null; 
         this.createMesh();
         this.createLabel();
         this.updatePosition();
     }
     
     createMesh() {
-        // Define Venus's surface using a procedural shader for cloud cover
+        // Load high-resolution textures
+        const textureLoader = new THREE.TextureLoader();
+        const venusAtmosphereTexture = textureLoader.load('assets/textures/venus_atmosphere_8k.jpg');
+        const venusSurfaceTexture = textureLoader.load('assets/textures/venus_surface_8k.jpg');
+        
+        // Create Venus geometry
+        const geometry = new THREE.SphereGeometry(this.radius, 64, 64);
+        
+        // Create Venus material with custom shader
         const venusVertexShader = `
-            varying vec3 vNormal;
             varying vec2 vUv;
-            varying vec3 vPosition;
+            varying vec3 vNormal;
+            varying vec3 vSunDirection;
+            varying vec3 vViewDirection;
+            
+            uniform vec3 sunPosition;
             
             void main() {
-                vNormal = normalize(normalMatrix * normal);
                 vUv = uv;
-                vPosition = position;
+                vNormal = normalize(normalMatrix * normal);
+                
+                // Calculate direction to the sun in world space
+                vec4 worldPosition = modelMatrix * vec4(position, 1.0);
+                vSunDirection = normalize(sunPosition - worldPosition.xyz);
+                
+                // Calculate view direction for atmosphere effect
+                vViewDirection = normalize(cameraPosition - worldPosition.xyz);
+                
                 gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
             }
         `;
         
         const venusFragmentShader = `
-            uniform vec3 venusColor;
-            uniform float time;
-            varying vec3 vNormal;
+            uniform sampler2D atmosphereTexture;
+            uniform sampler2D surfaceTexture;
+            uniform vec3 sunPosition;
+            
             varying vec2 vUv;
-            varying vec3 vPosition;
-            
-            // Noise functions for cloud patterns
-            float hash(float n) {
-                return fract(sin(n) * 43758.5453);
-            }
-            
-            float noise(vec3 x) {
-                vec3 p = floor(x);
-                vec3 f = fract(x);
-                f = f * f * (3.0 - 2.0 * f);
-                
-                float n = p.x + p.y * 57.0 + p.z * 113.0;
-                return mix(
-                    mix(
-                        mix(hash(n), hash(n + 1.0), f.x),
-                        mix(hash(n + 57.0), hash(n + 58.0), f.x),
-                        f.y
-                    ),
-                    mix(
-                        mix(hash(n + 113.0), hash(n + 114.0), f.x),
-                        mix(hash(n + 170.0), hash(n + 171.0), f.x),
-                        f.y
-                    ),
-                    f.z
-                );
-            }
-            
-            float fbm(vec3 p) {
-                float f = 0.0;
-                float amplitude = 0.5;
-                float frequency = 1.0;
-                for (int i = 0; i < 6; i++) {
-                    f += amplitude * noise(p * frequency);
-                    amplitude *= 0.5;
-                    frequency *= 2.0;
-                }
-                return f;
-            }
+            varying vec3 vNormal;
+            varying vec3 vSunDirection;
+            varying vec3 vViewDirection;
             
             void main() {
-                // Normalized light direction (from the sun)
-                vec3 lightDir = normalize(vec3(1.0, 0.2, 0.0));
-                float diffuse = max(0.0, dot(vNormal, lightDir));
+                // Sample textures
+                vec4 atmosphereColor = texture2D(atmosphereTexture, vUv);
+                vec4 surfaceColor = texture2D(surfaceTexture, vUv);
                 
-                // Base color for Venus (yellowish)
-                vec3 baseColor = venusColor;
+                // Calculate lighting
+                float sunDiffuse = max(0.0, dot(vNormal, vSunDirection));
                 
-                // Generate cloud patterns that move slowly
-                float cloudPattern = fbm(vPosition * 2.0 + vec3(0.0, 0.0, time * 0.05));
-                float cloudDetail = fbm(vPosition * 5.0 + vec3(0.0, time * 0.02, 0.0));
+                // Create smooth transition between lit and unlit sides
+                float lightIntensity = smoothstep(-0.2, 0.3, dot(vNormal, vSunDirection));
                 
-                // Combine cloud patterns
-                float clouds = cloudPattern * cloudDetail;
+                // Ambient light (dark side is still slightly visible)
+                float ambient = 0.1;
                 
-                // Create swirling cloud patterns
-                float swirl = fbm(vPosition * 3.0 + vec3(clouds * 0.5, clouds * 0.5, time * 0.01));
+                // Mix surface and atmosphere based on viewing angle
+                // More atmosphere visible at edges, more surface visible when looking straight on
+                float atmosphereRim = pow(1.0 - abs(dot(vNormal, vViewDirection)), 2.0);
+                float atmosphereFactor = max(atmosphereRim * 0.6, 0.3); // Always show some atmosphere
                 
-                // Create color variations for different cloud layers
-                vec3 cloudColor1 = vec3(0.95, 0.95, 0.8); // Light yellow
-                vec3 cloudColor2 = vec3(0.85, 0.75, 0.5); // Darker yellow-orange
+                // Mix surface and atmosphere
+                vec3 planetColor = mix(surfaceColor.rgb, atmosphereColor.rgb, atmosphereFactor);
                 
-                // Mix cloud colors based on patterns
-                vec3 cloudColor = mix(cloudColor2, cloudColor1, swirl);
+                // Apply lighting
+                vec3 finalColor = planetColor * (ambient + lightIntensity * 0.9);
                 
-                // Mix base color with cloud color
-                vec3 surfaceColor = mix(baseColor, cloudColor, clouds * 0.7);
-                
-                // Apply lighting with atmospheric scattering effect
-                float atmosphericEffect = pow(1.0 - abs(dot(vNormal, vec3(0.0, 0.0, 1.0))), 2.0);
-                vec3 atmosphereColor = vec3(0.9, 0.8, 0.6); // Yellowish atmosphere
-                
-                // Final color with lighting and atmosphere
-                vec3 finalColor = surfaceColor * (diffuse * 0.7 + 0.3);
-                finalColor = mix(finalColor, atmosphereColor, atmosphericEffect * 0.3);
+                // Add subtle glow on the edges
+                float edgeGlow = pow(1.0 - abs(dot(vNormal, vViewDirection)), 4.0) * 0.3;
+                finalColor += vec3(1.0, 0.9, 0.7) * edgeGlow;
                 
                 gl_FragColor = vec4(finalColor, 1.0);
             }
         `;
         
-        // Create Venus geometry and material
-        const geometry = new THREE.SphereGeometry(this.radius, 64, 64); // Higher resolution for more detail
         const material = new THREE.ShaderMaterial({
             uniforms: {
-                venusColor: { value: new THREE.Color(this.primaryColor) },
-                time: { value: 0.0 } // Will be updated in the animation loop
+                atmosphereTexture: { value: venusAtmosphereTexture },
+                surfaceTexture: { value: venusSurfaceTexture },
+                sunPosition: { value: this.sunPosition.clone() }
             },
             vertexShader: venusVertexShader,
             fragmentShader: venusFragmentShader
@@ -169,47 +146,31 @@ export class Venus extends CelestialBody {
     }
     
     createLabel() {
-        // Create a canvas for the label
-        const canvas = document.createElement('canvas');
-        const context = canvas.getContext('2d');
-        canvas.width = 256;
-        canvas.height = 128;
-        
-        // Draw text on the canvas with transparent background
-        context.clearRect(0, 0, canvas.width, canvas.height); // Clear canvas with transparency
-        context.font = '28px "Helvetica Neue", Arial, sans-serif';
-        context.fillStyle = 'rgba(255, 255, 255, 0.7)';
-        context.textAlign = 'center';
-        context.fillText(this.name, canvas.width / 2, canvas.height / 2);
-        
-        // Create a texture from the canvas
-        const texture = new THREE.CanvasTexture(canvas);
-        
-        const spriteMaterial = new THREE.SpriteMaterial({ 
-            map: texture,
-            transparent: true
-        });
-        
-        this.label = new THREE.Sprite(spriteMaterial);
-        this.label.scale.set(1.5, 0.75, 1); // Smaller scale
-        this.label.position.set(0, this.radius * 2, 0);
+        this.label = LabelUtils.createLabel(this.name, this.radius, 14, 24, 0.6, 1.0);
         this.objectGroup.add(this.label);
     }
     
-    update(deltaTime) {
-        // Update orbit position
-        this.orbitAngle += this.orbitSpeed * deltaTime;
-        
-        // Update rotation
-        this.mesh.rotation.y += this.rotationSpeed * deltaTime;
-        
-        // Update cloud animation time
-        if (this.mesh && this.mesh.material && this.mesh.material.uniforms) {
-            this.mesh.material.uniforms.time.value += deltaTime;
+    update(deltaTime, animate = true) {
+        if (animate) {
+            // Update orbit position
+            this.orbitAngle += this.orbitSpeed * deltaTime;
+            
+            // Update rotation
+            this.mesh.rotation.y += this.rotationSpeed * deltaTime;
+            
+            // Update shader uniforms
+            if (this.mesh && this.mesh.material && this.mesh.material.uniforms) {
+                this.mesh.material.uniforms.sunPosition.value.copy(this.sunPosition);
+            }
+            
+            // Update position
+            this.updatePosition();
+            
+            // Update orbit path position
+            if (this.orbitPath) {
+                this.orbitPath.position.set(0, 0, 0);
+            }
         }
-        
-        // Update position
-        this.updatePosition();
     }
     
     updatePosition() {

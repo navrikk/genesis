@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Interactive 3D Sun</title>
+    <title>Interactive 3D Solar System</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles/main.css">
@@ -27,21 +27,20 @@
     <button id="resetCameraButton" class="control-button">Reset Camera</button>
 </div>
 
-<!--<script type="importmap">-->
-<!--    {-->
-<!--        "imports": {-->
-<!--            "three": "https://cdn.jsdelivr.net/npm/three@0.164.1/build/three.module.js",-->
-<!--            "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.164.1/examples/jsm/"-->
-<!--        }-->
-<!--    }-->
-<!--</script>-->
-<!-- Classes -->
-<script src="js/classes/SolarSystem.js"></script>
-<script src="js/classes/Sun.js"></script>
-<script src="js/classes/Mercury.js"></script>
-<script src="js/classes/Venus.js"></script>
-<script src="js/classes/Earth.js"></script>
-<script src="js/classes/Starfield.js"></script>
+<script type="importmap">
+    {
+        "imports": {
+            "three": "https://cdn.jsdelivr.net/npm/three@0.164.1/build/three.module.js",
+            "three/examples/jsm/controls/OrbitControls.js": "https://cdn.jsdelivr.net/npm/three@0.164.1/examples/jsm/controls/OrbitControls.js",
+            "three/addons/postprocessing/EffectComposer.js": "https://cdn.jsdelivr.net/npm/three@0.164.1/examples/jsm/postprocessing/EffectComposer.js",
+            "three/addons/postprocessing/RenderPass.js": "https://cdn.jsdelivr.net/npm/three@0.164.1/examples/jsm/postprocessing/RenderPass.js",
+            "three/addons/postprocessing/UnrealBloomPass.js": "https://cdn.jsdelivr.net/npm/three@0.164.1/examples/jsm/postprocessing/UnrealBloomPass.js",
+            "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.164.1/examples/jsm/"
+        }
+    }
+</script>
+
+<!-- Load the main module script -->
 <script type="module" src="js/main.js"></script>
 
 </body>

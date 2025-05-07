@@ -57,9 +57,59 @@ const CONFIG = {
         get ORBIT_SPEED() { return (2 * Math.PI) / (this.ORBITAL_PERIOD_DAYS * 24 * 60 * 0.1); }, // Sped up for visualization
         get ROTATION_SPEED() { return (2 * Math.PI) / (this.ROTATION_PERIOD_DAYS * 24 * 60 * 0.1); } // Sped up for visualization
     },
+    MARS: {
+        NAME: 'Mars',
+        DIAMETER_KM: 6779 * 30, // Increased size for visibility
+        DISTANCE_FROM_SUN_KM: 227900000, // Average distance
+        ORBITAL_PERIOD_DAYS: 687,
+        ROTATION_PERIOD_DAYS: 1.03,
+        COLOR: 0xE27B58, // Reddish-orange color
+        get RADIUS() { return (this.DIAMETER_KM / 2) / CONFIG.SCALE_FACTOR; },
+        get ORBIT_RADIUS() { return this.DISTANCE_FROM_SUN_KM / CONFIG.SCALE_FACTOR; },
+        get ORBIT_SPEED() { return (2 * Math.PI) / (this.ORBITAL_PERIOD_DAYS * 24 * 60 * 0.1); }, // Sped up for visualization
+        get ROTATION_SPEED() { return (2 * Math.PI) / (this.ROTATION_PERIOD_DAYS * 24 * 60 * 0.1); } // Sped up for visualization
+    },
+    MOON: {
+        NAME: 'Moon',
+        DIAMETER_KM: 3475 * 5, // Reduced multiplier for more realistic scale relative to Earth
+        DISTANCE_FROM_PARENT_KM: 384400 * 2.5, // Increased distance for more realistic Moon-Earth separation
+        ORBITAL_PERIOD_DAYS: 27.3,
+        ROTATION_PERIOD_DAYS: 27.3, // Tidally locked to Earth
+        COLOR: 0xCCCCCC, // Gray color
+        get RADIUS() { return (this.DIAMETER_KM / 2) / CONFIG.SCALE_FACTOR; },
+        get ORBIT_RADIUS() { return this.DISTANCE_FROM_PARENT_KM / CONFIG.SCALE_FACTOR; },
+        get ORBIT_SPEED() { return (2 * Math.PI) / (this.ORBITAL_PERIOD_DAYS * 24 * 60 * 0.1); }, // Sped up for visualization
+        get ROTATION_SPEED() { return (2 * Math.PI) / (this.ROTATION_PERIOD_DAYS * 24 * 60 * 0.1); } // Sped up for visualization
+    },
+    PHOBOS: {
+        NAME: 'Phobos',
+        DIAMETER_KM: 22.2 * 30, // Scaled proportionally with Mars (30x)
+        DISTANCE_FROM_PARENT_KM: 9376 * 15, // Phobos orbits at ~2.76 Mars radii from Mars' center
+        ORBITAL_PERIOD_DAYS: 0.32, // Very fast orbit (7 hours 39 minutes)
+        ROTATION_PERIOD_DAYS: 0.32, // Tidally locked to Mars
+        COLOR: 0x887766, // Brownish-gray color
+        get RADIUS() { return (this.DIAMETER_KM / 2) / CONFIG.SCALE_FACTOR; },
+        get ORBIT_RADIUS() { return this.DISTANCE_FROM_PARENT_KM / CONFIG.SCALE_FACTOR; },
+        get ORBIT_SPEED() { return (2 * Math.PI) / (this.ORBITAL_PERIOD_DAYS * 24 * 60 * 0.1); }, // Sped up for visualization
+        get ROTATION_SPEED() { return (2 * Math.PI) / (this.ROTATION_PERIOD_DAYS * 24 * 60 * 0.1); } // Sped up for visualization
+    },
+    DEIMOS: {
+        NAME: 'Deimos',
+        DIAMETER_KM: 12.6 * 30, // Scaled proportionally with Mars (30x)
+        DISTANCE_FROM_PARENT_KM: 23463 * 15, // Deimos orbits at ~6.92 Mars radii from Mars' center
+        ORBITAL_PERIOD_DAYS: 1.26, // About 30 hours
+        ROTATION_PERIOD_DAYS: 1.26, // Tidally locked to Mars
+        COLOR: 0x998877, // Slightly lighter than Phobos
+        get RADIUS() { return (this.DIAMETER_KM / 2) / CONFIG.SCALE_FACTOR; },
+        get ORBIT_RADIUS() { return this.DISTANCE_FROM_PARENT_KM / CONFIG.SCALE_FACTOR; },
+        get ORBIT_SPEED() { return (2 * Math.PI) / (this.ORBITAL_PERIOD_DAYS * 24 * 60 * 0.1); }, // Sped up for visualization
+        get ROTATION_SPEED() { return (2 * Math.PI) / (this.ROTATION_PERIOD_DAYS * 24 * 60 * 0.1); } // Sped up for visualization
+    },
     STARFIELD: {
-        COUNT: 10000,
-        RADIUS: 5000
+        COUNT: 2500000, // Significantly increased from 10,000 to 50,000 stars
+        RADIUS: 50000, // Significantly increased to place stars much farther away
+        MIN_SIZE: 0.5,  // Minimum star size
+        MAX_SIZE: 2.0   // Maximum star size
     },
     BLOOM_EFFECT: {
         enabled: true,

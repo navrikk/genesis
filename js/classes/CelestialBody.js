@@ -55,4 +55,18 @@ export class CelestialBody {
     setPosition(x, y, z) {
         this.objectGroup.position.set(x, y, z);
     }
+
+    /**
+     * Set the sun position for lighting calculations
+     * @param {THREE.Vector3} position - Position of the sun
+     */
+    setSunPosition(position) {
+        this.sunPosition = position.clone();
+        
+        // Update shader uniforms if they exist
+        if (this.mesh && this.mesh.material && this.mesh.material.uniforms && 
+            this.mesh.material.uniforms.sunPosition) {
+            this.mesh.material.uniforms.sunPosition.value.copy(position);
+        }
+    }
 }

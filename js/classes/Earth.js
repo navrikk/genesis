@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import CONFIG from '../config.js';
 import { CelestialBody } from './CelestialBody.js';
+import { LabelUtils } from '../utils/LabelUtils.js';
 
 /**
  * Earth class representing the planet Earth
@@ -18,132 +19,130 @@ export class Earth extends CelestialBody {
         this.orbitAngle = Math.random() * Math.PI * 2; // Random starting position
         this.orbitPath = null;
         this.label = null;
+        this.moon = null; // Add moon property
         this.createMesh();
         this.createLabel();
         this.updatePosition();
     }
     
     createMesh() {
-        // Define Earth's surface using a procedural shader
+        // Load high-resolution textures
+        const textureLoader = new THREE.TextureLoader();
+        const earthDayTexture = textureLoader.load('assets/textures/earth_daymap_8k.jpg');
+        const earthNightTexture = textureLoader.load('assets/textures/earth_nightmap_8k.jpg');
+        const earthNormalMap = textureLoader.load('assets/textures/earth_normal_8k.jpg');
+        const earthSpecularMap = textureLoader.load('assets/textures/earth_specular_8k.jpg');
+        const earthCloudsTexture = textureLoader.load('assets/textures/earth_clouds_8k.jpg');
+        
+        // Create Earth geometry
+        const geometry = new THREE.SphereGeometry(this.radius, 64, 64);
+        
+        // Create Earth material with custom shader for accurate lighting
         const earthVertexShader = `
-            varying vec3 vNormal;
             varying vec2 vUv;
-            varying vec3 vPosition;
+            varying vec3 vNormal;
+            varying vec3 vSunDirection;
+            varying vec3 vViewDirection;
+            varying vec3 vWorldPosition;
+            
+            uniform vec3 sunPosition;
             
             void main() {
-                vNormal = normalize(normalMatrix * normal);
                 vUv = uv;
-                vPosition = position;
+                vNormal = normalize(normalMatrix * normal);
+                
+                // Calculate world position for lighting calculations
+                vec4 worldPosition = modelMatrix * vec4(position, 1.0);
+                vWorldPosition = worldPosition.xyz;
+                
+                // Calculate direction to the sun in world space
+                vSunDirection = normalize(sunPosition - worldPosition.xyz);
+                
+                // Calculate view direction for specular highlights
+                vViewDirection = normalize(cameraPosition - worldPosition.xyz);
+                
                 gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
             }
         `;
         
         const earthFragmentShader = `
-            uniform vec3 earthColor;
-            uniform float time;
-            varying vec3 vNormal;
+            uniform sampler2D dayTexture;
+            uniform sampler2D nightTexture;
+            uniform sampler2D normalMap;
+            uniform sampler2D specularMap;
+            uniform sampler2D cloudsTexture;
+            uniform vec3 sunPosition;
+            
             varying vec2 vUv;
-            varying vec3 vPosition;
-            
-            // Noise functions for terrain and clouds
-            float hash(float n) {
-                return fract(sin(n) * 43758.5453);
-            }
-            
-            float noise(vec3 x) {
-                vec3 p = floor(x);
-                vec3 f = fract(x);
-                f = f * f * (3.0 - 2.0 * f);
-                
-                float n = p.x + p.y * 57.0 + p.z * 113.0;
-                return mix(
-                    mix(
-                        mix(hash(n), hash(n + 1.0), f.x),
-                        mix(hash(n + 57.0), hash(n + 58.0), f.x),
-                        f.y
-                    ),
-                    mix(
-                        mix(hash(n + 113.0), hash(n + 114.0), f.x),
-                        mix(hash(n + 170.0), hash(n + 171.0), f.x),
-                        f.y
-                    ),
-                    f.z
-                );
-            }
-            
-            float fbm(vec3 p) {
-                float f = 0.0;
-                float amplitude = 0.5;
-                float frequency = 1.0;
-                for (int i = 0; i < 6; i++) {
-                    f += amplitude * noise(p * frequency);
-                    amplitude *= 0.5;
-                    frequency *= 2.0;
-                }
-                return f;
-            }
+            varying vec3 vNormal;
+            varying vec3 vSunDirection;
+            varying vec3 vViewDirection;
+            varying vec3 vWorldPosition;
             
             void main() {
-                // Normalized light direction (from the sun)
-                vec3 lightDir = normalize(vec3(1.0, 0.2, 0.0));
-                float diffuse = max(0.0, dot(vNormal, lightDir));
+                // Sample textures
+                vec4 dayColor = texture2D(dayTexture, vUv);
+                vec4 nightColor = texture2D(nightTexture, vUv);
+                vec4 cloudsColor = texture2D(cloudsTexture, vUv);
+                vec3 normalMapColor = texture2D(normalMap, vUv).xyz * 2.0 - 1.0; // Convert from [0,1] to [-1,1]
+                float specularIntensity = texture2D(specularMap, vUv).r; // Use red channel for specular intensity
                 
-                // Base color for Earth (blue)
-                vec3 baseColor = earthColor;
+                // Apply normal mapping for more detailed lighting
+                vec3 normal = normalize(vNormal + normalMapColor * 0.8);
                 
-                // Generate terrain patterns
-                float landPattern = fbm(vPosition * 3.0);
-                float landDetail = fbm(vPosition * 7.0);
+                // Calculate lighting with physically accurate falloff
+                float sunDistance = length(sunPosition - vWorldPosition);
+                float sunIntensity = 5.0; // Sun brightness factor
                 
-                // Generate cloud patterns that move slowly
-                float cloudPattern = fbm(vPosition * 2.5 + vec3(time * 0.01, 0.0, 0.0));
+                // Inverse square law for light falloff
+                float lightFalloff = sunIntensity / (1.0 + sunDistance * sunDistance * 0.0000001);
                 
-                // Determine land vs water based on noise
-                float isLand = smoothstep(0.4, 0.6, landPattern);
+                // Calculate diffuse lighting
+                float diffuse = max(0.0, dot(normal, vSunDirection)) * lightFalloff;
                 
-                // Create color variations for land and water
-                vec3 oceanColor = vec3(0.0, 0.2, 0.5); // Deep blue
-                vec3 shallowColor = vec3(0.0, 0.4, 0.8); // Lighter blue for shallow water
-                vec3 landColor1 = vec3(0.1, 0.4, 0.1); // Green for vegetation
-                vec3 landColor2 = vec3(0.6, 0.5, 0.3); // Brown for deserts
-                vec3 snowColor = vec3(0.9, 0.9, 0.9); // White for polar caps
+                // Calculate specular highlights (Blinn-Phong)
+                vec3 halfVector = normalize(vSunDirection + vViewDirection);
+                float specular = pow(max(0.0, dot(normal, halfVector)), 32.0) * specularIntensity * lightFalloff;
                 
-                // Mix water colors based on depth (using noise)
-                vec3 waterColor = mix(shallowColor, oceanColor, landDetail);
+                // Smooth transition between day and night sides
+                float dayNightMix = smoothstep(-0.2, 0.2, dot(normal, vSunDirection));
                 
-                // Mix land colors based on "elevation" (using noise)
-                vec3 groundColor = mix(landColor1, landColor2, landDetail);
+                // Mix day and night textures based on lighting
+                vec3 earthColor = mix(nightColor.rgb, dayColor.rgb, dayNightMix);
                 
-                // Add polar caps based on y-coordinate (latitude)
-                float isPolar = smoothstep(0.7, 0.9, abs(vNormal.y));
-                groundColor = mix(groundColor, snowColor, isPolar);
+                // Add specular highlights to the lit side only
+                earthColor += vec3(1.0, 0.95, 0.8) * specular * dayNightMix;
                 
-                // Mix land and water
-                vec3 surfaceColor = mix(waterColor, groundColor, isLand);
+                // Add clouds with transparency based on cloud texture alpha
+                float cloudOpacity = cloudsColor.r * 0.5; // Reduce cloud opacity
+                vec3 cloudShadow = vec3(0.8, 0.8, 0.8); // Slight darkening under clouds
                 
-                // Add clouds
-                float cloudDensity = smoothstep(0.4, 0.6, cloudPattern);
-                vec3 cloudColor = vec3(1.0, 1.0, 1.0);
-                surfaceColor = mix(surfaceColor, cloudColor, cloudDensity * 0.5);
+                // Clouds are more visible on the day side
+                float cloudVisibility = mix(0.3, 1.0, dayNightMix);
                 
-                // Apply lighting with atmospheric scattering effect
-                float atmosphericEffect = pow(1.0 - abs(dot(vNormal, vec3(0.0, 0.0, 1.0))), 3.0);
-                vec3 atmosphereColor = vec3(0.5, 0.7, 0.9); // Light blue atmosphere
+                // Apply clouds
+                earthColor = mix(earthColor, cloudsColor.rgb, cloudOpacity * cloudVisibility);
                 
-                // Final color with lighting and atmosphere
-                vec3 finalColor = surfaceColor * (diffuse * 0.7 + 0.3);
-                finalColor = mix(finalColor, atmosphereColor, atmosphericEffect * 0.3);
+                // Apply cloud shadows to the surface on the day side
+                earthColor = mix(earthColor, earthColor * cloudShadow, cloudOpacity * dayNightMix * 0.5);
                 
-                gl_FragColor = vec4(finalColor, 1.0);
+                // Add subtle atmospheric scattering at the edges (limb brightening)
+                float atmosphere = pow(1.0 - abs(dot(vNormal, vViewDirection)), 4.0);
+                vec3 atmosphereColor = vec3(0.6, 0.8, 1.0) * dayNightMix; // Blue atmosphere visible only on day side
+                earthColor = mix(earthColor, atmosphereColor, atmosphere * 0.3);
+                
+                gl_FragColor = vec4(earthColor, 1.0);
             }
         `;
         
-        // Create Earth geometry and material
-        const geometry = new THREE.SphereGeometry(this.radius, 64, 64); // Higher resolution for more detail
         const material = new THREE.ShaderMaterial({
             uniforms: {
-                earthColor: { value: new THREE.Color(this.primaryColor) },
-                time: { value: 0.0 } // Will be updated in the animation loop
+                dayTexture: { value: earthDayTexture },
+                nightTexture: { value: earthNightTexture },
+                normalMap: { value: earthNormalMap },
+                specularMap: { value: earthSpecularMap },
+                cloudsTexture: { value: earthCloudsTexture },
+                sunPosition: { value: this.sunPosition.clone() }
             },
             vertexShader: earthVertexShader,
             fragmentShader: earthFragmentShader
@@ -184,47 +183,44 @@ export class Earth extends CelestialBody {
     }
     
     createLabel() {
-        // Create a canvas for the label
-        const canvas = document.createElement('canvas');
-        const context = canvas.getContext('2d');
-        canvas.width = 256;
-        canvas.height = 128;
-        
-        // Draw text on the canvas with transparent background
-        context.clearRect(0, 0, canvas.width, canvas.height); // Clear canvas with transparency
-        context.font = '28px "Helvetica Neue", Arial, sans-serif';
-        context.fillStyle = 'rgba(255, 255, 255, 0.7)';
-        context.textAlign = 'center';
-        context.fillText(this.name, canvas.width / 2, canvas.height / 2);
-        
-        // Create a texture from the canvas
-        const texture = new THREE.CanvasTexture(canvas);
-        
-        const spriteMaterial = new THREE.SpriteMaterial({ 
-            map: texture,
-            transparent: true
-        });
-        
-        this.label = new THREE.Sprite(spriteMaterial);
-        this.label.scale.set(1.5, 0.75, 1); // Smaller scale
-        this.label.position.set(0, this.radius * 2, 0);
+        this.label = LabelUtils.createLabel(this.name, this.radius, 14, 24, 0.6, 1.0);
         this.objectGroup.add(this.label);
     }
     
-    update(deltaTime) {
-        // Update orbit position
-        this.orbitAngle += this.orbitSpeed * deltaTime;
-        
-        // Update rotation
-        this.mesh.rotation.y += this.rotationSpeed * deltaTime;
-        
-        // Update cloud animation time
-        if (this.mesh && this.mesh.material && this.mesh.material.uniforms) {
-            this.mesh.material.uniforms.time.value += deltaTime;
+    update(deltaTime, animate = true) {
+        if (animate) {
+            // Update orbit position
+            this.orbitAngle += this.orbitSpeed * deltaTime;
+            
+            // Update rotation
+            this.mesh.rotation.y += this.rotationSpeed * deltaTime;
+            
+            // Update shader uniforms
+            if (this.mesh && this.mesh.material && this.mesh.material.uniforms) {
+                if (this.mesh.material.uniforms.time) {
+                    this.mesh.material.uniforms.time.value += deltaTime;
+                }
+                if (this.mesh.material.uniforms.sunPosition) {
+                    this.mesh.material.uniforms.sunPosition.value.copy(this.sunPosition);
+                }
+            }
+            
+            // Update position
+            this.updatePosition();
+            
+            // Update orbit path position
+            if (this.orbitPath) {
+                // Use (0,0,0) as the orbit center since Earth orbits around the Sun at origin
+                this.orbitPath.position.set(0, 0, 0);
+            }
+            
+            // Update moon position if it exists
+            if (this.moon) {
+                this.moon.updateParentPosition(this.objectGroup.position);
+                this.moon.setSunPosition(this.sunPosition);
+                this.moon.update(deltaTime, animate);
+            }
         }
-        
-        // Update position
-        this.updatePosition();
     }
     
     updatePosition() {
