@@ -26,15 +26,15 @@ export class Moon extends CelestialBody {
     }
     
     createMesh() {
-        // Load high-resolution textures
+        // Load textures
         const textureLoader = new THREE.TextureLoader();
         const moonTexture = textureLoader.load('assets/textures/moon_8k.jpg');
         const moonNormalMap = textureLoader.load('assets/textures/moon_normal_8k.jpg');
         
-        // Create Moon geometry with higher resolution
+        // Create Moon geometry
         const geometry = new THREE.SphereGeometry(this.radius, 64, 64);
         
-        // Create Moon material with custom shader for proper lunar appearance
+        // Create custom shader for Moon
         const moonVertexShader = `
             varying vec2 vUv;
             varying vec3 vNormal;
@@ -47,8 +47,10 @@ export class Moon extends CelestialBody {
                 vUv = uv;
                 vNormal = normalize(normalMatrix * normal);
                 
-                // Calculate direction to the sun in world space
+                // Calculate world position
                 vec4 worldPosition = modelMatrix * vec4(position, 1.0);
+                
+                // Calculate direction to the sun in world space
                 vSunDirection = normalize(sunPosition - worldPosition.xyz);
                 
                 // Calculate view direction for specular highlights
@@ -71,31 +73,27 @@ export class Moon extends CelestialBody {
             void main() {
                 // Sample textures
                 vec4 texColor = texture2D(moonTexture, vUv);
-                vec3 normalColor = texture2D(normalMap, vUv).xyz * 2.0 - 1.0;
+                vec3 normalMapColor = texture2D(normalMap, vUv).xyz * 2.0 - 1.0;
                 
-                // Enhance the texture brightness slightly
-                texColor.rgb = texColor.rgb * 1.1;
+                // Apply normal mapping for better crater detail
+                vec3 normal = normalize(vNormal + normalMapColor * 0.5);
                 
-                // Apply normal mapping
-                vec3 normal = normalize(vNormal + normalColor * 0.8);
-                
-                // Calculate lighting with enhanced brightness
+                // Calculate lighting
                 float sunDiffuse = max(0.0, dot(normal, vSunDirection));
                 
-                // Create smooth transition between lit and unlit sides
-                float lightIntensity = smoothstep(-0.2, 0.3, dot(normal, vSunDirection));
+                // Moon has a sharp transition between lit and unlit sides (no atmosphere)
+                float lightIntensity = smoothstep(-0.1, 0.1, dot(normal, vSunDirection));
                 
-                // Add specular highlight for the shine
+                // Ambient light (dark side is barely visible)
+                float ambient = 0.03;
+                
+                // Add subtle specular highlight for minerals on the surface
                 vec3 halfVector = normalize(vSunDirection + vViewDirection);
-                float specular = pow(max(0.0, dot(normal, halfVector)), 32.0) * 0.3;
+                float specular = pow(max(0.0, dot(normal, halfVector)), 32.0) * 0.2;
                 
-                // Ambient light (dark side is still slightly visible)
-                float ambient = 0.15;
-                
-                // Final color with enhanced lighting
-                vec3 finalColor = texColor.rgb * (ambient + lightIntensity * 0.9) + specular * vec3(1.0);
-                
-                // No additional brightness boost
+                // Final color with lighting
+                vec3 finalColor = texColor.rgb * (ambient + lightIntensity * 0.97);
+                finalColor += vec3(1.0, 0.98, 0.9) * specular * lightIntensity;
                 
                 gl_FragColor = vec4(finalColor, 1.0);
             }
@@ -111,17 +109,15 @@ export class Moon extends CelestialBody {
             fragmentShader: moonFragmentShader
         });
         
-        // Fallback to standard material if shader fails
+        // Fallback material in case shader fails
         material.onError = () => {
-            console.warn('Shader compilation failed, using fallback material');
+            console.warn('Moon shader failed to compile, using fallback material');
             this.mesh.material = new THREE.MeshStandardMaterial({
                 map: moonTexture,
                 normalMap: moonNormalMap,
-                color: 0xDDDDDD,
-                roughness: 0.7,
+                normalScale: new THREE.Vector2(0.5, 0.5),
                 metalness: 0.1,
-                emissive: 0x222222,
-                emissiveIntensity: 0.1
+                roughness: 0.9
             });
         };
         
@@ -161,7 +157,8 @@ export class Moon extends CelestialBody {
     }
     
     createLabel() {
-        this.label = LabelUtils.createLabel(this.name, this.radius);
+        // Create a more visible label with larger font size
+        this.label = LabelUtils.createLabel(this.name, this.radius, 14, 24, 0.6, 1.2);
         this.objectGroup.add(this.label);
     }
     
@@ -189,14 +186,17 @@ export class Moon extends CelestialBody {
     }
     
     updatePosition() {
-        // Position on the orbit around parent
-        const x = Math.cos(this.orbitAngle) * this.orbitRadius;
-        const z = Math.sin(this.orbitAngle) * this.orbitRadius;
+        // Moon's orbital inclination is 5.1 degrees to the ecliptic
+        const inclination = 5.1 * Math.PI / 180;
         
-        // Position relative to parent
+        // Calculate position with inclination
+        const x = Math.cos(this.orbitAngle) * this.orbitRadius;
+        const y = Math.sin(this.orbitAngle) * this.orbitRadius * Math.sin(inclination);
+        const z = Math.sin(this.orbitAngle) * this.orbitRadius * Math.cos(inclination);
+        
         this.objectGroup.position.set(
             this.parentPosition.x + x,
-            this.parentPosition.y,
+            this.parentPosition.y + y,
             this.parentPosition.z + z
         );
     }
@@ -226,8 +226,11 @@ export class Moon extends CelestialBody {
     
     // Set the sun position for lighting calculations
     setSunPosition(sunPosition) {
-        this.sunPosition.copy(sunPosition);
+        this.sunPosition = sunPosition.clone();
         
-        // No need to update shader uniforms with standard material
+        // Update shader uniforms if available
+        if (this.mesh && this.mesh.material && this.mesh.material.uniforms) {
+            this.mesh.material.uniforms.sunPosition.value.copy(sunPosition);
+        }
     }
 }

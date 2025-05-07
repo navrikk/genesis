@@ -28,65 +28,94 @@ export class Deimos extends CelestialBody {
     }
     
     createMesh() {
-        // Load high-resolution textures
+        // Load textures
         const textureLoader = new THREE.TextureLoader();
-        const deimosTexture = textureLoader.load('assets/textures/deimos_8k.jpg');
-        // Fallback to basic material if texture loading fails
-        deimosTexture.onError = () => {
-            console.warn('Failed to load Deimos texture, using fallback');
+        const deimosTexture = textureLoader.load('assets/textures/deimos_4k.jpg');
+        // Use the same texture for bump mapping since we don't have a dedicated one
+        const deimosBumpMap = textureLoader.load('assets/textures/deimos_4k.jpg');
+        
+        // Create Deimos geometry with appropriate detail for its size
+        const geometry = new THREE.SphereGeometry(this.radius, 32, 32);
+        
+        // Create custom shader for Deimos with realistic lighting
+        const deimosVertexShader = `
+            varying vec2 vUv;
+            varying vec3 vNormal;
+            varying vec3 vSunDirection;
+            
+            uniform vec3 sunPosition;
+            
+            void main() {
+                vUv = uv;
+                vNormal = normalize(normalMatrix * normal);
+                
+                // Calculate world position
+                vec4 worldPosition = modelMatrix * vec4(position, 1.0);
+                
+                // Calculate direction to the sun in world space
+                vSunDirection = normalize(sunPosition - worldPosition.xyz);
+                
+                gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+            }
+        `;
+        
+        const deimosFragmentShader = `
+            uniform sampler2D deimosTexture;
+            uniform sampler2D bumpMap;
+            uniform vec3 sunPosition;
+            
+            varying vec2 vUv;
+            varying vec3 vNormal;
+            varying vec3 vSunDirection;
+            
+            void main() {
+                // Sample textures
+                vec4 texColor = texture2D(deimosTexture, vUv);
+                
+                // Use texture for bump mapping (extract brightness)
+                float bumpStrength = 0.3;
+                vec3 bumpColor = texture2D(bumpMap, vUv).rgb;
+                float bumpValue = (bumpColor.r + bumpColor.g + bumpColor.b) / 3.0;
+                vec3 bumpNormal = vNormal + vNormal * (bumpValue - 0.5) * bumpStrength;
+                vec3 normal = normalize(bumpNormal);
+                
+                // Calculate lighting
+                float sunDiffuse = max(0.0, dot(normal, vSunDirection));
+                
+                // Create sharp transition between lit and unlit sides (small bodies have less atmosphere to scatter light)
+                float lightIntensity = smoothstep(-0.1, 0.1, dot(normal, vSunDirection));
+                
+                // Ambient light (dark side is barely visible)
+                float ambient = 0.02;
+                
+                // Final color with lighting
+                vec3 finalColor = texColor.rgb * (ambient + lightIntensity * 0.98);
+                
+                gl_FragColor = vec4(finalColor, 1.0);
+            }
+        `;
+        
+        const material = new THREE.ShaderMaterial({
+            uniforms: {
+                deimosTexture: { value: deimosTexture },
+                bumpMap: { value: deimosBumpMap },
+                sunPosition: { value: this.sunPosition.clone() }
+            },
+            vertexShader: deimosVertexShader,
+            fragmentShader: deimosFragmentShader
+        });
+        
+        // Fallback material in case shader fails
+        material.onError = () => {
+            console.warn('Deimos shader failed to compile, using fallback material');
             this.mesh.material = new THREE.MeshStandardMaterial({
-                color: CONFIG.DEIMOS.COLOR,
-                roughness: 0.5,
-                metalness: 0.2,
-                emissive: new THREE.Color(0x555555),
-                emissiveIntensity: 0.4
+                map: deimosTexture,
+                bumpMap: deimosBumpMap,
+                bumpScale: 0.02,
+                metalness: 0.1,
+                roughness: 0.9
             });
         };
-        
-        // Create Deimos geometry - irregular shape with dimensions 15 × 12.2 × 11 km
-        const geometry = new THREE.SphereGeometry(this.radius, 64, 64);
-        
-        // Apply scientifically accurate vertex displacement for Deimos' shape
-        const positionAttribute = geometry.getAttribute('position');
-        const vertex = new THREE.Vector3();
-        
-        // Define Deimos' true dimensions ratio (15 × 12.2 × 11 km)
-        const scaleX = 15/12.2;
-        const scaleY = 1.0; // Using 12.2 as the base
-        const scaleZ = 11/12.2;
-        
-        for (let i = 0; i < positionAttribute.count; i++) {
-            vertex.fromBufferAttribute(positionAttribute, i);
-            
-            // Apply true dimensional scaling
-            vertex.x *= scaleX;
-            vertex.y *= scaleY;
-            vertex.z *= scaleZ;
-            
-            // Deimos has a more rounded appearance than Phobos, but still has craters
-            // Add multiple frequencies of noise for realistic surface features
-            const noise1 = 0.06 * Math.sin(vertex.x * 12 + vertex.y * 10 + vertex.z * 14);
-            const noise2 = 0.04 * Math.sin(vertex.x * 25 + vertex.y * 20 + vertex.z * 22);
-            const noise3 = 0.02 * Math.sin(vertex.x * 40 + vertex.y * 35 + vertex.z * 38);
-            
-            // Apply the noise
-            vertex.addScaledVector(vertex.clone().normalize(), noise1 + noise2 + noise3);
-            
-            positionAttribute.setXYZ(i, vertex.x, vertex.y, vertex.z);
-        }
-        
-        // Update normals after displacement
-        geometry.computeVertexNormals();
-        
-        // Use a simpler material for better visibility with increased brightness
-        const material = new THREE.MeshStandardMaterial({
-            map: deimosTexture,
-            color: 0xDDDDDD, // Brighter base color
-            roughness: 0.5, // Reduced roughness for more shine
-            metalness: 0.2, // Increased metalness for more shine
-            emissive: new THREE.Color(0x555555), // Increased emissive
-            emissiveIntensity: 0.4 // Increased intensity
-        });
         
         this.mesh = new THREE.Mesh(geometry, material);
         this.mesh.castShadow = true;
@@ -124,14 +153,18 @@ export class Deimos extends CelestialBody {
     }
     
     createLabel() {
-        this.label = LabelUtils.createLabel(this.name, this.radius, 10, 16, 0.2, 0.7);
+        // Create a more visible label with larger font size
+        this.label = LabelUtils.createLabel(this.name, this.radius, 14, 24, 0.6, 1.2);
         this.objectGroup.add(this.label);
     }
     
     setSunPosition(position) {
-        this.sunPosition.copy(position);
+        this.sunPosition = position.clone();
         
-        // No need to update shader uniforms with standard material
+        // Update shader uniforms if available
+        if (this.mesh && this.mesh.material && this.mesh.material.uniforms) {
+            this.mesh.material.uniforms.sunPosition.value.copy(position);
+        }
     }
     
     update(deltaTime, animate = true) {
@@ -153,14 +186,17 @@ export class Deimos extends CelestialBody {
     }
     
     updatePosition() {
-        // Position on the orbit around parent
-        const x = Math.cos(this.orbitAngle) * this.orbitRadius;
-        const z = Math.sin(this.orbitAngle) * this.orbitRadius;
+        // Deimos's orbital inclination is 1.79 degrees to Mars's equator
+        const inclination = 1.79 * Math.PI / 180;
         
-        // Position relative to parent
+        // Calculate position with inclination
+        const x = Math.cos(this.orbitAngle) * this.orbitRadius;
+        const y = Math.sin(this.orbitAngle) * this.orbitRadius * Math.sin(inclination);
+        const z = Math.sin(this.orbitAngle) * this.orbitRadius * Math.cos(inclination);
+        
         this.objectGroup.position.set(
             this.parentPosition.x + x,
-            this.parentPosition.y,
+            this.parentPosition.y + y,
             this.parentPosition.z + z
         );
     }

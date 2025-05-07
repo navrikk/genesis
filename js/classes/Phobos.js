@@ -28,75 +28,94 @@ export class Phobos extends CelestialBody {
     }
     
     createMesh() {
-        // Load high-resolution textures
+        // Load textures
         const textureLoader = new THREE.TextureLoader();
-        const phobosTexture = textureLoader.load('assets/textures/phobos_8k.jpg');
-        // Fallback to basic material if texture loading fails
-        phobosTexture.onError = () => {
-            console.warn('Failed to load Phobos texture, using fallback');
+        const phobosTexture = textureLoader.load('assets/textures/phobos_4k.jpg');
+        // Use the same texture for bump mapping since we don't have a dedicated one
+        const phobosBumpMap = textureLoader.load('assets/textures/phobos_4k.jpg');
+        
+        // Create Phobos geometry with appropriate detail for its size
+        const geometry = new THREE.SphereGeometry(this.radius, 32, 32);
+        
+        // Create custom shader for Phobos with realistic lighting
+        const phobosVertexShader = `
+            varying vec2 vUv;
+            varying vec3 vNormal;
+            varying vec3 vSunDirection;
+            
+            uniform vec3 sunPosition;
+            
+            void main() {
+                vUv = uv;
+                vNormal = normalize(normalMatrix * normal);
+                
+                // Calculate world position
+                vec4 worldPosition = modelMatrix * vec4(position, 1.0);
+                
+                // Calculate direction to the sun in world space
+                vSunDirection = normalize(sunPosition - worldPosition.xyz);
+                
+                gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+            }
+        `;
+        
+        const phobosFragmentShader = `
+            uniform sampler2D phobosTexture;
+            uniform sampler2D bumpMap;
+            uniform vec3 sunPosition;
+            
+            varying vec2 vUv;
+            varying vec3 vNormal;
+            varying vec3 vSunDirection;
+            
+            void main() {
+                // Sample textures
+                vec4 texColor = texture2D(phobosTexture, vUv);
+                
+                // Use texture for bump mapping (extract brightness)
+                float bumpStrength = 0.3;
+                vec3 bumpColor = texture2D(bumpMap, vUv).rgb;
+                float bumpValue = (bumpColor.r + bumpColor.g + bumpColor.b) / 3.0;
+                vec3 bumpNormal = vNormal + vNormal * (bumpValue - 0.5) * bumpStrength;
+                vec3 normal = normalize(bumpNormal);
+                
+                // Calculate lighting
+                float sunDiffuse = max(0.0, dot(normal, vSunDirection));
+                
+                // Create sharp transition between lit and unlit sides (small bodies have less atmosphere to scatter light)
+                float lightIntensity = smoothstep(-0.1, 0.1, dot(normal, vSunDirection));
+                
+                // Ambient light (dark side is barely visible)
+                float ambient = 0.02;
+                
+                // Final color with lighting
+                vec3 finalColor = texColor.rgb * (ambient + lightIntensity * 0.98);
+                
+                gl_FragColor = vec4(finalColor, 1.0);
+            }
+        `;
+        
+        const material = new THREE.ShaderMaterial({
+            uniforms: {
+                phobosTexture: { value: phobosTexture },
+                bumpMap: { value: phobosBumpMap },
+                sunPosition: { value: this.sunPosition.clone() }
+            },
+            vertexShader: phobosVertexShader,
+            fragmentShader: phobosFragmentShader
+        });
+        
+        // Fallback material in case shader fails
+        material.onError = () => {
+            console.warn('Phobos shader failed to compile, using fallback material');
             this.mesh.material = new THREE.MeshStandardMaterial({
-                color: CONFIG.PHOBOS.COLOR,
-                roughness: 0.6,
-                metalness: 0.2,
-                emissive: new THREE.Color(0x555555),
-                emissiveIntensity: 0.4
+                map: phobosTexture,
+                bumpMap: phobosBumpMap,
+                bumpScale: 0.02,
+                metalness: 0.1,
+                roughness: 0.9
             });
         };
-        
-        // Create Phobos geometry - highly irregular potato shape with dimensions 27 × 22 × 18 km
-        const geometry = new THREE.SphereGeometry(this.radius, 64, 64);
-        
-        // Apply scientifically accurate vertex displacement for Phobos' shape
-        const positionAttribute = geometry.getAttribute('position');
-        const vertex = new THREE.Vector3();
-        
-        // Define Phobos' true dimensions ratio (27 × 22 × 18 km)
-        const scaleX = 27/22;
-        const scaleY = 1.0; // Using 22 as the base
-        const scaleZ = 18/22;
-        
-        // Define Stickney crater parameters (9km wide crater on one end)
-        const stickneyCenter = new THREE.Vector3(this.radius * 0.8, 0, 0).normalize();
-        const stickneyRadius = this.radius * 0.4; // Stickney is about 9km wide (approx 40% of Phobos' diameter)
-        
-        for (let i = 0; i < positionAttribute.count; i++) {
-            vertex.fromBufferAttribute(positionAttribute, i);
-            
-            // Apply true dimensional scaling
-            vertex.x *= scaleX;
-            vertex.y *= scaleY;
-            vertex.z *= scaleZ;
-            
-            // Create the Stickney crater
-            const distToStickneyCenter = vertex.clone().normalize().distanceTo(stickneyCenter);
-            if (distToStickneyCenter < 0.4) {
-                // Create crater depression based on distance to center
-                const craterDepth = 0.3 * (1.0 - (distToStickneyCenter / 0.4));
-                vertex.multiplyScalar(1.0 - craterDepth);
-            }
-            
-            // Add smaller craters and surface irregularities
-            const noise1 = 0.08 * Math.sin(vertex.x * 15 + vertex.y * 13 + vertex.z * 17);
-            const noise2 = 0.05 * Math.sin(vertex.x * 30 + vertex.y * 25 + vertex.z * 35);
-            
-            // Apply the noise
-            vertex.addScaledVector(vertex.clone().normalize(), noise1 + noise2);
-            
-            positionAttribute.setXYZ(i, vertex.x, vertex.y, vertex.z);
-        }
-        
-        // Update normals after displacement
-        geometry.computeVertexNormals();
-        
-        // Use a simpler material for better visibility with increased brightness
-        const material = new THREE.MeshStandardMaterial({
-            map: phobosTexture,
-            color: 0xDDDDDD, // Brighter base color
-            roughness: 0.5, // Reduced roughness for more shine
-            metalness: 0.25, // Increased metalness for more shine
-            emissive: new THREE.Color(0x555555), // Increased emissive
-            emissiveIntensity: 0.4 // Increased intensity
-        });
         
         this.mesh = new THREE.Mesh(geometry, material);
         this.mesh.castShadow = true;
@@ -134,12 +153,18 @@ export class Phobos extends CelestialBody {
     }
     
     createLabel() {
-        this.label = LabelUtils.createLabel(this.name, this.radius, 10, 18, 0.2, 0.8);
+        // Create a more visible label with larger font size
+        this.label = LabelUtils.createLabel(this.name, this.radius, 14, 24, 0.6, 1.2);
         this.objectGroup.add(this.label);
     }
     
     setSunPosition(position) {
-        this.sunPosition.copy(position);
+        this.sunPosition = position.clone();
+        
+        // Update shader uniforms if available
+        if (this.mesh && this.mesh.material && this.mesh.material.uniforms) {
+            this.mesh.material.uniforms.sunPosition.value.copy(position);
+        }
     }
     
     update(deltaTime, animate = true) {
@@ -161,15 +186,18 @@ export class Phobos extends CelestialBody {
     }
     
     updatePosition() {
-        // Position on the orbit around parent
-        const x = Math.cos(this.orbitAngle) * this.orbitRadius;
-        const z = Math.sin(this.orbitAngle) * this.orbitRadius;
+        // Phobos's orbital inclination is 1.08 degrees to Mars's equator
+        const inclination = 1.08 * Math.PI / 180;
         
-        // Position relative to parent
-        this.objectGroup.position.set(
-            this.parentPosition.x + x,
-            this.parentPosition.y,
-            this.parentPosition.z + z
+        // Calculate position with inclination
+        const x = Math.cos(this.orbitAngle) * this.orbitRadius;
+        const y = Math.sin(this.orbitAngle) * this.orbitRadius * Math.sin(inclination);
+        const z = Math.sin(this.orbitAngle) * this.orbitRadius * Math.cos(inclination);
+        
+        this.setPosition(
+            x + this.parentPosition.x, 
+            y + this.parentPosition.y, 
+            z + this.parentPosition.z
         );
     }
     

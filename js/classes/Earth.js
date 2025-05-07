@@ -25,25 +25,38 @@ export class Earth extends CelestialBody {
         this.updatePosition();
     }
     
+    setSunPosition(position) {
+        this.sunPosition = position.clone();
+        
+        // Update shader uniforms if available
+        if (this.mesh && this.mesh.material && this.mesh.material.uniforms) {
+            this.mesh.material.uniforms.sunPosition.value.copy(position);
+        }
+        
+        // Update moon's sun position
+        if (this.moon) {
+            this.moon.setSunPosition(this.sunPosition);
+        }
+    }
+
     createMesh() {
-        // Load high-resolution textures
+        // Load textures
         const textureLoader = new THREE.TextureLoader();
         const earthDayTexture = textureLoader.load('assets/textures/earth_daymap_8k.jpg');
         const earthNightTexture = textureLoader.load('assets/textures/earth_nightmap_8k.jpg');
+        const earthCloudsTexture = textureLoader.load('assets/textures/earth_clouds_8k.jpg');
         const earthNormalMap = textureLoader.load('assets/textures/earth_normal_8k.jpg');
         const earthSpecularMap = textureLoader.load('assets/textures/earth_specular_8k.jpg');
-        const earthCloudsTexture = textureLoader.load('assets/textures/earth_clouds_8k.jpg');
         
         // Create Earth geometry
         const geometry = new THREE.SphereGeometry(this.radius, 64, 64);
         
-        // Create Earth material with custom shader for accurate lighting
+        // Create custom shader for Earth
         const earthVertexShader = `
             varying vec2 vUv;
             varying vec3 vNormal;
             varying vec3 vSunDirection;
             varying vec3 vViewDirection;
-            varying vec3 vWorldPosition;
             
             uniform vec3 sunPosition;
             
@@ -51,9 +64,8 @@ export class Earth extends CelestialBody {
                 vUv = uv;
                 vNormal = normalize(normalMatrix * normal);
                 
-                // Calculate world position for lighting calculations
+                // Calculate world position
                 vec4 worldPosition = modelMatrix * vec4(position, 1.0);
-                vWorldPosition = worldPosition.xyz;
                 
                 // Calculate direction to the sun in world space
                 vSunDirection = normalize(sunPosition - worldPosition.xyz);
@@ -68,70 +80,56 @@ export class Earth extends CelestialBody {
         const earthFragmentShader = `
             uniform sampler2D dayTexture;
             uniform sampler2D nightTexture;
+            uniform sampler2D cloudsTexture;
             uniform sampler2D normalMap;
             uniform sampler2D specularMap;
-            uniform sampler2D cloudsTexture;
             uniform vec3 sunPosition;
             
             varying vec2 vUv;
             varying vec3 vNormal;
             varying vec3 vSunDirection;
             varying vec3 vViewDirection;
-            varying vec3 vWorldPosition;
             
             void main() {
                 // Sample textures
                 vec4 dayColor = texture2D(dayTexture, vUv);
                 vec4 nightColor = texture2D(nightTexture, vUv);
                 vec4 cloudsColor = texture2D(cloudsTexture, vUv);
-                vec3 normalMapColor = texture2D(normalMap, vUv).xyz * 2.0 - 1.0; // Convert from [0,1] to [-1,1]
-                float specularIntensity = texture2D(specularMap, vUv).r; // Use red channel for specular intensity
+                vec3 normalMapColor = texture2D(normalMap, vUv).xyz * 2.0 - 1.0;
+                float specularValue = texture2D(specularMap, vUv).r;
                 
-                // Apply normal mapping for more detailed lighting
-                vec3 normal = normalize(vNormal + normalMapColor * 0.8);
+                // Apply normal mapping
+                vec3 normal = normalize(vNormal + normalMapColor * 0.2);
                 
-                // Calculate lighting with physically accurate falloff
-                float sunDistance = length(sunPosition - vWorldPosition);
-                float sunIntensity = 5.0; // Sun brightness factor
+                // Calculate lighting
+                float sunDiffuse = max(0.0, dot(normal, vSunDirection));
                 
-                // Inverse square law for light falloff
-                float lightFalloff = sunIntensity / (1.0 + sunDistance * sunDistance * 0.0000001);
+                // Create smooth day/night transition
+                float dayMix = smoothstep(-0.2, 0.2, dot(normal, vSunDirection));
+                vec3 groundColor = mix(nightColor.rgb, dayColor.rgb, dayMix);
                 
-                // Calculate diffuse lighting
-                float diffuse = max(0.0, dot(normal, vSunDirection)) * lightFalloff;
+                // Clouds are illuminated on the day side
+                float cloudsMix = cloudsColor.r * 0.8;
+                float cloudBrightness = mix(0.1, 1.0, dayMix);
+                vec3 cloudsIlluminated = cloudsColor.rgb * cloudBrightness;
                 
-                // Calculate specular highlights (Blinn-Phong)
+                // Blend ground and clouds
+                vec3 blendedColor = mix(groundColor, cloudsIlluminated, cloudsMix);
+                
+                // Add specular highlight on water (oceans)
                 vec3 halfVector = normalize(vSunDirection + vViewDirection);
-                float specular = pow(max(0.0, dot(normal, halfVector)), 32.0) * specularIntensity * lightFalloff;
+                float specular = pow(max(0.0, dot(normal, halfVector)), 64.0) * specularValue * dayMix;
                 
-                // Smooth transition between day and night sides
-                float dayNightMix = smoothstep(-0.2, 0.2, dot(normal, vSunDirection));
+                // Add atmospheric scattering effect on the edges
+                float atmosphere = 1.0 - max(0.0, dot(vNormal, vViewDirection));
+                float atmosphereGlow = pow(atmosphere, 3.0) * 0.3 * max(0.0, dot(vNormal, vSunDirection));
                 
-                // Mix day and night textures based on lighting
-                vec3 earthColor = mix(nightColor.rgb, dayColor.rgb, dayNightMix);
+                // Final color
+                vec3 finalColor = blendedColor;
+                finalColor += vec3(0.3, 0.5, 0.9) * atmosphereGlow; // Blue atmospheric glow
+                finalColor += vec3(1.0, 1.0, 0.9) * specular; // Specular highlight on water
                 
-                // Add specular highlights to the lit side only
-                earthColor += vec3(1.0, 0.95, 0.8) * specular * dayNightMix;
-                
-                // Add clouds with transparency based on cloud texture alpha
-                float cloudOpacity = cloudsColor.r * 0.5; // Reduce cloud opacity
-                vec3 cloudShadow = vec3(0.8, 0.8, 0.8); // Slight darkening under clouds
-                
-                // Clouds are more visible on the day side
-                float cloudVisibility = mix(0.3, 1.0, dayNightMix);
-                
-                // Apply clouds
-                earthColor = mix(earthColor, cloudsColor.rgb, cloudOpacity * cloudVisibility);
-                
-                // Apply cloud shadows to the surface on the day side
-                earthColor = mix(earthColor, earthColor * cloudShadow, cloudOpacity * dayNightMix * 0.5);
-                
-                // Add subtle atmospheric scattering at the edges (limb brightening)
-                float atmosphere = pow(1.0 - abs(dot(vNormal, vViewDirection)), 4.0);
-                vec3 atmosphereColor = vec3(0.6, 0.8, 1.0) * dayNightMix; // Blue atmosphere visible only on day side
-                earthColor = mix(earthColor, atmosphereColor, atmosphere * 0.3);
-                
-                gl_FragColor = vec4(earthColor, 1.0);
+                gl_FragColor = vec4(finalColor, 1.0);
             }
         `;
         
@@ -139,14 +137,26 @@ export class Earth extends CelestialBody {
             uniforms: {
                 dayTexture: { value: earthDayTexture },
                 nightTexture: { value: earthNightTexture },
+                cloudsTexture: { value: earthCloudsTexture },
                 normalMap: { value: earthNormalMap },
                 specularMap: { value: earthSpecularMap },
-                cloudsTexture: { value: earthCloudsTexture },
                 sunPosition: { value: this.sunPosition.clone() }
             },
             vertexShader: earthVertexShader,
             fragmentShader: earthFragmentShader
         });
+        
+        // Fallback material in case shader fails
+        material.onError = () => {
+            console.warn('Earth shader failed to compile, using fallback material');
+            this.mesh.material = new THREE.MeshStandardMaterial({
+                map: earthDayTexture,
+                normalMap: earthNormalMap,
+                normalScale: new THREE.Vector2(0.2, 0.2),
+                metalness: 0.1,
+                roughness: 0.8
+            });
+        };
         
         this.mesh = new THREE.Mesh(geometry, material);
         this.mesh.castShadow = true;
@@ -154,7 +164,13 @@ export class Earth extends CelestialBody {
         this.mesh.name = this.name;
         this.objectGroup.add(this.mesh);
     }
-    
+
+    createLabel() {
+        // Create a more visible label with larger font size
+        this.label = LabelUtils.createLabel(this.name, this.radius, 16, 28, 0.7, 1.3);
+        this.objectGroup.add(this.label);
+    }
+
     createOrbitPath(scene) {
         const orbitGeometry = new THREE.BufferGeometry();
         const orbitMaterial = new THREE.LineBasicMaterial({ 
@@ -182,9 +198,19 @@ export class Earth extends CelestialBody {
         }
     }
     
-    createLabel() {
-        this.label = LabelUtils.createLabel(this.name, this.radius, 14, 24, 0.6, 1.0);
-        this.objectGroup.add(this.label);
+    updatePosition() {
+        // Earth's orbital inclination is 0.0 degrees to the ecliptic (by definition)
+        // Earth's axial tilt is 23.5 degrees
+        const axialTilt = 23.5 * Math.PI / 180;
+        
+        // Calculate position
+        const x = Math.cos(this.orbitAngle) * this.orbitRadius;
+        const z = Math.sin(this.orbitAngle) * this.orbitRadius;
+        
+        this.setPosition(x + this.sunPosition.x, 0, z + this.sunPosition.z);
+        
+        // Apply axial tilt
+        this.mesh.rotation.x = axialTilt;
     }
     
     update(deltaTime, animate = true) {
@@ -221,14 +247,6 @@ export class Earth extends CelestialBody {
                 this.moon.update(deltaTime, animate);
             }
         }
-    }
-    
-    updatePosition() {
-        // Position on the orbit
-        const x = Math.cos(this.orbitAngle) * this.orbitRadius;
-        const z = Math.sin(this.orbitAngle) * this.orbitRadius;
-        
-        this.objectGroup.position.set(x, 0, z);
     }
     
     toggleOrbitPath(visible) {

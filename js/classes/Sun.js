@@ -16,6 +16,10 @@ export class Sun extends CelestialBody {
     }
 
     createMesh() {
+        // Load textures
+        const textureLoader = new THREE.TextureLoader();
+        const sunTexture = textureLoader.load('assets/textures/sun_8k.jpg');
+        
         const sunGeometry = new THREE.SphereGeometry(this.radius, 128, 128); // Higher segments for smoother sun
 
         // Vertex Shader for Sun Surface
@@ -37,6 +41,7 @@ export class Sun extends CelestialBody {
         const fragmentShader = `
             uniform float time;
             uniform vec3 baseColor;
+            uniform sampler2D sunTexture;
             uniform sampler2D noiseTexture; // For granulation
             varying vec2 vUv;
             varying vec3 vNormal;
@@ -60,11 +65,14 @@ export class Sun extends CelestialBody {
             }
 
             void main() {
+                // Sample base texture
+                vec4 texColor = texture2D(sunTexture, vUv);
+                
                 // Limb Darkening: Darker/redder towards the edges
                 float viewAngleFactor = dot(vNormal, normalize(vViewPosition)); // Cosine of angle between normal and view vector
                 float limbFactor = smoothstep(0.0, 0.8, viewAngleFactor); // Stronger effect near edge
                 limbFactor = pow(limbFactor, 2.5); // Adjust power for falloff
-                vec3 limbColor = mix(vec3(0.9, 0.3, 0.1), baseColor, limbFactor); // Redder at edges
+                vec3 limbColor = mix(vec3(0.9, 0.3, 0.1), texColor.rgb * baseColor, limbFactor); // Redder at edges
 
                 // Granulation: Use noise function, animated over time
                 // Scale UVs and add time for animation
@@ -84,6 +92,15 @@ export class Sun extends CelestialBody {
                 if (spotNoise > 0.6 && spotNoise < 0.63) {
                     finalColor *= 0.9;
                 }
+
+                // Add solar flare effect (bright spots that move over time)
+                float flareNoise = noise(vUv * 8.0 + vec2(scaledTime * 0.3, scaledTime * 0.2));
+                if (flareNoise > 0.75) {
+                    finalColor += vec3(1.0, 0.7, 0.3) * 0.4 * (flareNoise - 0.75) * 4.0;
+                }
+
+                // Add glow effect
+                finalColor += baseColor * 0.2;
 
                 gl_FragColor = vec4(finalColor, 1.0);
             }
@@ -108,6 +125,7 @@ export class Sun extends CelestialBody {
             uniforms: {
                 time: { value: 0.0 },
                 baseColor: { value: new THREE.Color(this.primaryColor) },
+                sunTexture: { value: sunTexture },
                 noiseTexture: { value: proceduralNoiseTexture }
             },
             vertexShader: vertexShader,
@@ -119,7 +137,7 @@ export class Sun extends CelestialBody {
         this.objectGroup.add(this.mesh);
 
         // Add this line to make the Sun's material emissive for the bloom effect
-        if (CONFIG.BLOOM_EFFECT.enabled) {
+        if (CONFIG.BLOOM_EFFECT && CONFIG.BLOOM_EFFECT.enabled) {
             this.mesh.layers.enable(1); // BLOOM_SCENE layer
         }
     }
@@ -128,7 +146,8 @@ export class Sun extends CelestialBody {
      * Creates a text label for the Sun
      */
     createLabel() {
-        this.label = LabelUtils.createLabel(this.name, this.radius, 16, 32, 0.8, 1.5);
+        // Create a more visible label with larger font size
+        this.label = LabelUtils.createLabel(this.name, this.radius, 18, 36, 0.9, 1.8);
         this.objectGroup.add(this.label);
     }
 

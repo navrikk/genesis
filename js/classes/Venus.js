@@ -25,16 +25,25 @@ export class Venus extends CelestialBody {
         this.updatePosition();
     }
     
-    createMesh() {
-        // Load high-resolution textures
-        const textureLoader = new THREE.TextureLoader();
-        const venusAtmosphereTexture = textureLoader.load('assets/textures/venus_atmosphere_8k.jpg');
-        const venusSurfaceTexture = textureLoader.load('assets/textures/venus_surface_8k.jpg');
+    setSunPosition(position) {
+        this.sunPosition = position.clone();
         
-        // Create Venus geometry
+        // Update shader uniforms if available
+        if (this.mesh && this.mesh.material && this.mesh.material.uniforms) {
+            this.mesh.material.uniforms.sunPosition.value.copy(position);
+        }
+    }
+
+    createMesh() {
+        // Load textures
+        const textureLoader = new THREE.TextureLoader();
+        const venusTexture = textureLoader.load('assets/textures/venus_surface_8k.jpg');
+        const venusCloudsTexture = textureLoader.load('assets/textures/venus_atmosphere_8k.jpg');
+        
+        // Create Venus geometry with high detail
         const geometry = new THREE.SphereGeometry(this.radius, 64, 64);
         
-        // Create Venus material with custom shader
+        // Create custom shader for Venus
         const venusVertexShader = `
             varying vec2 vUv;
             varying vec3 vNormal;
@@ -47,11 +56,13 @@ export class Venus extends CelestialBody {
                 vUv = uv;
                 vNormal = normalize(normalMatrix * normal);
                 
-                // Calculate direction to the sun in world space
+                // Calculate world position
                 vec4 worldPosition = modelMatrix * vec4(position, 1.0);
+                
+                // Calculate direction to the sun in world space
                 vSunDirection = normalize(sunPosition - worldPosition.xyz);
                 
-                // Calculate view direction for atmosphere effect
+                // Calculate view direction for specular highlights
                 vViewDirection = normalize(cameraPosition - worldPosition.xyz);
                 
                 gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
@@ -59,8 +70,8 @@ export class Venus extends CelestialBody {
         `;
         
         const venusFragmentShader = `
-            uniform sampler2D atmosphereTexture;
-            uniform sampler2D surfaceTexture;
+            uniform sampler2D venusTexture;
+            uniform sampler2D venusCloudsTexture;
             uniform vec3 sunPosition;
             
             varying vec2 vUv;
@@ -70,32 +81,31 @@ export class Venus extends CelestialBody {
             
             void main() {
                 // Sample textures
-                vec4 atmosphereColor = texture2D(atmosphereTexture, vUv);
-                vec4 surfaceColor = texture2D(surfaceTexture, vUv);
+                vec4 surfaceColor = texture2D(venusTexture, vUv);
+                vec4 cloudsColor = texture2D(venusCloudsTexture, vUv);
                 
                 // Calculate lighting
                 float sunDiffuse = max(0.0, dot(vNormal, vSunDirection));
                 
-                // Create smooth transition between lit and unlit sides
-                float lightIntensity = smoothstep(-0.2, 0.3, dot(vNormal, vSunDirection));
+                // Venus has a thick atmosphere that scatters light
+                // This creates a smoother transition from day to night
+                float atmosphericScattering = smoothstep(-0.3, 0.6, dot(vNormal, vSunDirection)) * 0.8 + 0.2;
                 
-                // Ambient light (dark side is still slightly visible)
-                float ambient = 0.1;
+                // Ambient light (Venus is never completely dark due to atmospheric scattering)
+                float ambient = 0.15;
                 
-                // Mix surface and atmosphere based on viewing angle
-                // More atmosphere visible at edges, more surface visible when looking straight on
-                float atmosphereRim = pow(1.0 - abs(dot(vNormal, vViewDirection)), 2.0);
-                float atmosphereFactor = max(atmosphereRim * 0.6, 0.3); // Always show some atmosphere
-                
-                // Mix surface and atmosphere
-                vec3 planetColor = mix(surfaceColor.rgb, atmosphereColor.rgb, atmosphereFactor);
+                // Blend surface and clouds based on lighting
+                // Clouds are more visible on the day side
+                float cloudsMix = mix(0.3, 0.7, atmosphericScattering);
+                vec4 blendedColor = mix(surfaceColor, cloudsColor, cloudsMix);
                 
                 // Apply lighting
-                vec3 finalColor = planetColor * (ambient + lightIntensity * 0.9);
+                vec3 finalColor = blendedColor.rgb * (ambient + atmosphericScattering * 0.85);
                 
-                // Add subtle glow on the edges
-                float edgeGlow = pow(1.0 - abs(dot(vNormal, vViewDirection)), 4.0) * 0.3;
-                finalColor += vec3(1.0, 0.9, 0.7) * edgeGlow;
+                // Add subtle atmospheric glow on the edges
+                float rimLight = 1.0 - max(0.0, dot(vNormal, vViewDirection));
+                float atmosphereGlow = pow(rimLight, 3.0) * 0.3;
+                finalColor += vec3(0.9, 0.7, 0.3) * atmosphereGlow;
                 
                 gl_FragColor = vec4(finalColor, 1.0);
             }
@@ -103,13 +113,25 @@ export class Venus extends CelestialBody {
         
         const material = new THREE.ShaderMaterial({
             uniforms: {
-                atmosphereTexture: { value: venusAtmosphereTexture },
-                surfaceTexture: { value: venusSurfaceTexture },
+                venusTexture: { value: venusTexture },
+                venusCloudsTexture: { value: venusCloudsTexture },
                 sunPosition: { value: this.sunPosition.clone() }
             },
             vertexShader: venusVertexShader,
             fragmentShader: venusFragmentShader
         });
+        
+        // Fallback material in case shader fails
+        material.onError = () => {
+            console.warn('Venus shader failed to compile, using fallback material');
+            this.mesh.material = new THREE.MeshStandardMaterial({
+                map: venusTexture,
+                emissive: new THREE.Color(0x221100),
+                emissiveIntensity: 0.1,
+                metalness: 0.1,
+                roughness: 0.8
+            });
+        };
         
         this.mesh = new THREE.Mesh(geometry, material);
         this.mesh.castShadow = true;
@@ -146,7 +168,8 @@ export class Venus extends CelestialBody {
     }
     
     createLabel() {
-        this.label = LabelUtils.createLabel(this.name, this.radius, 14, 24, 0.6, 1.0);
+        // Create a more visible label with larger font size
+        this.label = LabelUtils.createLabel(this.name, this.radius, 14, 26, 0.6, 1.2);
         this.objectGroup.add(this.label);
     }
     
@@ -174,11 +197,15 @@ export class Venus extends CelestialBody {
     }
     
     updatePosition() {
-        // Position on the orbit
-        const x = Math.cos(this.orbitAngle) * this.orbitRadius;
-        const z = Math.sin(this.orbitAngle) * this.orbitRadius;
+        // Venus's orbital inclination is 3.4 degrees to the ecliptic
+        const inclination = 3.4 * Math.PI / 180;
         
-        this.objectGroup.position.set(x, 0, z);
+        // Calculate position with inclination
+        const x = Math.cos(this.orbitAngle) * this.orbitRadius;
+        const y = Math.sin(this.orbitAngle) * this.orbitRadius * Math.sin(inclination);
+        const z = Math.sin(this.orbitAngle) * this.orbitRadius * Math.cos(inclination);
+        
+        this.setPosition(x + this.sunPosition.x, y, z + this.sunPosition.z);
     }
     
     toggleOrbitPath(visible) {
