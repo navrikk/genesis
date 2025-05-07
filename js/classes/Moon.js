@@ -29,8 +29,8 @@ export class Moon extends CelestialBody {
     createMesh() {
         // Load high-resolution textures
         const textureLoader = new THREE.TextureLoader();
-        const moonTexture = textureLoader.load('assets/textures/moon_8k.jpg');
-        const moonNormalMap = textureLoader.load('assets/textures/moon_normal_8k.jpg');
+        const moonTexture = textureLoader.load('/textures/moon_8k.jpg');
+        const moonNormalMap = textureLoader.load('/textures/moon_normal_8k.jpg');
         
         // Use base class implementation for mesh creation with proper lighting
         this.createBaseMesh({

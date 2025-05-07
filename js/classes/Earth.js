@@ -43,10 +43,10 @@ export class Earth extends CelestialBody {
     createMesh() {
         // Load textures
         const textureLoader = new THREE.TextureLoader();
-        const earthDayTexture = textureLoader.load('assets/textures/earth_daymap_8k.jpg');
-        const earthCloudsTexture = textureLoader.load('assets/textures/earth_clouds_8k.jpg');
-        const earthNormalMap = textureLoader.load('assets/textures/earth_normal_8k.jpg');
-        const earthSpecularMap = textureLoader.load('assets/textures/earth_specular_8k.jpg');
+        const earthDayTexture = textureLoader.load('/textures/earth_daymap_8k.jpg');
+        const earthCloudsTexture = textureLoader.load('/textures/earth_clouds_8k.jpg');
+        const earthNormalMap = textureLoader.load('/textures/earth_normal_8k.jpg');
+        const earthSpecularMap = textureLoader.load('/textures/earth_specular_8k.jpg');
         
         // Use base class implementation for mesh creation with proper lighting
         this.createBaseMesh({

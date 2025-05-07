@@ -15,7 +15,7 @@ export class Sun extends CelestialBody {
     createMesh() {
         // Load textures
         const textureLoader = new THREE.TextureLoader();
-        const sunTexture = textureLoader.load('assets/textures/sun_8k.jpg');
+        const sunTexture = textureLoader.load('/textures/sun_8k.jpg');
         
         const sunGeometry = new THREE.SphereGeometry(this.radius, 128, 128); // Higher segments for smoother sun
 

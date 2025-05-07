@@ -39,8 +39,8 @@ export class Venus extends CelestialBody {
     createMesh() {
         // Load textures
         const textureLoader = new THREE.TextureLoader();
-        const venusTexture = textureLoader.load('assets/textures/venus_surface_8k.jpg');
-        const venusCloudsTexture = textureLoader.load('assets/textures/venus_atmosphere_8k.jpg');
+        const venusTexture = textureLoader.load('/textures/venus_surface_8k.jpg');
+        const venusCloudsTexture = textureLoader.load('/textures/venus_atmosphere_8k.jpg');
         
         // Use base class implementation for mesh creation with proper lighting
         this.createBaseMesh({

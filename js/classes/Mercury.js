@@ -25,7 +25,7 @@ export class Mercury extends CelestialBody {
     createMesh() {
         // Load high-resolution textures
         const textureLoader = new THREE.TextureLoader();
-        const mercuryTexture = textureLoader.load('assets/textures/mercury_8k.jpg');
+        const mercuryTexture = textureLoader.load('/textures/mercury_8k.jpg');
         
         // Use base class implementation for mesh creation with proper lighting
         this.createBaseMesh({
