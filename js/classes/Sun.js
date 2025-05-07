@@ -71,23 +71,46 @@ export class Sun extends CelestialBody {
                 limbFactor = pow(limbFactor, 2.5); // Adjust power for falloff
                 vec3 limbColor = mix(vec3(0.9, 0.3, 0.1), texColor.rgb * baseColor, limbFactor); // Redder at edges
 
-                // Granulation: Use noise function, animated over time
-                // Scale UVs and add time for animation
+                // Enhanced Granulation: Use noise function with multiple layers, animated over time
                 float scaledTime = time * 0.05;
-                vec2 uvAnimated = vUv * 20.0 + vec2(scaledTime * 0.2, scaledTime * 0.1); // Animate noise pattern
-                float n = noise(uvAnimated);
-                n = (n - 0.5) * 0.3 + 0.9; // Adjust noise intensity and baseline brightness
+                
+                // First noise layer - large scale granulation
+                vec2 uvAnimated1 = vUv * 25.0 + vec2(scaledTime * 0.2, scaledTime * 0.1);
+                float n1 = noise(uvAnimated1);
+                
+                // Second noise layer - medium scale details
+                vec2 uvAnimated2 = vUv * 40.0 + vec2(scaledTime * 0.15, scaledTime * 0.25);
+                float n2 = noise(uvAnimated2);
+                
+                // Third noise layer - fine details
+                vec2 uvAnimated3 = vUv * 60.0 + vec2(scaledTime * 0.3, -scaledTime * 0.2);
+                float n3 = noise(uvAnimated3);
+                
+                // Combine noise layers with different weights
+                float n = n1 * 0.5 + n2 * 0.3 + n3 * 0.2;
+                n = (n - 0.5) * 0.35 + 0.9; // Adjust combined noise intensity
 
                 vec3 finalColor = limbColor * n;
 
-                // Subtle Sunspots (example, could be more complex)
-                // Simple dark spots based on UVs or another noise layer
-                float spotNoise = noise(vUv * 5.0 + vec2(0.0, scaledTime * 0.05)); // Slower moving spots
-                if (spotNoise > 0.75 && spotNoise < 0.8) {
-                     finalColor *= 0.85; // Darken for sunspot
+                // Enhanced Sunspots with more realistic appearance
+                // Primary sunspot layer - larger spots
+                float spotNoise1 = noise(vUv * 4.0 + vec2(scaledTime * 0.03, scaledTime * 0.02));
+                float spotNoise2 = noise(vUv * 8.0 + vec2(-scaledTime * 0.04, scaledTime * 0.01));
+                
+                // Combine noise patterns for more organic shapes
+                float combinedSpotNoise = spotNoise1 * 0.7 + spotNoise2 * 0.3;
+                
+                // Create sunspot with umbra (darker center) and penumbra (lighter edge)
+                if (combinedSpotNoise > 0.75 && combinedSpotNoise < 0.85) {
+                    // Penumbra region (outer part of sunspot)
+                    float penumbraFactor = smoothstep(0.75, 0.78, combinedSpotNoise) * (1.0 - smoothstep(0.82, 0.85, combinedSpotNoise));
+                    finalColor *= mix(0.9, 0.7, penumbraFactor);
                 }
-                if (spotNoise > 0.6 && spotNoise < 0.63) {
-                    finalColor *= 0.9;
+                
+                // Add a few more smaller sunspots
+                float smallSpotNoise = noise(vUv * 12.0 + vec2(scaledTime * 0.02, -scaledTime * 0.03));
+                if (smallSpotNoise > 0.8 && smallSpotNoise < 0.85) {
+                    finalColor *= 0.85;
                 }
 
                 // Add solar flare effect (bright spots that move over time)
@@ -96,10 +119,10 @@ export class Sun extends CelestialBody {
                     finalColor += vec3(1.0, 0.7, 0.3) * 0.4 * (flareNoise - 0.75) * 4.0;
                 }
 
-                // Enhanced corona effect
-                float edgeGlow = pow(1.0 - viewAngleFactor, 4.0);
+                // Reduced corona effect
+                float edgeGlow = pow(1.0 - viewAngleFactor, 5.0); // Increased power for sharper falloff
                 vec3 coronaColor = mix(vec3(1.0, 0.6, 0.2), vec3(1.0, 0.8, 0.4), viewAngleFactor);
-                finalColor += coronaColor * edgeGlow * 1.5;
+                finalColor += coronaColor * edgeGlow * 0.9; // Reduced intensity from 1.5 to 0.9
                 
                 // Add overall glow and increase brightness
                 finalColor += baseColor * 0.4;

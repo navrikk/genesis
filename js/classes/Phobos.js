@@ -36,36 +36,67 @@ export class Phobos extends CelestialBody {
             for (let j = 0; j < textureSize; j++) {
                 const index = (i * textureSize + j) * 4;
                 
-                // Base color - light tan/gray
-                let r = 192 + Math.random() * 30;
-                let g = 176 + Math.random() * 30;
-                let b = 144 + Math.random() * 30;
+                // Improved base color - more reddish-brown to match Phobos' actual appearance
+                let r = 180 + Math.random() * 40;
+                let g = 150 + Math.random() * 30;
+                let b = 120 + Math.random() * 25;
                 
-                // Add noise for texture variation
-                const noise = Math.random() * 20 - 10;
+                // Add perlin-like noise for more natural texture variation
+                // Use position-based noise instead of pure random for more coherent patterns
+                const noiseX = Math.sin(i * 0.1) * Math.cos(j * 0.1) * 20;
+                const noiseY = Math.cos(i * 0.15) * Math.sin(j * 0.12) * 15;
+                const noise = noiseX + noiseY + (Math.random() * 15 - 7.5);
+                
                 r = Math.max(0, Math.min(255, r + noise));
                 g = Math.max(0, Math.min(255, g + noise));
                 b = Math.max(0, Math.min(255, b + noise));
                 
-                // Add craters
-                for (let c = 0; c < 30; c++) {
+                // Add more realistic craters with varied sizes and depths
+                // Add one large Stickney-like crater (Phobos' most prominent feature)
+                const stickneyX = textureSize * 0.3;
+                const stickneyY = textureSize * 0.6;
+                const stickneyRadius = textureSize * 0.25; // Large crater
+                const distToStickney = Math.sqrt(Math.pow(i - stickneyX, 2) + Math.pow(j - stickneyY, 2));
+                
+                // Apply Stickney crater effect
+                if (distToStickney < stickneyRadius) {
+                    // Crater rim is lighter with a more pronounced ridge
+                    if (distToStickney > stickneyRadius * 0.85) {
+                        r = Math.min(255, r + 45);
+                        g = Math.min(255, g + 40);
+                        b = Math.min(255, b + 35);
+                    } 
+                    // Crater center is darker with more variation
+                    else if (distToStickney < stickneyRadius * 0.7) {
+                        const depth = 1.0 - (distToStickney / (stickneyRadius * 0.7));
+                        r = Math.max(0, r - 50 * depth);
+                        g = Math.max(0, g - 45 * depth);
+                        b = Math.max(0, b - 40 * depth);
+                    }
+                }
+                
+                // Add medium and small craters
+                for (let c = 0; c < 40; c++) {
                     const craterX = Math.random() * textureSize;
                     const craterY = Math.random() * textureSize;
-                    const craterRadius = 5 + Math.random() * 50;
+                    // More varied crater sizes with emphasis on smaller craters
+                    const craterRadius = c < 5 ? 30 + Math.random() * 60 : 3 + Math.random() * 25;
                     const distToCrater = Math.sqrt(Math.pow(i - craterX, 2) + Math.pow(j - craterY, 2));
                     
                     if (distToCrater < craterRadius) {
-                        // Crater rim is lighter
+                        // Crater rim with more natural gradient
                         if (distToCrater > craterRadius * 0.8) {
-                            r = Math.min(255, r + 30);
-                            g = Math.min(255, g + 30);
-                            b = Math.min(255, b + 30);
+                            const rimIntensity = 1.0 - ((distToCrater - craterRadius * 0.8) / (craterRadius * 0.2));
+                            r = Math.min(255, r + 35 * rimIntensity);
+                            g = Math.min(255, g + 30 * rimIntensity);
+                            b = Math.min(255, b + 25 * rimIntensity);
                         } 
-                        // Crater center is darker
-                        else if (distToCrater < craterRadius * 0.5) {
-                            r = Math.max(0, r - 40);
-                            g = Math.max(0, g - 40);
-                            b = Math.max(0, b - 40);
+                        // Crater center with depth gradient
+                        else if (distToCrater < craterRadius * 0.6) {
+                            const depth = 1.0 - (distToCrater / (craterRadius * 0.6));
+                            r = Math.max(0, r - 45 * depth);
+                            g = Math.max(0, g - 40 * depth);
+                            b = Math.max(0, b - 35 * depth);
                         }
                     }
                 }
@@ -76,11 +107,20 @@ export class Phobos extends CelestialBody {
                 colorData[index + 2] = b;
                 colorData[index + 3] = 255; // Alpha
                 
-                // Set bump data (use similar pattern but with different values for height)
-                const bumpValue = (r + g + b) / 10; // Simplified height map based on color
-                bumpData[index] = bumpValue;
-                bumpData[index + 1] = bumpValue;
-                bumpData[index + 2] = bumpValue;
+                // Enhanced bump mapping with more detailed height variation
+                // Calculate bump value based on color but with more pronounced features
+                // Use different weights for R, G, B channels to create more variation
+                const bumpValue = (r * 0.5 + g * 0.3 + b * 0.2) / 8;
+                
+                // Add extra detail to bump map that wasn't in the color texture
+                const bumpDetail = Math.sin(i * 0.2) * Math.cos(j * 0.2) * 10 + 
+                                  Math.sin(i * 0.1 + j * 0.05) * 15;
+                
+                const finalBumpValue = Math.max(0, Math.min(255, bumpValue + bumpDetail));
+                
+                bumpData[index] = finalBumpValue;
+                bumpData[index + 1] = finalBumpValue;
+                bumpData[index + 2] = finalBumpValue;
                 bumpData[index + 3] = 255;
             }
         }
@@ -168,13 +208,6 @@ export class Phobos extends CelestialBody {
             
             // Update orbit path position
             this.updateOrbitPath();
-            
-            // Update sunlight direction
-            if (this.sunLight && this.sunPosition) {
-                const sunDirection = this.sunPosition.clone().sub(this.objectGroup.position).normalize();
-                this.sunLight.position.copy(sunDirection);
-                this.sunLight.target = this.mesh;
-            }
         }
     }
     

@@ -79,9 +79,8 @@ export class Earth extends CelestialBody {
     }
 
     createLabel() {
-        // Create a more visible label with larger font size
-        this.label = LabelUtils.createLabel(this.name, this.radius, 16, 28, 0.7, 1.3);
-        this.objectGroup.add(this.label);
+        // Labels have been removed completely
+        // This method is kept for compatibility
     }
 
     createOrbitPath(scene) {
@@ -152,13 +151,6 @@ export class Earth extends CelestialBody {
             // Update orbit path position
             this.updateOrbitPath();
             
-            // Update sunlight direction
-            if (this.sunLight) {
-                const sunDirection = this.sunPosition.clone().sub(this.objectGroup.position).normalize();
-                this.sunLight.position.copy(sunDirection);
-                this.sunLight.target = this.mesh;
-            }
-            
             // Update moon position if it exists
             if (this.moon) {
                 this.moon.updateParentPosition(this.objectGroup.position);
@@ -175,8 +167,7 @@ export class Earth extends CelestialBody {
     }
     
     toggleLabel(visible) {
-        if (this.label) {
-            this.label.visible = visible;
-        }
+        // Labels have been completely removed
+        // This method is kept for compatibility
     }
 }

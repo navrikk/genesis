@@ -105,13 +105,6 @@ export class Mercury extends CelestialBody {
             if (this.orbitPath) {
                 this.orbitPath.position.copy(this.sunPosition);
             }
-            
-            // Update sunlight direction
-            if (this.sunLight) {
-                const sunDirection = this.sunPosition.clone().sub(this.objectGroup.position).normalize();
-                this.sunLight.position.copy(sunDirection);
-                this.sunLight.target = this.mesh;
-            }
         }
     }
 

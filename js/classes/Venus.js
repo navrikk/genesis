@@ -99,9 +99,8 @@ export class Venus extends CelestialBody {
     }
 
     createLabel() {
-        // Create a more visible label with larger font size
-        this.label = LabelUtils.createLabel(this.name, this.radius, 14, 26, 0.6, 1.2);
-        this.objectGroup.add(this.label);
+        // Labels have been removed completely
+        // This method is kept for compatibility
     }
     
     updateOrbitPath() {
@@ -125,13 +124,6 @@ export class Venus extends CelestialBody {
             
             // Update orbit path position
             this.updateOrbitPath();
-            
-            // Update sunlight direction
-            if (this.sunLight) {
-                const sunDirection = this.sunPosition.clone().sub(this.objectGroup.position).normalize();
-                this.sunLight.position.copy(sunDirection);
-                this.sunLight.target = this.mesh;
-            }
         }
     }
     
@@ -158,8 +150,7 @@ export class Venus extends CelestialBody {
     }
     
     toggleLabel(visible) {
-        if (this.label) {
-            this.label.visible = visible;
-        }
+        // Labels have been completely removed
+        // This method is kept for compatibility
     }
 }

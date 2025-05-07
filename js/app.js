@@ -226,126 +226,107 @@ export default class App {
         // Add raycaster for object selection
         this.setupObjectSelection();
         
-        // Create Play/Pause button
+        // Create Play/Pause button with icon
         const playPauseButton = document.createElement('button');
         playPauseButton.id = 'playPauseButton';
-        playPauseButton.className = 'control-button';
-        playPauseButton.textContent = 'Pause';
+        playPauseButton.className = 'control-button control-tooltip';
+        playPauseButton.setAttribute('data-tooltip', 'Pause Animation');
+        
+        // Create icon element
+        const playPauseIcon = document.createElement('i');
+        playPauseIcon.className = 'fas fa-pause';
+        playPauseButton.appendChild(playPauseIcon);
+        
         playPauseButton.addEventListener('click', () => {
             const isPlaying = CONFIG.ANIMATION.enabled;
             CONFIG.ANIMATION.enabled = !isPlaying;
             this.solarSystem.toggleAnimation(!isPlaying);
-            playPauseButton.textContent = !isPlaying ? 'Pause' : 'Play';
+            
+            // Update icon and tooltip based on state
+            if (!isPlaying) {
+                playPauseIcon.className = 'fas fa-pause';
+                playPauseButton.setAttribute('data-tooltip', 'Pause Animation');
+            } else {
+                playPauseIcon.className = 'fas fa-play';
+                playPauseButton.setAttribute('data-tooltip', 'Play Animation');
+            }
         });
         document.getElementById('controls').appendChild(playPauseButton);
         
-        // Create Toggle Orbit Paths button
+        // Create Toggle Orbit Paths button with icon
         const toggleOrbitPathsButton = document.createElement('button');
         toggleOrbitPathsButton.id = 'toggleOrbitPathsButton';
-        toggleOrbitPathsButton.className = 'control-button';
-        toggleOrbitPathsButton.textContent = 'Hide Orbit Paths';
+        toggleOrbitPathsButton.className = 'control-button control-tooltip active';
+        toggleOrbitPathsButton.setAttribute('data-tooltip', 'Hide Orbit Paths');
+        
+        // Create icon element
+        const orbitPathsIcon = document.createElement('i');
+        orbitPathsIcon.className = 'fas fa-circle-notch';
+        toggleOrbitPathsButton.appendChild(orbitPathsIcon);
+        
         let orbitPathsVisible = true;
         toggleOrbitPathsButton.addEventListener('click', () => {
             orbitPathsVisible = !orbitPathsVisible;
             this.solarSystem.toggleOrbitPaths(orbitPathsVisible);
-            toggleOrbitPathsButton.textContent = orbitPathsVisible ? 'Hide Orbit Paths' : 'Show Orbit Paths';
+            
+            // Update tooltip and active state based on visibility
+            if (orbitPathsVisible) {
+                toggleOrbitPathsButton.setAttribute('data-tooltip', 'Hide Orbit Paths');
+                toggleOrbitPathsButton.classList.add('active');
+            } else {
+                toggleOrbitPathsButton.setAttribute('data-tooltip', 'Show Orbit Paths');
+                toggleOrbitPathsButton.classList.remove('active');
+            }
         });
         document.getElementById('controls').appendChild(toggleOrbitPathsButton);
         
         // Labels have been removed from the system
         
-        // Create Focus dropdown
+        // Create Focus button with dropdown
+        const focusButton = document.createElement('button');
+        focusButton.id = 'focusButton';
+        focusButton.className = 'control-button control-tooltip';
+        focusButton.setAttribute('data-tooltip', 'Focus on Body');
+        
+        // Create icon element
+        const focusIcon = document.createElement('i');
+        focusIcon.className = 'fas fa-crosshairs';
+        focusButton.appendChild(focusIcon);
+        
+        // Create dropdown container that will appear on hover/click
         const focusContainer = document.createElement('div');
         focusContainer.className = 'focus-container';
         
-        const focusLabel = document.createElement('span');
-        focusLabel.textContent = 'Focus on: ';
-        focusLabel.className = 'focus-label';
-        focusContainer.appendChild(focusLabel);
+        // Create list of celestial bodies as clickable items instead of a dropdown
+        const celestialBodiesList = [
+            { name: 'Sun', icon: 'fa-sun' },
+            { name: 'Mercury', icon: 'fa-circle' },
+            { name: 'Venus', icon: 'fa-circle' },
+            { name: 'Earth', icon: 'fa-earth-americas' },
+            { name: 'Moon', icon: 'fa-moon' },
+            { name: 'Mars', icon: 'fa-circle' },
+            { name: 'Phobos', icon: 'fa-circle' },
+            { name: 'Deimos', icon: 'fa-circle' }
+        ];
         
-        const focusDropdown = document.createElement('select');
-        focusDropdown.id = 'focusDropdown';
-        focusDropdown.className = 'focus-dropdown';
-        
-        const defaultOption = document.createElement('option');
-        defaultOption.value = '';
-        defaultOption.textContent = 'Select a body';
-        focusDropdown.appendChild(defaultOption);
-        
-        const sunOption = document.createElement('option');
-        sunOption.value = 'Sun';
-        sunOption.textContent = 'Sun';
-        focusDropdown.appendChild(sunOption);
-        
-        const mercuryOption = document.createElement('option');
-        mercuryOption.value = 'Mercury';
-        mercuryOption.textContent = 'Mercury';
-        focusDropdown.appendChild(mercuryOption);
-        
-        const venusOption = document.createElement('option');
-        venusOption.value = 'Venus';
-        venusOption.textContent = 'Venus';
-        focusDropdown.appendChild(venusOption);
-        
-        const earthOption = document.createElement('option');
-        earthOption.value = 'Earth';
-        earthOption.textContent = 'Earth';
-        focusDropdown.appendChild(earthOption);
-        
-        const moonOption = document.createElement('option');
-        moonOption.value = 'Moon';
-        moonOption.textContent = 'Moon';
-        focusDropdown.appendChild(moonOption);
-        
-        const marsOption = document.createElement('option');
-        marsOption.value = 'Mars';
-        marsOption.textContent = 'Mars';
-        focusDropdown.appendChild(marsOption);
-        
-        const phobosOption = document.createElement('option');
-        phobosOption.value = 'Phobos';
-        phobosOption.textContent = 'Phobos (Mars Moon)';
-        focusDropdown.appendChild(phobosOption);
-        
-        const deimosOption = document.createElement('option');
-        deimosOption.value = 'Deimos';
-        deimosOption.textContent = 'Deimos (Mars Moon)';
-        focusDropdown.appendChild(deimosOption);
-        
-        focusDropdown.addEventListener('change', (event) => {
-            const selectedBody = event.target.value;
-            if (selectedBody) {
-                this.focusOnBody(selectedBody);
-            }
+        // Create clickable items for each celestial body
+        celestialBodiesList.forEach(body => {
+            const bodyOption = document.createElement('div');
+            bodyOption.className = 'focus-option';
+            bodyOption.innerHTML = `<i class="fas ${body.icon}"></i> ${body.name}`;
+            bodyOption.addEventListener('click', () => {
+                this.focusOnBody(body.name);
+                // Hide dropdown after selection
+                focusButton.blur();
+            });
+            focusContainer.appendChild(bodyOption);
         });
         
-        focusContainer.appendChild(focusDropdown);
-        document.getElementById('controls').appendChild(focusContainer);
+        // Append the dropdown to the focus button
+        focusButton.appendChild(focusContainer);
+        document.getElementById('controls').appendChild(focusButton);
         
-        const style = document.createElement('style');
-        style.textContent = `
-            .focus-container {
-                display: inline-flex;
-                align-items: center;
-                margin-left: 10px;
-            }
-            .focus-label {
-                margin-right: 5px;
-                color: white;
-            }
-            .focus-dropdown {
-                padding: 5px;
-                border-radius: 4px;
-                background-color: #333;
-                color: white;
-                border: 1px solid #555;
-            }
-            .focus-dropdown option {
-                background-color: #333;
-                color: white;
-            }
-        `;
-        document.head.appendChild(style);
+        // Zoom buttons have been removed
     }
     
     /**
@@ -383,6 +364,8 @@ export default class App {
                 
                 if (selectedBody) {
                     this.showBodyInfo(selectedBody.name);
+                    // Automatically focus on the selected body
+                    this.focusOnBody(selectedBody.name);
                 }
             }
         });
@@ -451,9 +434,9 @@ export default class App {
             } else if (bodyName === 'Mars') {
                 screenRatio = 0.6; 
             } else if (bodyName === 'Phobos') {
-                screenRatio = 0.6; 
+                screenRatio = 0.15; // Reduced ratio to zoom out more for better visibility
             } else if (bodyName === 'Deimos') {
-                screenRatio = 0.6; 
+                screenRatio = 0.15; // Reduced ratio to zoom out more for better visibility
             } else {
                 screenRatio = 0.5; 
             }

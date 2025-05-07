@@ -36,36 +36,71 @@ export class Deimos extends CelestialBody {
             for (let j = 0; j < textureSize; j++) {
                 const index = (i * textureSize + j) * 4;
                 
-                // Base color - lighter than Phobos, more beige/tan
-                let r = 200 + Math.random() * 30;
-                let g = 184 + Math.random() * 30;
-                let b = 168 + Math.random() * 30;
+                // Improved base color - more accurate to Deimos' grayish appearance
+                let r = 190 + Math.random() * 35;
+                let g = 180 + Math.random() * 30;
+                let b = 170 + Math.random() * 30;
                 
-                // Add noise for texture variation (smoother than Phobos)
-                const noise = Math.random() * 15 - 7.5;
+                // Add coherent noise patterns for more realistic surface texture
+                // Deimos has a smoother surface than Phobos but still has some texture
+                const noiseX = Math.sin(i * 0.08) * Math.cos(j * 0.07) * 15;
+                const noiseY = Math.cos(i * 0.12) * Math.sin(j * 0.09) * 10;
+                const randomNoise = Math.random() * 10 - 5;
+                const noise = noiseX + noiseY + randomNoise;
+                
                 r = Math.max(0, Math.min(255, r + noise));
                 g = Math.max(0, Math.min(255, g + noise));
                 b = Math.max(0, Math.min(255, b + noise));
                 
-                // Add fewer, more subtle craters (Deimos has fewer craters than Phobos)
-                for (let c = 0; c < 20; c++) {
+                // Add more realistic craters for Deimos
+                // Deimos has fewer, more eroded craters than Phobos
+                
+                // Add a few larger craters
+                for (let c = 0; c < 3; c++) {
                     const craterX = Math.random() * textureSize;
                     const craterY = Math.random() * textureSize;
-                    const craterRadius = 5 + Math.random() * 40;
+                    const craterRadius = 40 + Math.random() * 60;
                     const distToCrater = Math.sqrt(Math.pow(i - craterX, 2) + Math.pow(j - craterY, 2));
                     
                     if (distToCrater < craterRadius) {
-                        // Crater rim is lighter
-                        if (distToCrater > craterRadius * 0.8) {
-                            r = Math.min(255, r + 25);
-                            g = Math.min(255, g + 25);
-                            b = Math.min(255, b + 25);
+                        // More subtle, eroded crater rim
+                        if (distToCrater > craterRadius * 0.85) {
+                            const rimIntensity = 1.0 - ((distToCrater - craterRadius * 0.85) / (craterRadius * 0.15));
+                            r = Math.min(255, r + 20 * rimIntensity);
+                            g = Math.min(255, g + 20 * rimIntensity);
+                            b = Math.min(255, b + 20 * rimIntensity);
                         } 
-                        // Crater center is darker
-                        else if (distToCrater < craterRadius * 0.5) {
-                            r = Math.max(0, r - 30);
-                            g = Math.max(0, g - 30);
-                            b = Math.max(0, b - 30);
+                        // Smoother crater bowl
+                        else if (distToCrater < craterRadius * 0.7) {
+                            const depth = Math.pow(1.0 - (distToCrater / (craterRadius * 0.7)), 0.5); // Smoother falloff
+                            r = Math.max(0, r - 25 * depth);
+                            g = Math.max(0, g - 25 * depth);
+                            b = Math.max(0, b - 25 * depth);
+                        }
+                    }
+                }
+                
+                // Add more numerous smaller craters
+                for (let c = 0; c < 25; c++) {
+                    const craterX = Math.random() * textureSize;
+                    const craterY = Math.random() * textureSize;
+                    const craterRadius = 3 + Math.random() * 20; // Smaller craters
+                    const distToCrater = Math.sqrt(Math.pow(i - craterX, 2) + Math.pow(j - craterY, 2));
+                    
+                    if (distToCrater < craterRadius) {
+                        // Subtle rim for small craters
+                        if (distToCrater > craterRadius * 0.8) {
+                            const rimIntensity = 1.0 - ((distToCrater - craterRadius * 0.8) / (craterRadius * 0.2));
+                            r = Math.min(255, r + 15 * rimIntensity);
+                            g = Math.min(255, g + 15 * rimIntensity);
+                            b = Math.min(255, b + 15 * rimIntensity);
+                        } 
+                        // Shallow crater center
+                        else if (distToCrater < craterRadius * 0.6) {
+                            const depth = Math.pow(1.0 - (distToCrater / (craterRadius * 0.6)), 0.5);
+                            r = Math.max(0, r - 20 * depth);
+                            g = Math.max(0, g - 20 * depth);
+                            b = Math.max(0, b - 20 * depth);
                         }
                     }
                 }
@@ -76,11 +111,21 @@ export class Deimos extends CelestialBody {
                 colorData[index + 2] = b;
                 colorData[index + 3] = 255; // Alpha
                 
-                // Set bump data (smoother than Phobos)
-                const bumpValue = (r + g + b) / 12; // Smoother height map
-                bumpData[index] = bumpValue;
-                bumpData[index + 1] = bumpValue;
-                bumpData[index + 2] = bumpValue;
+                // Enhanced bump mapping for Deimos - smoother than Phobos but with subtle details
+                // Calculate base bump value with weighted color channels
+                const bumpValue = (r * 0.4 + g * 0.4 + b * 0.2) / 10;
+                
+                // Add subtle detail to the bump map
+                // Use lower frequency noise for a smoother appearance
+                const bumpDetail = Math.sin(i * 0.1) * Math.cos(j * 0.1) * 5 + 
+                                  Math.sin(i * 0.05 + j * 0.03) * 8;
+                
+                // Combine with less intensity than Phobos for a smoother appearance
+                const finalBumpValue = Math.max(0, Math.min(255, bumpValue + bumpDetail * 0.7));
+                
+                bumpData[index] = finalBumpValue;
+                bumpData[index + 1] = finalBumpValue;
+                bumpData[index + 2] = finalBumpValue;
                 bumpData[index + 3] = 255;
             }
         }
@@ -168,13 +213,6 @@ export class Deimos extends CelestialBody {
             
             // Update orbit path position
             this.updateOrbitPath();
-            
-            // Update sunlight direction
-            if (this.sunLight && this.sunPosition) {
-                const sunDirection = this.sunPosition.clone().sub(this.objectGroup.position).normalize();
-                this.sunLight.position.copy(sunDirection);
-                this.sunLight.target = this.mesh;
-            }
         }
     }
     

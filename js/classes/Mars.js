@@ -83,8 +83,8 @@ export class Mars extends CelestialBody {
     }
     
     createLabel() {
-        this.label = LabelUtils.createLabel(this.name, this.radius, 14, 24, 0.6, 1.0);
-        this.objectGroup.add(this.label);
+        // Labels have been removed completely
+        // This method is kept for compatibility
     }
     
     update(deltaTime, animate = true) {
@@ -130,9 +130,8 @@ export class Mars extends CelestialBody {
     }
     
     toggleLabel(visible) {
-        if (this.label) {
-            this.label.visible = visible;
-        }
+        // Labels have been completely removed
+        // This method is kept for compatibility
     }
     
     // Add a moon to Mars
@@ -148,12 +147,7 @@ export class Mars extends CelestialBody {
     setSunPosition(position) {
         super.setSunPosition(position);
         
-        // Set fixed atmosphere opacity
-        if (this.atmosphereMesh && this.atmosphereMesh.material) {
-            this.atmosphereMesh.material.opacity = 0.1;
-        }
-        
-        // Update moons' sun position
+        // Update moons' sun position for orbit calculations
         this.moons.forEach(moon => moon.setSunPosition(position));
     }
 }

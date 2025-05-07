@@ -82,15 +82,11 @@ export class CelestialBody {
     }
 
     /**
-     * Set the sun position for lighting calculations
+     * Set the sun position (no longer used for lighting)
      * @param {THREE.Vector3} position - Position of the sun
      */
     setSunPosition(position) {
-        // Only update shader uniforms if they exist (for custom shaders)
-        if (this.mesh && this.mesh.material && this.mesh.material.uniforms && 
-            this.mesh.material.uniforms.sunPosition) {
-            this.mesh.material.uniforms.sunPosition.value.copy(position);
-        }
+        // This method is kept for compatibility but no longer updates lighting
     }
     
     /**

@@ -94,15 +94,12 @@ export class SolarSystem {
     }
     
     /**
-     * Toggle visibility of labels for all celestial bodies
+     * Toggle visibility of labels for all celestial bodies (placeholder for compatibility)
      * @param {boolean} visible - Whether labels should be visible
      */
     toggleLabels(visible) {
-        this.celestialBodies.forEach(body => {
-            if (body.toggleLabel) {
-                body.toggleLabel(visible);
-            }
-        });
+        // Labels have been completely removed from the system
+        // This method is kept for compatibility
     }
     
     /**

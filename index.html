@@ -6,6 +6,7 @@
     <title>Interactive 3D Solar System</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="styles/main.css">
 </head>
 <body>
@@ -79,7 +80,9 @@
 </div>
 
 <div id="controls">
-    <button id="resetCameraButton" class="control-button">Reset Camera</button>
+    <button id="resetCameraButton" class="control-button control-tooltip" data-tooltip="Reset Camera">
+        <i class="fas fa-home"></i>
+    </button>
 </div>
 
 <script type="importmap">

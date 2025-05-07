@@ -94,13 +94,6 @@ export class Moon extends CelestialBody {
             
             // Update orbit path position
             this.updateOrbitPath();
-            
-            // Update sunlight direction
-            if (this.sunLight && this.sunPosition) {
-                const sunDirection = this.sunPosition.clone().sub(this.objectGroup.position).normalize();
-                this.sunLight.position.copy(sunDirection);
-                this.sunLight.target = this.mesh;
-            }
         }
     }
     
