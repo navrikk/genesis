@@ -92,4 +92,12 @@ export class CelestialBody {
             this.mesh.material.uniforms.sunPosition.value.copy(position);
         }
     }
+    
+    /**
+     * Toggle label visibility (placeholder for backward compatibility)
+     * @param {boolean} visible - Whether the label should be visible
+     */
+    toggleLabel(visible) {
+        // Labels have been removed, this is just a placeholder for compatibility
+    }
 }

@@ -83,11 +83,11 @@ const CONFIG = {
     },
     PHOBOS: {
         NAME: 'Phobos',
-        DIAMETER_KM: 22.2 * 30, // Scaled proportionally with Mars (30x)
+        DIAMETER_KM: 22.2 * 60, // Reduced zoom level while maintaining visibility
         DISTANCE_FROM_PARENT_KM: 9376 * 15, // Phobos orbits at ~2.76 Mars radii from Mars' center
         ORBITAL_PERIOD_DAYS: 0.32, // Very fast orbit (7 hours 39 minutes)
         ROTATION_PERIOD_DAYS: 0.32, // Tidally locked to Mars
-        COLOR: 0x887766, // Brownish-gray color
+        COLOR: 0xC0B090, // Brighter, more visible color based on actual observations
         get RADIUS() { return (this.DIAMETER_KM / 2) / CONFIG.SCALE_FACTOR; },
         get ORBIT_RADIUS() { return this.DISTANCE_FROM_PARENT_KM / CONFIG.SCALE_FACTOR; },
         get ORBIT_SPEED() { return (2 * Math.PI) / (this.ORBITAL_PERIOD_DAYS * 24 * 60 * 0.1); }, // Sped up for visualization
@@ -95,18 +95,18 @@ const CONFIG = {
     },
     DEIMOS: {
         NAME: 'Deimos',
-        DIAMETER_KM: 12.6 * 30, // Scaled proportionally with Mars (30x)
+        DIAMETER_KM: 12.6 * 60, // Reduced zoom level while maintaining visibility
         DISTANCE_FROM_PARENT_KM: 23463 * 15, // Deimos orbits at ~6.92 Mars radii from Mars' center
         ORBITAL_PERIOD_DAYS: 1.26, // About 30 hours
         ROTATION_PERIOD_DAYS: 1.26, // Tidally locked to Mars
-        COLOR: 0x998877, // Slightly lighter than Phobos
+        COLOR: 0xC8B8A8, // Brighter, more visible color based on actual observations
         get RADIUS() { return (this.DIAMETER_KM / 2) / CONFIG.SCALE_FACTOR; },
         get ORBIT_RADIUS() { return this.DISTANCE_FROM_PARENT_KM / CONFIG.SCALE_FACTOR; },
         get ORBIT_SPEED() { return (2 * Math.PI) / (this.ORBITAL_PERIOD_DAYS * 24 * 60 * 0.1); }, // Sped up for visualization
         get ROTATION_SPEED() { return (2 * Math.PI) / (this.ROTATION_PERIOD_DAYS * 24 * 60 * 0.1); } // Sped up for visualization
     },
     STARFIELD: {
-        COUNT: 5000000, // Massively increased star count for a more realistic sky
+        COUNT: 1000000*10, // Massively increased star count for a more realistic sky
         RADIUS: 100000, // Increased radius for better depth perception
         MIN_SIZE: 0.3,  // Smaller minimum size for more variation
         MAX_SIZE: 2.0   // Maximum star size

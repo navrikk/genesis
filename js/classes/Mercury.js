@@ -1,7 +1,6 @@
 import * as THREE from 'three';
 import CONFIG from '../config.js';
 import { CelestialBody } from './CelestialBody.js';
-import { LabelUtils } from '../utils/LabelUtils.js';
 
 /**
  * Mercury class representing the planet Mercury
@@ -18,10 +17,8 @@ export class Mercury extends CelestialBody {
         this.rotationSpeed = CONFIG.MERCURY.ROTATION_SPEED;
         this.orbitAngle = Math.random() * Math.PI * 2; // Random starting position
         this.orbitPath = null;
-        this.label = null;
         this.moon = null;
         this.createMesh();
-        this.createLabel();
         this.updatePosition();
     }
 
@@ -71,11 +68,7 @@ export class Mercury extends CelestialBody {
         scene.add(this.orbitPath);
     }
 
-    createLabel() {
-        // Create a more visible label with larger font size
-        this.label = LabelUtils.createLabel(this.name, this.radius, 14, 24, 0.6, 1.2);
-        this.objectGroup.add(this.label);
-    }
+
 
     /**
      * Updates Mercury's position based on its orbit
@@ -132,13 +125,5 @@ export class Mercury extends CelestialBody {
         }
     }
 
-    /**
-     * Toggle the visibility of the label
-     * @param {boolean} visible - Whether the label should be visible
-     */
-    toggleLabel(visible) {
-        if (this.label) {
-            this.label.visible = visible;
-        }
-    }
+
 }

@@ -23,6 +23,61 @@
 
 <div id="container"></div>
 
+<!-- Celestial Body Info Panel -->
+<div id="infoPanel" class="hidden">
+    <div class="info-header">
+        <h2 id="bodyName">Celestial Body</h2>
+        <button id="closeInfoPanel" class="close-button">×</button>
+    </div>
+    <div class="info-content">
+        <div class="info-section">
+            <h3>Physical Properties</h3>
+            <div class="info-grid">
+                <div class="info-item">
+                    <span class="info-label">Radius:</span>
+                    <span id="bodyRadius" class="info-value">-</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Mass:</span>
+                    <span id="bodyMass" class="info-value">-</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Surface Gravity:</span>
+                    <span id="bodyGravity" class="info-value">-</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Temperature:</span>
+                    <span id="bodyTemp" class="info-value">-</span>
+                </div>
+            </div>
+        </div>
+        <div class="info-section">
+            <h3>Orbital Properties</h3>
+            <div class="info-grid">
+                <div class="info-item">
+                    <span class="info-label">Orbit Radius:</span>
+                    <span id="bodyOrbitRadius" class="info-value">-</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Orbit Period:</span>
+                    <span id="bodyOrbitPeriod" class="info-value">-</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Rotation Period:</span>
+                    <span id="bodyRotation" class="info-value">-</span>
+                </div>
+            </div>
+        </div>
+        <div class="info-section">
+            <h3>Description</h3>
+            <p id="bodyDescription" class="info-description">Select a celestial body to see its details.</p>
+        </div>
+    </div>
+    <div class="info-footer">
+        <button id="focusBodyButton" class="focus-button">Focus Camera</button>
+    </div>
+</div>
+
 <div id="controls">
     <button id="resetCameraButton" class="control-button">Reset Camera</button>
 </div>

@@ -16,6 +16,7 @@ import { Mars } from './classes/Mars.js';
 import { Phobos } from './classes/Phobos.js'; 
 import { Deimos } from './classes/Deimos.js'; 
 import { Starfield } from './classes/Starfield.js';
+import { getBodyData } from './utils/CelestialBodyData.js';
 
 /**
  * Main application class for the 3D solar system
@@ -53,6 +54,10 @@ export default class App {
         this.userCameraPosition = null; 
         this.userControlsTarget = null; 
         this.currentAnimation = null; 
+        
+        // Info panel state
+        this.selectedBody = null;
+        this.infoPanel = null;
 
         this.init();
     }
@@ -205,6 +210,22 @@ export default class App {
     }
     
     setupUIControls() {
+        // Setup info panel controls
+        this.infoPanel = document.getElementById('infoPanel');
+        document.getElementById('closeInfoPanel').addEventListener('click', () => {
+            this.infoPanel.classList.add('hidden');
+            this.selectedBody = null;
+        });
+        
+        document.getElementById('focusBodyButton').addEventListener('click', () => {
+            if (this.selectedBody) {
+                this.focusOnBody(this.selectedBody);
+            }
+        });
+        
+        // Add raycaster for object selection
+        this.setupObjectSelection();
+        
         // Create Play/Pause button
         const playPauseButton = document.createElement('button');
         playPauseButton.id = 'playPauseButton';
@@ -231,18 +252,7 @@ export default class App {
         });
         document.getElementById('controls').appendChild(toggleOrbitPathsButton);
         
-        // Create Toggle Labels button
-        const toggleLabelsButton = document.createElement('button');
-        toggleLabelsButton.id = 'toggleLabelsButton';
-        toggleLabelsButton.className = 'control-button';
-        toggleLabelsButton.textContent = 'Hide Labels';
-        let labelsVisible = true;
-        toggleLabelsButton.addEventListener('click', () => {
-            labelsVisible = !labelsVisible;
-            this.solarSystem.toggleLabels(labelsVisible);
-            toggleLabelsButton.textContent = labelsVisible ? 'Hide Labels' : 'Show Labels';
-        });
-        document.getElementById('controls').appendChild(toggleLabelsButton);
+        // Labels have been removed from the system
         
         // Create Focus dropdown
         const focusContainer = document.createElement('div');
@@ -338,6 +348,69 @@ export default class App {
         document.head.appendChild(style);
     }
     
+    /**
+     * Setup object selection with raycaster
+     */
+    setupObjectSelection() {
+        const raycaster = new THREE.Raycaster();
+        const mouse = new THREE.Vector2();
+        
+        // Add click event listener
+        window.addEventListener('click', (event) => {
+            // Calculate mouse position in normalized device coordinates
+            mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+            mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+            
+            // Update the raycaster
+            raycaster.setFromCamera(mouse, this.camera);
+            
+            // Get all celestial body meshes
+            const celestialBodies = this.solarSystem.getBodies();
+            const meshes = [];
+            
+            celestialBodies.forEach(body => {
+                if (body.mesh) {
+                    meshes.push(body.mesh);
+                }
+            });
+            
+            // Check for intersections
+            const intersects = raycaster.intersectObjects(meshes);
+            
+            if (intersects.length > 0) {
+                const selectedMesh = intersects[0].object;
+                const selectedBody = celestialBodies.find(body => body.mesh === selectedMesh);
+                
+                if (selectedBody) {
+                    this.showBodyInfo(selectedBody.name);
+                }
+            }
+        });
+    }
+    
+    /**
+     * Show celestial body information in the info panel
+     * @param {string} bodyName - Name of the celestial body
+     */
+    showBodyInfo(bodyName) {
+        this.selectedBody = bodyName;
+        const bodyData = getBodyData(bodyName);
+        
+        // Update info panel content
+        document.getElementById('bodyName').textContent = bodyData.name;
+        document.getElementById('bodyRadius').textContent = bodyData.radius;
+        document.getElementById('bodyMass').textContent = bodyData.mass;
+        document.getElementById('bodyGravity').textContent = bodyData.gravity;
+        document.getElementById('bodyTemp').textContent = bodyData.temperature;
+        document.getElementById('bodyOrbitRadius').textContent = bodyData.orbitRadius;
+        document.getElementById('bodyOrbitPeriod').textContent = bodyData.orbitPeriod;
+        document.getElementById('bodyRotation').textContent = bodyData.rotationPeriod;
+        document.getElementById('bodyDescription').textContent = bodyData.description;
+        
+        // Show the panel
+        this.infoPanel.classList.remove('hidden');
+    }
+    
     focusOnBody(bodyName) {
         const body = this.solarSystem.getBody(bodyName);
         if (body) {
@@ -356,6 +429,9 @@ export default class App {
             if (dropdown) {
                 dropdown.value = bodyName;
             }
+            
+            // Show body info immediately when focusing
+            this.showBodyInfo(bodyName);
             
             const bodyPosition = body.getObject().position.clone();
             

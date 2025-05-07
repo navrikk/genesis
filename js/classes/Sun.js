@@ -1,7 +1,6 @@
 import * as THREE from 'three';
 import CONFIG from '../config.js';
 import { CelestialBody } from './CelestialBody.js';
-import { LabelUtils } from '../utils/LabelUtils.js';
 
 /**
  * Sun class with advanced shader-based visualization
@@ -10,9 +9,7 @@ export class Sun extends CelestialBody {
     constructor() {
         super(CONFIG.SUN.NAME, CONFIG.SUN.RADIUS, 0xFFCC33); // Base yellow color
         this.rotationSpeed = CONFIG.SUN.ROTATION_SPEED;
-        this.label = null;
         this.createMesh();
-        this.createLabel();
     }
 
     createMesh() {
@@ -148,20 +145,6 @@ export class Sun extends CelestialBody {
         }
     }
     
-    /**
-     * Creates a text label for the Sun
-     */
-    createLabel() {
-        // Create a more visible label with larger font size and better contrast
-        this.label = LabelUtils.createLabel(this.name, this.radius, 24, 48, 1.2, 2.0);
-        // Make the label always face the camera and be more visible
-        if (this.label.material) {
-            this.label.material.depthTest = false;
-            this.label.material.opacity = 0.9;
-        }
-        this.objectGroup.add(this.label);
-    }
-
     update(deltaTime) {
         // Sun rotation
         this.mesh.rotation.y += this.rotationSpeed * deltaTime;
@@ -169,16 +152,6 @@ export class Sun extends CelestialBody {
         // Update shader time for animations
         if (this.mesh.material.uniforms && this.mesh.material.uniforms.time) {
             this.mesh.material.uniforms.time.value += deltaTime;
-        }
-    }
-    
-    /**
-     * Toggle the visibility of the label
-     * @param {boolean} visible - Whether the label should be visible
-     */
-    toggleLabel(visible) {
-        if (this.label) {
-            this.label.visible = visible;
         }
     }
 }
