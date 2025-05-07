@@ -22,7 +22,7 @@ export class Moon extends CelestialBody {
         this.sunLight = null;
         this.sunPosition = null;
         this.createMesh();
-        this.createLabel();
+        // Label creation removed
         this.updatePosition();
     }
     
@@ -70,9 +70,8 @@ export class Moon extends CelestialBody {
     }
     
     createLabel() {
-        // Create a more visible label with larger font size
-        this.label = LabelUtils.createLabel(this.name, this.radius, 14, 24, 0.6, 1.2);
-        this.objectGroup.add(this.label);
+        // Label creation disabled
+        // No label will be displayed above the Moon
     }
     
     updateOrbitPath() {
