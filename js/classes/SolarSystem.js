@@ -1,3 +1,5 @@
+import * as THREE from 'three';
+
 /**
  * Manages all celestial bodies in the solar system
  */
@@ -9,6 +11,9 @@ export class SolarSystem {
         this.scene = scene;
         this.celestialBodies = [];
         this.animationEnabled = true;
+        
+        // Add global lighting for all celestial bodies
+        this.setupGlobalLighting();
     }
 
     /**
@@ -98,6 +103,25 @@ export class SolarSystem {
                 body.toggleLabel(visible);
             }
         });
+    }
+    
+    /**
+     * Setup global lighting for the entire scene
+     * This provides moderate lighting for all celestial bodies
+     */
+    setupGlobalLighting() {
+        // Add ambient light for basic illumination
+        const ambientLight = new THREE.AmbientLight(0x404040, 0.5);
+        this.scene.add(ambientLight);
+        
+        // Add directional light for some shadows and highlights
+        const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+        directionalLight.position.set(1, 0.5, 1).normalize();
+        this.scene.add(directionalLight);
+        
+        // Add hemisphere light for better color variation
+        const hemisphereLight = new THREE.HemisphereLight(0xffffbb, 0x080820, 0.5);
+        this.scene.add(hemisphereLight);
     }
     
     /**

@@ -31,28 +31,14 @@ export class Phobos extends CelestialBody {
         const textureLoader = new THREE.TextureLoader();
         const phobosTexture = textureLoader.load('assets/textures/phobos_4k.jpg');
         
-        // Create Phobos geometry
-        const geometry = new THREE.SphereGeometry(this.radius, 32, 32);
-        
-        // Create material with lighting
-        const material = new THREE.MeshPhongMaterial({
+        // Use base class implementation for mesh creation with proper lighting
+        this.createBaseMesh({
             map: phobosTexture,
             bumpMap: phobosTexture,
             bumpScale: 0.02,
-            shininess: 2, // Low shininess for rocky surface
-            specular: new THREE.Color(0x111111) // Low specular for rocky surface
+            shininess: 2,
+            specular: new THREE.Color(0x111111)
         });
-        
-        this.mesh = new THREE.Mesh(geometry, material);
-        this.mesh.castShadow = true;
-        this.mesh.receiveShadow = true;
-        this.mesh.name = this.name;
-        this.objectGroup.add(this.mesh);
-        
-        // Add directional light to simulate sunlight
-        this.sunLight = new THREE.DirectionalLight(0xffffff, 1.5);
-        this.sunLight.position.set(1, 0, 0); // Will be updated in setSunPosition
-        this.objectGroup.add(this.sunLight);
     }
     
     createOrbitPath(scene) {
@@ -134,13 +120,7 @@ export class Phobos extends CelestialBody {
     }
     
     setSunPosition(position) {
-        this.sunPosition = position.clone();
-        
-        // Update the directional light position to match sun direction
-        if (this.sunLight) {
-            const sunDirection = this.sunPosition.clone().sub(this.objectGroup.position).normalize();
-            this.sunLight.position.copy(sunDirection);
-        }
+        super.setSunPosition(position);
     }
     
     /**

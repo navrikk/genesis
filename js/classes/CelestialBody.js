@@ -18,16 +18,41 @@ export class CelestialBody {
     }
 
     /**
-     * Creates the 3D mesh for this celestial body
-     * To be implemented by subclasses
+     * Creates the 3D mesh for this celestial body with proper lighting setup
+     * @param {Object} options - Options for mesh creation
+     * @param {THREE.Texture} options.map - Base color texture
+     * @param {THREE.Texture} [options.normalMap] - Normal map texture
+     * @param {THREE.Texture} [options.specularMap] - Specular map texture
+     * @param {THREE.Texture} [options.bumpMap] - Bump map texture
+     * @param {number} [options.bumpScale=0.02] - Bump scale
+     * @param {number} [options.shininess=5] - Material shininess
+     * @param {THREE.Color} [options.specular] - Specular color
      */
-    createMesh() {
-        // Example: Basic sphere
+    createBaseMesh(options) {
         const geometry = new THREE.SphereGeometry(this.radius, 64, 64);
-        const material = new THREE.MeshBasicMaterial({ color: this.primaryColor });
+        
+        // Create material with moderate lighting
+        const materialOptions = {
+            map: options.map,
+            normalMap: options.normalMap,
+            specularMap: options.specularMap,
+            bumpMap: options.bumpMap,
+            bumpScale: options.bumpScale || 0.02,
+            shininess: options.shininess || 5,
+            specular: options.specular || new THREE.Color(0x111111)
+        };
+        
+        const material = new THREE.MeshPhongMaterial(materialOptions);
+        
         this.mesh = new THREE.Mesh(geometry, material);
+        this.mesh.castShadow = true;
+        this.mesh.receiveShadow = true;
         this.mesh.name = this.name;
         this.objectGroup.add(this.mesh);
+        
+        // Add ambient light for moderate illumination
+        const ambientLight = new THREE.AmbientLight(0x404040, 0.5);
+        this.objectGroup.add(ambientLight);
     }
 
     /**
@@ -61,9 +86,7 @@ export class CelestialBody {
      * @param {THREE.Vector3} position - Position of the sun
      */
     setSunPosition(position) {
-        this.sunPosition = position.clone();
-        
-        // Update shader uniforms if they exist
+        // Only update shader uniforms if they exist (for custom shaders)
         if (this.mesh && this.mesh.material && this.mesh.material.uniforms && 
             this.mesh.material.uniforms.sunPosition) {
             this.mesh.material.uniforms.sunPosition.value.copy(position);

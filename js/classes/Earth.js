@@ -27,18 +27,16 @@ export class Earth extends CelestialBody {
     }
     
     setSunPosition(position) {
-        this.sunPosition = position.clone();
+        super.setSunPosition(position);
         
-        // Update shader uniforms if available
-        if (this.mesh && this.mesh.material && this.mesh.material.uniforms) {
-            this.mesh.material.uniforms.sunPosition.value.copy(position);
+        // Set fixed cloud opacity
+        if (this.cloudsMesh && this.cloudsMesh.material) {
+            this.cloudsMesh.material.opacity = 0.4;
         }
-        
-
         
         // Update moon's sun position
         if (this.moon) {
-            this.moon.setSunPosition(this.sunPosition);
+            this.moon.setSunPosition(position);
         }
     }
 
@@ -50,27 +48,15 @@ export class Earth extends CelestialBody {
         const earthNormalMap = textureLoader.load('assets/textures/earth_normal_8k.jpg');
         const earthSpecularMap = textureLoader.load('assets/textures/earth_specular_8k.jpg');
         
-        // Create Earth geometry
-        const geometry = new THREE.SphereGeometry(this.radius, 64, 64);
-        
-        // Create material with lighting
-        const material = new THREE.MeshPhongMaterial({
+        // Use base class implementation for mesh creation with proper lighting
+        this.createBaseMesh({
             map: earthDayTexture,
             normalMap: earthNormalMap,
             normalScale: new THREE.Vector2(0.05, 0.05),
             specularMap: earthSpecularMap,
-            shininess: 5, // Reduced shininess for more matte appearance
-            specular: new THREE.Color(0x111111), // Reduced specular highlights
-            emissive: new THREE.Color(0x000000), // No self-emission
-            emissiveIntensity: 0,
-            aoMapIntensity: 1.0 // Ambient occlusion intensity
+            shininess: 5,
+            specular: new THREE.Color(0x111111)
         });
-        
-        this.mesh = new THREE.Mesh(geometry, material);
-        this.mesh.castShadow = true;
-        this.mesh.receiveShadow = true;
-        this.mesh.name = this.name;
-        this.objectGroup.add(this.mesh);
         
         // Add cloud layer as a slightly larger sphere
         const cloudsGeometry = new THREE.SphereGeometry(this.radius * 1.01, 64, 64);
@@ -82,14 +68,14 @@ export class Earth extends CelestialBody {
             specular: new THREE.Color(0x111111),
             emissive: new THREE.Color(0x000000),
             emissiveIntensity: 0,
-            blending: THREE.NormalBlending // Changed from additive to normal blending
+            blending: THREE.NormalBlending
         });
         
         this.cloudsMesh = new THREE.Mesh(cloudsGeometry, cloudsMaterial);
+        this.cloudsMesh.castShadow = true;
+        this.cloudsMesh.receiveShadow = true;
         this.cloudsMesh.name = this.name + "Clouds";
         this.objectGroup.add(this.cloudsMesh);
-        
-        // No local directional light - lighting should come from the scene's sun
     }
 
     createLabel() {
