@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import LightingUtils from '../utils/LightingUtils.js';
 
 /**
  * Base class for all celestial bodies in the solar system
@@ -8,11 +9,14 @@ export class CelestialBody {
      * @param {string} name - Name of the celestial body
      * @param {number} radius - Radius in scene units
      * @param {number} primaryColor - Primary color as a hex value
+     * @param {boolean} isEmissive - Whether the body is emissive
+     * @param {THREE.Geometry} customGeometry - Optional custom geometry
      */
-    constructor(name, radius, primaryColor = 0xffffff) {
+    constructor(name, radius, primaryColor, isEmissive = false, customGeometry = null, ambientLightIntensity = 1.0) { // Default ambient intensity
         this.name = name;
         this.radius = radius;
         this.primaryColor = primaryColor;
+        this.ambientLightIntensity = ambientLightIntensity; // Store it
         this.mesh = null;
         this.objectGroup = new THREE.Group(); // Group to hold mesh and any effects
     }
@@ -27,32 +31,82 @@ export class CelestialBody {
      * @param {number} [options.bumpScale=0.02] - Bump scale
      * @param {number} [options.shininess=5] - Material shininess
      * @param {THREE.Color} [options.specular] - Specular color
+     * @param {THREE.Geometry} [customGeometry] - Optional custom geometry
      */
-    createBaseMesh(options) {
-        const geometry = new THREE.SphereGeometry(this.radius, 64, 64);
+    createBaseMesh(options, customGeometry = null) {
+        let geometry, material;
+
+        // Check if 'options' is actual geometry and 'customGeometry' is a pre-made material (our debug case)
+        if (options instanceof THREE.BufferGeometry && customGeometry instanceof THREE.Material) {
+            console.log(`[${this.name}] Using pre-supplied geometry and material for debug (geometry from 1st arg, material from 2nd arg).`);
+            geometry = options;     // 'options' (1st arg) is the geometry
+            material = customGeometry; // 'customGeometry' (2nd arg) is the material
+        } else if (customGeometry) {
+            // Standard case: custom geometry provided, create material from options object
+            console.log(`[${this.name}] Using custom geometry, creating material from options.`);
+            geometry = customGeometry;
+            const isEmissive = options.isEmissive || false;
+            const materialParams = {
+                map: options.map,
+                bumpMap: options.bumpMap,
+                bumpScale: options.bumpScale || 0.01,
+                baseColor: options.baseColor || new THREE.Color(0x333333),
+                emissive: isEmissive
+            };
+            if (options.normalMap) {
+                materialParams.normalMap = options.normalMap;
+            }
+            material = LightingUtils.createNaturalLightingMaterial(materialParams);
+        } else {
+            // Default case: no custom geometry, create sphere and material from options object
+            console.log(`[${this.name}] Creating default sphere geometry, creating material from options.`);
+            geometry = new THREE.SphereGeometry(this.radius, 32, 32);
+            const isEmissive = options.isEmissive || false;
+            const materialParams = {
+                map: options.map,
+                bumpMap: options.bumpMap,
+                bumpScale: options.bumpScale || 0.01,
+                baseColor: options.baseColor || new THREE.Color(0x333333),
+                emissive: isEmissive
+            };
+            if (options.normalMap) {
+                materialParams.normalMap = options.normalMap;
+            }
+            material = LightingUtils.createNaturalLightingMaterial(materialParams);
+        }
         
-        // Create material with moderate lighting
-        const materialOptions = {
-            map: options.map,
-            normalMap: options.normalMap,
-            specularMap: options.specularMap,
-            bumpMap: options.bumpMap,
-            bumpScale: options.bumpScale || 0.02,
-            shininess: options.shininess || 5,
-            specular: options.specular || new THREE.Color(0x111111)
-        };
-        
-        const material = new THREE.MeshPhongMaterial(materialOptions);
-        
+        console.log(`[${this.name}] In createBaseMesh:`);
+        console.log(`  - Geometry type: ${geometry ? geometry.type : 'undefined'}`);
+        console.log(`  - Geometry UUID: ${geometry ? geometry.uuid : 'undefined'}`);
+        console.log(`  - Geometry parameters (if SphereGeometry):`, geometry && geometry.parameters ? geometry.parameters : 'N/A or not SphereGeometry');
+        console.log(`  - Material type: ${material ? material.type : 'undefined'}`);
+        console.log(`  - Material UUID: ${material ? material.uuid : 'undefined'}`);
+        console.log(`  - this.radius: ${this.radius}`);
+
+        if (!geometry) {
+            console.error(`[${this.name}] FATAL: Geometry is undefined in createBaseMesh!`);
+            // Optionally, create a tiny fallback cube to prevent further errors down the line
+            geometry = new THREE.BoxGeometry(0.001, 0.001, 0.001); 
+        }
+        if (!material) {
+            console.error(`[${this.name}] FATAL: Material is undefined in createBaseMesh!`);
+            material = new THREE.MeshBasicMaterial({ color: 0xff0000, wireframe: true });
+        }
+
         this.mesh = new THREE.Mesh(geometry, material);
-        this.mesh.castShadow = true;
-        this.mesh.receiveShadow = true;
+        this.mesh.castShadow = false; // Disable shadows for better visibility
+        this.mesh.receiveShadow = true; // But do receive shadows for natural appearance
         this.mesh.name = this.name;
         this.objectGroup.add(this.mesh);
+        this.addLighting();
         
-        // Add ambient light for moderate illumination
-        const ambientLight = new THREE.AmbientLight(0x404040, 0.5);
-        this.objectGroup.add(ambientLight);
+    }
+
+    addLighting() {
+        // Add ambient lighting based on the body's specified intensity
+        if (!this.isEmissive) {
+            LightingUtils.addAmbientLight(this.objectGroup, this.ambientLightIntensity);
+        }
     }
 
     /**
@@ -86,7 +140,27 @@ export class CelestialBody {
      * @param {THREE.Vector3} position - Position of the sun
      */
     setSunPosition(position) {
-        // This method is kept for compatibility but no longer updates lighting
+        // Update the material to ensure shine only appears on the side facing the Sun
+        if (this.mesh && this.mesh.material) {
+            // Create a directional light that points from the sun to this object
+            const sunDirection = new THREE.Vector3()
+                .subVectors(this.objectGroup.position, position)
+                .normalize();
+            
+            // Update the material's light direction
+            if (!this.mesh.material.userData.sunDirection) {
+                this.mesh.material.userData.sunDirection = new THREE.Vector3();
+            }
+            this.mesh.material.userData.sunDirection.copy(sunDirection);
+            
+            // Reduce specular intensity based on angle to sun (only shine on sun-facing side)
+            if (this.mesh.material.specular) {
+                // Store original specular color if not already stored
+                if (!this.mesh.material.userData.originalSpecular) {
+                    this.mesh.material.userData.originalSpecular = this.mesh.material.specular.clone();
+                }
+            }
+        }
     }
     
     /**

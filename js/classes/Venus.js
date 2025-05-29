@@ -11,7 +11,7 @@ export class Venus extends CelestialBody {
      * @param {THREE.Vector3} sunPosition - Position of the sun
      */
     constructor(sunPosition = new THREE.Vector3(0, 0, 0)) {
-        super('Venus', CONFIG.VENUS.RADIUS, CONFIG.VENUS.COLOR);
+        super(CONFIG.VENUS.NAME, CONFIG.VENUS.RADIUS, CONFIG.VENUS.COLOR, false, null, 2.2); // isEmissive, customGeometry, ambientLightIntensity
         this.sunPosition = sunPosition;
         this.orbitRadius = CONFIG.VENUS.ORBIT_RADIUS;
         this.orbitSpeed = CONFIG.VENUS.ORBIT_SPEED;

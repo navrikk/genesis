@@ -11,7 +11,7 @@ export class Mars extends CelestialBody {
      * @param {THREE.Vector3} sunPosition - Position of the sun
      */
     constructor(sunPosition = new THREE.Vector3(0, 0, 0)) {
-        super('Mars', CONFIG.MARS.RADIUS, CONFIG.MARS.COLOR);
+        super(CONFIG.MARS.NAME, CONFIG.MARS.RADIUS, CONFIG.MARS.COLOR, false, null, 2.2); // isEmissive, customGeometry, ambientLightIntensity
         this.sunPosition = sunPosition;
         this.orbitRadius = CONFIG.MARS.ORBIT_RADIUS;
         this.orbitSpeed = CONFIG.MARS.ORBIT_SPEED;
@@ -41,12 +41,12 @@ export class Mars extends CelestialBody {
             specular: new THREE.Color(0x222222)
         });
         
-        // Add atmospheric glow effect
-        const atmosphereGeometry = new THREE.SphereGeometry(this.radius * 1.025, 64, 64);
+        // Add subtle atmospheric effect - Mars has a very thin atmosphere
+        const atmosphereGeometry = new THREE.SphereGeometry(this.radius * 1.015, 64, 64);
         const atmosphereMaterial = new THREE.MeshPhongMaterial({
-            color: new THREE.Color(0xff6644),
+            color: new THREE.Color(0xff9977), // Adjusted to more accurate dusty reddish-orange
             transparent: true,
-            opacity: 0.1,
+            opacity: 0.05, // Much more subtle than before
             side: THREE.BackSide,
             blending: THREE.AdditiveBlending
         });
@@ -76,6 +76,7 @@ export class Mars extends CelestialBody {
         
         orbitGeometry.setFromPoints(points);
         this.orbitPath = new THREE.Line(orbitGeometry, orbitMaterial);
+        this.orbitPath.position.copy(this.sunPosition); // Center orbit path on Sun
         
         if (scene) {
             scene.add(this.orbitPath);
@@ -99,12 +100,14 @@ export class Mars extends CelestialBody {
             this.updatePosition();
             
             // Update orbit path position
+            // Update orbit path position (in case sunPosition could change)
             if (this.orbitPath) {
-                this.orbitPath.position.set(0, 0, 0);
+                this.orbitPath.position.copy(this.sunPosition);
             }
             
             // Update moons if they exist
             if (this.moons.length > 0) {
+                console.log(`[Mars] Position: X=${this.objectGroup.position.x.toFixed(2)}, Y=${this.objectGroup.position.y.toFixed(2)}, Z=${this.objectGroup.position.z.toFixed(2)}`);
                 this.moons.forEach(moon => {
                     moon.updateParentPosition(this.objectGroup.position);
                     moon.setSunPosition(this.sunPosition);

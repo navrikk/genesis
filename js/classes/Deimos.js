@@ -1,18 +1,21 @@
 import * as THREE from 'three';
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import CONFIG from '../config.js';
 import { CelestialBody } from './CelestialBody.js';
+
+import LightingUtils from '../utils/LightingUtils.js';
 
 /**
  * Deimos class representing Mars' smaller moon
  * Deimos is highly irregular in shape with dimensions of 15 × 12.2 × 11 km
- * and has a more rounded appearance than Phobos
+ * and has a smoother surface than Phobos
  */
 export class Deimos extends CelestialBody {
     /**
      * @param {THREE.Vector3} parentPosition - Position of Mars
      */
     constructor(parentPosition = new THREE.Vector3(0, 0, 0)) {
-        super(CONFIG.DEIMOS.NAME, CONFIG.DEIMOS.RADIUS, CONFIG.DEIMOS.COLOR);
+        super(CONFIG.DEIMOS.NAME, CONFIG.DEIMOS.RADIUS, CONFIG.DEIMOS.COLOR, false, null, 0.02); // Further reduced ambientLightIntensity, isEmissive, customGeometry (sphere), ambientLightIntensity
         this.parentPosition = parentPosition;
         this.orbitRadius = CONFIG.DEIMOS.ORBIT_RADIUS;
         this.orbitSpeed = CONFIG.DEIMOS.ORBIT_SPEED;
@@ -20,248 +23,148 @@ export class Deimos extends CelestialBody {
         this.orbitAngle = Math.random() * Math.PI * 2; // Random starting position
         this.orbitPath = null;
         this.createMesh();
-        this.updatePosition();
+        this.updatePosition(); // Ensure initial position is set
     }
     
     createMesh() {
-        // Create procedural textures for Deimos
-        const textureSize = 1024;
-        
-        // Create base color texture with smoother surface (Deimos is smoother than Phobos)
-        const colorData = new Uint8Array(textureSize * textureSize * 4);
-        const bumpData = new Uint8Array(textureSize * textureSize * 4);
-        
-        // Generate realistic moon surface
-        for (let i = 0; i < textureSize; i++) {
-            for (let j = 0; j < textureSize; j++) {
-                const index = (i * textureSize + j) * 4;
-                
-                // Improved base color - more accurate to Deimos' grayish appearance
-                let r = 190 + Math.random() * 35;
-                let g = 180 + Math.random() * 30;
-                let b = 170 + Math.random() * 30;
-                
-                // Add coherent noise patterns for more realistic surface texture
-                // Deimos has a smoother surface than Phobos but still has some texture
-                const noiseX = Math.sin(i * 0.08) * Math.cos(j * 0.07) * 15;
-                const noiseY = Math.cos(i * 0.12) * Math.sin(j * 0.09) * 10;
-                const randomNoise = Math.random() * 10 - 5;
-                const noise = noiseX + noiseY + randomNoise;
-                
-                r = Math.max(0, Math.min(255, r + noise));
-                g = Math.max(0, Math.min(255, g + noise));
-                b = Math.max(0, Math.min(255, b + noise));
-                
-                // Add more realistic craters for Deimos
-                // Deimos has fewer, more eroded craters than Phobos
-                
-                // Add a few larger craters
-                for (let c = 0; c < 3; c++) {
-                    const craterX = Math.random() * textureSize;
-                    const craterY = Math.random() * textureSize;
-                    const craterRadius = 40 + Math.random() * 60;
-                    const distToCrater = Math.sqrt(Math.pow(i - craterX, 2) + Math.pow(j - craterY, 2));
-                    
-                    if (distToCrater < craterRadius) {
-                        // More subtle, eroded crater rim
-                        if (distToCrater > craterRadius * 0.85) {
-                            const rimIntensity = 1.0 - ((distToCrater - craterRadius * 0.85) / (craterRadius * 0.15));
-                            r = Math.min(255, r + 20 * rimIntensity);
-                            g = Math.min(255, g + 20 * rimIntensity);
-                            b = Math.min(255, b + 20 * rimIntensity);
-                        } 
-                        // Smoother crater bowl
-                        else if (distToCrater < craterRadius * 0.7) {
-                            const depth = Math.pow(1.0 - (distToCrater / (craterRadius * 0.7)), 0.5); // Smoother falloff
-                            r = Math.max(0, r - 25 * depth);
-                            g = Math.max(0, g - 25 * depth);
-                            b = Math.max(0, b - 25 * depth);
-                        }
-                    }
-                }
-                
-                // Add more numerous smaller craters
-                for (let c = 0; c < 25; c++) {
-                    const craterX = Math.random() * textureSize;
-                    const craterY = Math.random() * textureSize;
-                    const craterRadius = 3 + Math.random() * 20; // Smaller craters
-                    const distToCrater = Math.sqrt(Math.pow(i - craterX, 2) + Math.pow(j - craterY, 2));
-                    
-                    if (distToCrater < craterRadius) {
-                        // Subtle rim for small craters
-                        if (distToCrater > craterRadius * 0.8) {
-                            const rimIntensity = 1.0 - ((distToCrater - craterRadius * 0.8) / (craterRadius * 0.2));
-                            r = Math.min(255, r + 15 * rimIntensity);
-                            g = Math.min(255, g + 15 * rimIntensity);
-                            b = Math.min(255, b + 15 * rimIntensity);
-                        } 
-                        // Shallow crater center
-                        else if (distToCrater < craterRadius * 0.6) {
-                            const depth = Math.pow(1.0 - (distToCrater / (craterRadius * 0.6)), 0.5);
-                            r = Math.max(0, r - 20 * depth);
-                            g = Math.max(0, g - 20 * depth);
-                            b = Math.max(0, b - 20 * depth);
-                        }
-                    }
-                }
-                
-                // Set color data
-                colorData[index] = r;
-                colorData[index + 1] = g;
-                colorData[index + 2] = b;
-                colorData[index + 3] = 255; // Alpha
-                
-                // Enhanced bump mapping for Deimos - smoother than Phobos but with subtle details
-                // Calculate base bump value with weighted color channels
-                const bumpValue = (r * 0.4 + g * 0.4 + b * 0.2) / 10;
-                
-                // Add subtle detail to the bump map
-                // Use lower frequency noise for a smoother appearance
-                const bumpDetail = Math.sin(i * 0.1) * Math.cos(j * 0.1) * 5 + 
-                                  Math.sin(i * 0.05 + j * 0.03) * 8;
-                
-                // Combine with less intensity than Phobos for a smoother appearance
-                const finalBumpValue = Math.max(0, Math.min(255, bumpValue + bumpDetail * 0.7));
-                
-                bumpData[index] = finalBumpValue;
-                bumpData[index + 1] = finalBumpValue;
-                bumpData[index + 2] = finalBumpValue;
-                bumpData[index + 3] = 255;
+        // Deimos actual dimensions (approximate): 15 km x 12.2 km x 11 km
+        // We will use this.radius (derived from CONFIG.DEIMOS.DIAMETER_KM) for a sphere representation.
+        const geometry = new THREE.SphereGeometry(this.radius, 32, 32);
+
+        const textureLoader = new THREE.TextureLoader();
+        const deimosTextureUrl = '/assets/textures/deimos_nasa_texture.jpg'; // Ensure this texture exists
+
+        textureLoader.load(
+            deimosTextureUrl,
+            (deimosTexture) => { // Success callback
+                console.log(`[${this.name}] Applying Deimos texture.`);
+                const material = LightingUtils.createNaturalLightingMaterial({
+                    map: deimosTexture,
+                    ambientLightIntensity: this.ambientLightIntensity,
+                });
+                this.createBaseMesh(geometry, material);
+            },
+            undefined, // onProgress callback (optional)
+            (error) => { // onError callback
+                console.error(`[${this.name}] Error loading texture from ${deimosTextureUrl}:`, error);
+                console.log(`[${this.name}] Texture load error. Applying fallback material.`);
+                const fallbackMaterial = new THREE.MeshLambertMaterial({ color: this.primaryColor || 0x777777 });
+                this.createBaseMesh(geometry, fallbackMaterial);
             }
-        }
-        
-        // Create textures from data
-        const colorTexture = new THREE.DataTexture(colorData, textureSize, textureSize, THREE.RGBAFormat);
-        colorTexture.wrapS = THREE.RepeatWrapping;
-        colorTexture.wrapT = THREE.RepeatWrapping;
-        colorTexture.needsUpdate = true;
-        
-        const bumpTexture = new THREE.DataTexture(bumpData, textureSize, textureSize, THREE.RGBAFormat);
-        bumpTexture.wrapS = THREE.RepeatWrapping;
-        bumpTexture.wrapT = THREE.RepeatWrapping;
-        bumpTexture.needsUpdate = true;
-        
-        // Use base class implementation with our procedural textures
-        this.createBaseMesh({
-            map: colorTexture,
-            bumpMap: bumpTexture,
-            bumpScale: 0.08,    // Slightly less pronounced than Phobos
-            shininess: 7,       // Slightly more reflective than Phobos
-            specular: new THREE.Color(0x666666)  // Subtle specular highlights
-        });
-        
-        // Add directional light to enhance surface features
-        const directionalLight = new THREE.DirectionalLight(0xffffff, 1.0);
-        directionalLight.position.set(5, 5, 5);
-        this.objectGroup.add(directionalLight);
-        
-        // Add point light for general illumination
-        const pointLight = new THREE.PointLight(0xffffff, 1.0, 20);
-        pointLight.position.set(0, 0, 0);
-        this.objectGroup.add(pointLight);
-        
-        // Add ambient light to ensure visibility
-        const ambientLight = new THREE.AmbientLight(0xffffff, 0.4);
-        this.objectGroup.add(ambientLight);
+        );
     }
+
+    // createFallbackSphereMesh method removed as GLTF loading is removed.
     
-    createOrbitPath(scene) {
-        const orbitGeometry = new THREE.BufferGeometry();
-        const orbitMaterial = new THREE.LineBasicMaterial({ 
-            color: this.primaryColor,
-            opacity: 0.5,
-            transparent: true
-        });
-        
-        // Create a circle in 3D space with proper inclination
-        const inclination = 1.79 * Math.PI / 180;
-        const points = [];
-        const segments = 64;
-        
-        for (let i = 0; i <= segments; i++) {
-            const theta = (i / segments) * Math.PI * 2;
-            const x = Math.cos(theta) * this.orbitRadius;
-            const y = Math.sin(theta) * this.orbitRadius * Math.sin(inclination);
-            const z = Math.sin(theta) * this.orbitRadius * Math.cos(inclination);
-            points.push(new THREE.Vector3(x, y, z));
-        }
-        
-        orbitGeometry.setFromPoints(points);
-        this.orbitPath = new THREE.Line(orbitGeometry, orbitMaterial);
-        this.orbitPath.position.copy(this.parentPosition);
-        scene.add(this.orbitPath);
-    }
-    
-    // Label creation has been removed
-    
-    updateOrbitPath() {
-        if (this.orbitPath) {
-            this.orbitPath.position.copy(this.parentPosition);
-        }
-    }
-    
-    update(deltaTime, animate = true) {
-        if (animate) {
-            // Update orbit position
+    /**
+     * Update the position based on orbit around Mars
+     * @param {number} deltaTime - Time since last frame in seconds
+     * @param {boolean} animate - Whether to animate the moon
+     */
+    update(deltaTime = 0, animate = true) {
+        if (animate && deltaTime) {
+            // Update orbit angle based on orbit speed (slower than Phobos)
             this.orbitAngle += this.orbitSpeed * deltaTime;
+            if (this.orbitAngle > Math.PI * 2) {
+                this.orbitAngle -= Math.PI * 2;
+            }
             
-            // Update rotation
-            this.mesh.rotation.y += this.rotationSpeed * deltaTime;
+            // Apply rotation around own axis
+            if (this.mesh) {
+                this.mesh.rotation.y += this.rotationSpeed * deltaTime;
+            }
             
             // Update position
             this.updatePosition();
-            
-            // Update orbit path position
-            this.updateOrbitPath();
         }
     }
     
+    /**
+     * Update the position based on current orbit angle
+     */
     updatePosition() {
-        // Deimos's orbital inclination is 1.79 degrees to Mars's equator
-        const inclination = 1.79 * Math.PI / 180;
-        
-        // Calculate position with inclination
+        // Calculate position based on orbit angle
         const x = Math.cos(this.orbitAngle) * this.orbitRadius;
-        const y = Math.sin(this.orbitAngle) * this.orbitRadius * Math.sin(inclination);
-        const z = Math.sin(this.orbitAngle) * this.orbitRadius * Math.cos(inclination);
+        const z = Math.sin(this.orbitAngle) * this.orbitRadius;
         
+        // Update position relative to Mars
         this.objectGroup.position.set(
             this.parentPosition.x + x,
-            this.parentPosition.y + y,
+            this.parentPosition.y,
             this.parentPosition.z + z
         );
     }
     
-    setSunPosition(position) {
-        super.setSunPosition(position);
-    }
-    
     /**
-     * Toggle visibility of the orbit path
-     * @param {boolean} visible - Whether the orbit path should be visible
+     * Update the parent planet's position
+     * @param {THREE.Vector3} position - New parent position
      */
-    toggleOrbitPath(visible) {
+    updateParentPosition(position) {
+        this.parentPosition.copy(position);
         if (this.orbitPath) {
-            this.orbitPath.visible = visible;
+            this.orbitPath.position.copy(this.parentPosition); // Update orbit path position when parent moves
         }
     }
     
     /**
-     * Toggle visibility of the label (placeholder for backward compatibility)
-     * @param {boolean} visible - Whether the label should be visible
+     * Set the sun position (used for lighting effects)
+     * @param {THREE.Vector3} position - Sun position
      */
-    toggleLabel(visible) {
-        // Labels have been removed, this is just a placeholder for compatibility
+    setSunPosition(position) {
+        // We're using the base class implementation which doesn't need this
+        // but we need to implement it for compatibility with Mars.js
     }
     
-    // Update the parent position (when Mars moves)
-    updateParentPosition(newPosition) {
-        this.parentPosition.copy(newPosition);
-        this.updatePosition();
+    /**
+     * Get the orbit path for external use
+     * @returns {THREE.Line} The orbit path visualization
+     */
+    getOrbitPath() {
+        return this.orbitPath;
+    }
+    
+    /**
+     * Creates an orbit path visualization and adds it to the scene
+     * @param {THREE.Scene} scene - Scene to add the orbit path to
+     */
+    createOrbitPath(scene) {
+        // Create the orbit path visualization
+        const orbitGeometry = new THREE.BufferGeometry();
+        const orbitMaterial = new THREE.LineBasicMaterial({
+            color: 0xaaaaaa,
+            opacity: 0.5,
+            transparent: true
+        });
         
-        // Update orbit path position
+        // Create orbit path with a resolution of 128 segments
+        const orbitPoints = [];
+        for (let i = 0; i <= 128; i++) {
+            const angle = (i / 128) * Math.PI * 2;
+            orbitPoints.push(
+                Math.cos(angle) * this.orbitRadius,
+                0,
+                Math.sin(angle) * this.orbitRadius
+            );
+        }
+        
+        orbitGeometry.setAttribute('position', new THREE.Float32BufferAttribute(orbitPoints, 3));
+        this.orbitPath = new THREE.Line(orbitGeometry, orbitMaterial);
+        this.orbitPath.position.copy(this.parentPosition); // Set orbit path position to parent's position
+        scene.add(this.orbitPath);
+        
+        return this.orbitPath;
+    }
+
+    /**
+     * Toggles the visibility of the orbit path.
+     * @param {boolean} visible - Whether the orbit path should be visible.
+     */
+    toggleOrbitPath(visible) {
         if (this.orbitPath) {
-            this.orbitPath.position.copy(this.parentPosition);
+            this.orbitPath.visible = visible;
+            console.log(`[${this.name}] Orbit path visibility set to: ${visible}`);
+        } else {
+            console.warn(`[${this.name}] Attempted to toggle orbit path, but orbitPath is null.`);
         }
     }
 }

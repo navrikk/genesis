@@ -10,7 +10,7 @@ export class Mercury extends CelestialBody {
      * @param {THREE.Vector3} sunPosition - Position of the sun
      */
     constructor(sunPosition = new THREE.Vector3(0, 0, 0)) {
-        super('Mercury', CONFIG.MERCURY.RADIUS, CONFIG.MERCURY.COLOR);
+        super(CONFIG.MERCURY.NAME, CONFIG.MERCURY.RADIUS, CONFIG.MERCURY.COLOR, false, null, 2.2); 
         this.sunPosition = sunPosition;
         this.orbitRadius = CONFIG.MERCURY.ORBIT_RADIUS;
         this.orbitSpeed = CONFIG.MERCURY.ORBIT_SPEED;

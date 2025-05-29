@@ -50,11 +50,12 @@ export default class App {
         this.userPanned = false; 
         this.userControlActive = false; 
         this.lastUserInteractionTime = 0; 
-        this.userControlTimeout = 5000; 
+        this.userControlTimeout = 200; // Reduced for faster re-lock
         this.userCameraPosition = null; 
         this.userControlsTarget = null; 
         this.currentAnimation = null; 
-        
+        this.isSimulationPaused = false; // Flag to control simulation updates
+
         // Info panel state
         this.selectedBody = null;
         this.infoPanel = null;
@@ -63,7 +64,28 @@ export default class App {
         this.soundtrack = null;
         this.isMuted = false;
 
+        // Time controls
+        this.timeControlsPanel = null;
+        this.playPauseButton = null;
+        this.timeSeeker = null;
+        this.goToTodayButton = null;
+
         this.init();
+    }
+
+    setupPostProcessing() {
+        this.composer = new EffectComposer(this.renderer);
+        const renderPass = new RenderPass(this.scene, this.camera);
+        this.composer.addPass(renderPass);
+
+        this.bloomPass = new UnrealBloomPass(
+            new THREE.Vector2(window.innerWidth, window.innerHeight),
+            CONFIG.BLOOM_EFFECT.strength, 
+            CONFIG.BLOOM_EFFECT.radius, 
+            CONFIG.BLOOM_EFFECT.threshold 
+        );
+        this.composer.addPass(this.bloomPass);
+        console.log('Post-processing setup complete with bloom effect.');
     }
 
     init() {
@@ -94,10 +116,11 @@ export default class App {
 
         // OrbitControls setup
         this.controls = new OrbitControls(this.camera, this.renderer.domElement);
+        this.controls.update(); // Update OrbitControls
         this.controls.enableDamping = true;
         this.controls.dampingFactor = 0.05;
         this.controls.screenSpacePanning = false;
-        this.controls.minDistance = 0.1; 
+        this.controls.minDistance = 0.00001; // Significantly reduced for extreme close-ups on tiny objects
         this.controls.maxDistance = CONFIG.STARFIELD.RADIUS / 10; 
         
         // Add event listeners for user interaction
@@ -188,10 +211,24 @@ export default class App {
         }
 
         // Create Starfield
-        this.starfield = new Starfield(this.scene);
-        if (this.starfield.stars) {
-            if (this.starfield.stars.material) this.materialsToDispose.push(this.starfield.stars.material);
-            if (this.starfield.stars.geometry) this.geometriesToDispose.push(this.starfield.stars.geometry);
+        this.starfield = new Starfield(this.scene, CONFIG.STARFIELD.RADIUS, CONFIG.STARFIELD.COUNT, CONFIG.STARFIELD.MIN_SIZE, CONFIG.STARFIELD.MAX_SIZE);
+        this.materialsToDispose.push(this.starfield.material);
+        this.geometriesToDispose.push(this.starfield.geometry);
+
+        // Time Controls UI
+        this.timeControlsPanel = document.getElementById('timeControlsPanel');
+        this.playPauseButton = document.getElementById('playPauseButton');
+        this.timeSeeker = document.getElementById('timeSeeker'); // Will be used later
+        this.goToTodayButton = document.getElementById('goToTodayButton'); // Will be used later
+
+        if (this.playPauseButton) {
+            this.playPauseButton.addEventListener('click', () => {
+                // Only allow play/pause if Sun is focused, as other bodies force pause
+                if (this.focusedBody && this.focusedBody.name === 'Sun') {
+                    this.isSimulationPaused = !this.isSimulationPaused;
+                    this.updatePlayPauseButtonState();
+                }
+            });
         }
 
         // Post-processing for Bloom Effect (Sun Glow)
@@ -209,8 +246,18 @@ export default class App {
         // Hide loading screen and start animation
         document.getElementById('loadingScreen').style.display = 'none';
         this.animate();
+    }
 
-        console.log("Solar System Initialized. Scene graph:", this.scene);
+    onWindowResize() {
+        if (this.camera && this.renderer) {
+            this.camera.aspect = window.innerWidth / window.innerHeight;
+            this.camera.updateProjectionMatrix();
+            this.renderer.setSize(window.innerWidth, window.innerHeight);
+            if (this.composer) {
+                this.composer.setSize(window.innerWidth, window.innerHeight);
+            }
+            console.log('Window resized, updated camera and renderer/composer.');
+        }
     }
     
     setupUIControls() {
@@ -384,6 +431,16 @@ export default class App {
         // Zoom buttons have been removed
     }
     
+    updatePlayPauseButtonState() {
+        if (!this.playPauseButton) return;
+
+        if (this.isSimulationPaused) {
+            this.playPauseButton.innerHTML = '<i class="fas fa-play"></i> Play';
+        } else {
+            this.playPauseButton.innerHTML = '<i class="fas fa-pause"></i> Pause';
+        }
+    }
+
     /**
      * Setup object selection with raycaster
      */
@@ -472,131 +529,62 @@ export default class App {
                 cancelAnimationFrame(this.currentAnimation);
                 this.currentAnimation = null;
             }
-            
+
             this.focusedBody = body;
-            
-            this.userControlActive = false;
-            this.userCameraPosition = null;
-            this.userControlsTarget = null;
-            
-            const dropdown = document.getElementById('focusDropdown');
-            if (dropdown) {
-                dropdown.value = bodyName;
-            }
-            
-            // Show body info immediately when focusing
-            this.showBodyInfo(bodyName);
-            
-            const bodyPosition = body.getObject().position.clone();
-            
+            this.userControlActive = false; // Reset user control flag
+
+            // Get the world position of the body's visual object group
+            const bodyObject = body.getObject();
+            if (!bodyObject) return; // Should not happen if body exists
+            const bodyPosition = bodyObject.getWorldPosition(new THREE.Vector3());
+
+            // IMPORTANT: Set OrbitControls target immediately
+            this.controls.target.copy(bodyPosition);
+
             const fovRadians = THREE.MathUtils.degToRad(this.camera.fov);
-            
-            let screenRatio;
-            if (bodyName === 'Sun') {
-                screenRatio = 0.4; 
-            } else if (bodyName === 'Mercury') {
-                screenRatio = 0.6; 
-            } else if (bodyName === 'Venus') {
-                screenRatio = 0.6; 
-            } else if (bodyName === 'Earth') {
-                screenRatio = 0.6; 
-            } else if (bodyName === 'Moon') {
-                screenRatio = 0.6; 
-            } else if (bodyName === 'Mars') {
-                screenRatio = 0.6; 
-            } else if (bodyName === 'Phobos') {
-                screenRatio = 0.15; // Reduced ratio to zoom out more for better visibility
+            let distance;
+
+            if (bodyName === 'Phobos') {
+                const K_PHOBOS = 0.01; // Attempt 100x closer zoom for Phobos
+                distance = body.radius * K_PHOBOS;
+                distance = Math.max(distance, body.radius * 0.05, CONFIG.CAMERA.NEAR * 2);
             } else if (bodyName === 'Deimos') {
-                screenRatio = 0.15; // Reduced ratio to zoom out more for better visibility
+                const K_DEIMOS = 5.0; // Reduced Deimos zoom slightly
+                distance = body.radius * K_DEIMOS;
+                distance = Math.max(distance, body.radius * 0.05, CONFIG.CAMERA.NEAR * 2);
             } else {
-                screenRatio = 0.5; 
+                // For other bodies, use screen ratio (fraction of screen height the body should occupy)
+                let screenRatio;
+                if (bodyName === 'Sun') screenRatio = 0.3; // Increased Sun zoom slightly
+                else if (['Mercury', 'Venus', 'Earth', 'Moon', 'Mars'].includes(bodyName)) screenRatio = 0.6;
+                else screenRatio = 0.5; // Default for other bodies
+                distance = (body.radius / screenRatio) / Math.tan(fovRadians / 2);
             }
-            
-            const distance = (body.radius / screenRatio) / Math.tan(fovRadians / 2);
-            
-            const targetPosition = new THREE.Vector3(
-                bodyPosition.x + distance * 0.2, 
-                bodyPosition.y + distance * 0.2, 
-                bodyPosition.z + distance
-            );
-            
-            this.animateCameraToPosition(targetPosition, bodyPosition, 1500);
-        }
-    }
-    
-    updateCameraFocus(forceUpdate = false) {
-        if (!this.focusedBody) return;
-        
-        if (this.userControlActive && !forceUpdate) {
-            const currentTime = Date.now();
-            if (currentTime - this.lastUserInteractionTime < this.userControlTimeout) {
-                return; 
+
+            // Define a consistent offset direction for the camera relative to the target
+            const cameraOffsetDirection = new THREE.Vector3(0.3, 0.3, 1).normalize(); // Slight top-right perspective
+
+            // Calculate the target camera position
+            const targetCameraPosition = new THREE.Vector3().copy(bodyPosition).addScaledVector(cameraOffsetDirection, distance);
+
+            // The lerp calls here provide an immediate partial snap, animateCameraToPosition does the smooth transition.
+            // Consider if these are needed or if animateCameraToPosition is sufficient.
+            // For now, keeping them for responsiveness before the main animation kicks in.
+            this.camera.position.lerp(targetCameraPosition, 0.9); 
+            this.controls.target.lerp(bodyPosition, 0.9); 
+
+            // Simulation pause logic and time panel visibility
+            if (bodyName === 'Sun') {
+                this.isSimulationPaused = false; // Default to playing when Sun is focused
+                if (this.timeControlsPanel) this.timeControlsPanel.classList.remove('hidden');
+                this.updatePlayPauseButtonState(); // Set initial button state for Sun focus
             } else {
-                this.userControlActive = false;
+                this.isSimulationPaused = true;
+                if (this.timeControlsPanel) this.timeControlsPanel.classList.add('hidden');
             }
-        }
-        
-        const bodyPosition = this.focusedBody.getObject().position.clone();
-        
-        const fovRadians = THREE.MathUtils.degToRad(this.camera.fov);
-        
-        let screenRatio;
-        if (this.focusedBody.name === 'Sun') {
-            screenRatio = 0.4; 
-        } else if (this.focusedBody.name === 'Mercury') {
-            screenRatio = 0.6; 
-        } else if (this.focusedBody.name === 'Venus') {
-            screenRatio = 0.6; 
-        } else if (this.focusedBody.name === 'Earth') {
-            screenRatio = 0.6; 
-        } else if (this.focusedBody.name === 'Moon') {
-            screenRatio = 0.6; 
-        } else if (this.focusedBody.name === 'Mars') {
-            screenRatio = 0.6; 
-        } else if (this.focusedBody.name === 'Phobos') {
-            screenRatio = 0.6; 
-        } else if (this.focusedBody.name === 'Deimos') {
-            screenRatio = 0.6; 
-        } else {
-            screenRatio = 0.5; 
-        }
-        
-        const distance = (this.focusedBody.radius / screenRatio) / Math.tan(fovRadians / 2);
-        
-        const cameraPosition = new THREE.Vector3(
-            bodyPosition.x + distance * 0.2, 
-            bodyPosition.y + distance * 0.2, 
-            bodyPosition.z + distance
-        );
-        
-        const transitionSpeed = forceUpdate ? 0.5 : 0.05;
-        
-        this.camera.position.lerp(cameraPosition, transitionSpeed);
-        this.controls.target.lerp(bodyPosition, transitionSpeed);
-        this.controls.update();
-    }
 
-    setupPostProcessing() {
-        this.composer = new EffectComposer(this.renderer);
-        const renderPass = new RenderPass(this.scene, this.camera);
-        this.composer.addPass(renderPass);
-
-        this.bloomPass = new UnrealBloomPass(
-            new THREE.Vector2(window.innerWidth, window.innerHeight),
-            CONFIG.BLOOM_EFFECT.strength,
-            CONFIG.BLOOM_EFFECT.radius,
-            CONFIG.BLOOM_EFFECT.threshold
-        );
-        this.composer.addPass(this.bloomPass);
-    }
-
-    onWindowResize() {
-        this.camera.aspect = window.innerWidth / window.innerHeight;
-        this.camera.updateProjectionMatrix();
-        this.renderer.setSize(window.innerWidth, window.innerHeight);
-        if (this.composer) {
-            this.composer.setSize(window.innerWidth, window.innerHeight);
-        }
+            this.animateCameraToPosition(targetCameraPosition, bodyPosition, 1500);
+        } // This closes the 'if (body)' block
     }
 
     resetCamera() {
@@ -605,7 +593,9 @@ export default class App {
             this.currentAnimation = null;
         }
         
-        this.focusedBody = null;
+        this.focusedBody = null; // Clear focused body
+        this.isSimulationPaused = false; // Ensure simulation runs when camera is reset
+        if (this.timeControlsPanel) this.timeControlsPanel.classList.add('hidden'); // Hide time controls
         
         const dropdown = document.getElementById('focusDropdown');
         if (dropdown) {
@@ -654,77 +644,96 @@ export default class App {
 
     animate() {
         requestAnimationFrame(this.animate.bind(this));
-        const time = this.clock.getElapsedTime();
+        // const time = this.clock.getElapsedTime(); // Not currently used, can be removed or kept for future use
         const deltaTime = this.clock.getDelta();
         
-        // Get the Sun for lighting updates
-        const sun = this.solarSystem.getSun();
-        const sunPosition = sun ? sun.objectGroup.position.clone() : new THREE.Vector3(0, 0, 0);
+        // Get the Sun for lighting updates (assuming getSun() and getObject() are correctly implemented)
+        const sun = this.solarSystem.getSun(); // Make sure solarSystem has getSun()
+        let sunPosition = new THREE.Vector3(0, 0, 0); // Default sun position if not found
+        if (sun && sun.getObject()) { // Make sure sun and its objectGroup exist
+            sunPosition = sun.getObject().position.clone();
+        }
         
-        // Update all celestial bodies
-        const celestialBodies = this.solarSystem.getBodies();
-        celestialBodies.forEach(body => {
-            // Skip the sun
-            if (body === sun) return;
-            
-            // Update the body with the sun's position for lighting
-            if (body.setSunPosition && sun) {
-                body.setSunPosition(sunPosition);
-            }
-            
-            // Update the body's position
-            body.update(deltaTime);
-            
-            // Update sun position in shader materials for accurate lighting
-            if (body.mesh && body.mesh.material && body.mesh.material.uniforms && 
-                body.mesh.material.uniforms.sunPosition && sun) {
-                body.mesh.material.uniforms.sunPosition.value.copy(sunPosition);
-            }
-            
-            // If the body has moons, update their positions relative to their parent
-            if (body.moons && body.moons.length > 0) {
-                body.moons.forEach(moon => {
-                    if (moon.setSunPosition && sun) {
-                        moon.setSunPosition(sunPosition);
-                    }
-                    moon.update(deltaTime);
-                });
-            }
-        });
-        
-        // Update starfield if it exists
+        // Update all celestial bodies if simulation is not paused
+        if (!this.isSimulationPaused) {
+            const celestialBodies = this.solarSystem.getBodies(); // Make sure solarSystem has getBodies()
+            celestialBodies.forEach(body => {
+                // Update the body's intrinsic properties (rotation, etc.)
+                body.update(deltaTime, CONFIG.ANIMATION.enabled); // Pass animation enabled flag
+
+                // Update lighting for non-emissive bodies (if setSunPosition is a method on them)
+                if (body.setSunPosition && !body.isEmissive) { // Assuming isEmissive property exists
+                    body.setSunPosition(sunPosition);
+                }
+
+                // If using custom shaders that need sun position:
+                if (body.mesh && body.mesh.material && body.mesh.material.uniforms && body.mesh.material.uniforms.sunPosition) {
+                    body.mesh.material.uniforms.sunPosition.value.copy(sunPosition);
+                }
+            });
+        }
+
+        // Update starfield
         if (this.starfield) {
             this.starfield.update(deltaTime, this.camera.position);
         }
         
-        // Check for camera focus updates if user is not controlling
-        if (!this.userControlActive) {
-            this.updateCameraFocus();
+        // Update OrbitControls (should be done regardless of pause state for camera interaction)
+        if (this.controls) {
+            this.controls.update();
         }
         
-        // Update controls and render
-        this.controls.update();
-        
-        // Use composer for bloom effects if available
-        if (this.composer && CONFIG.BLOOM_EFFECT.enabled) {
+        // Check for camera focus updates if user is not controlling
+        if (!this.userControlActive) {
+            this.updateCameraFocus(); 
+        }
+
+        // Render the scene
+        if (CONFIG.BLOOM_EFFECT.enabled && this.composer) {
             this.composer.render(deltaTime);
         } else {
             this.renderer.render(this.scene, this.camera);
         }
     }
 
-    cleanup() {
-        window.removeEventListener('resize', this.onWindowResize.bind(this));
-        document.getElementById('resetCameraButton').removeEventListener('click', this.resetCamera.bind(this));
+    updateCameraFocus() {
+        // Placeholder: Actual camera focusing logic will be implemented here.
+        // This could involve smoothly moving the camera to keep the this.focusedBody in view,
+        // or implementing a gentle orbiting behavior if no specific body is focused but the camera is not idle.
+        // For now, this stub prevents the TypeError.
+        if (this.focusedBody && !this.userControlActive) {
+            // Example: Simple re-targeting, but actual smooth animation is more complex.
+            // const targetPosition = this.focusedBody.getObject().getWorldPosition(new THREE.Vector3());
+            // this.controls.target.lerp(targetPosition, 0.02); // Gentle lerp
+        }
+    }
 
-        this.controls.dispose();
+    cleanup() {
+        console.log("Cleaning up App resources...");
+        window.removeEventListener('resize', this.onWindowResize.bind(this));
+        
+        const resetButton = document.getElementById('resetCameraButton');
+        if (resetButton) {
+            resetButton.removeEventListener('click', this.resetCamera.bind(this));
+        }
+
+        const bodyList = document.getElementById('celestialBodyList');
+        if (bodyList) {
+            bodyList.removeEventListener('click', this.handleBodySelection.bind(this));
+        }
+
+        if (this.controls) {
+            this.controls.dispose();
+        }
 
         this.materialsToDispose.forEach(material => material.dispose());
         this.geometriesToDispose.forEach(geometry => geometry.dispose());
 
         this.scene.traverse(object => {
             if (object.isMesh || object.isPoints) {
-                if (object.geometry) object.geometry.dispose();
+                if (object.geometry) {
+                    object.geometry.dispose();
+                }
                 if (object.material) {
                     if (Array.isArray(object.material)) {
                         object.material.forEach(mat => mat.dispose());
@@ -733,10 +742,36 @@ export default class App {
                     }
                 }
             }
+            // Remove event listeners from objects if any were added
+            // Example: if (object.removeEventListener) object.removeEventListener(...);
         });
 
-        this.renderer.dispose();
-        this.container.removeChild(this.renderer.domElement);
+        if (this.solarSystem) {
+            this.solarSystem.cleanup(); // Ensure SolarSystem also cleans up its resources
+        }
+
+        if (this.starfield) {
+            this.starfield.dispose();
+        }
+
+        if (this.composer) {
+            this.composer.passes.forEach(pass => {
+                if (pass.dispose) pass.dispose();
+            });
+        }
+
+        if (this.renderer) {
+            this.renderer.dispose();
+            if (this.renderer.domElement.parentNode) {
+                this.renderer.domElement.parentNode.removeChild(this.renderer.domElement);
+            }
+        }
+        
+        // Clear arrays
+        this.materialsToDispose = [];
+        this.geometriesToDispose = [];
+        this.scene.children = []; // Clear scene children
+
         console.log("App cleaned up.");
     }
 }

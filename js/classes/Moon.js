@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import CONFIG from '../config.js';
 import { CelestialBody } from './CelestialBody.js';
 import { LabelUtils } from '../utils/LabelUtils.js';
+import PlanetShader from '../shaders/PlanetShader.js';
 
 /**
  * Moon class representing Earth's moon
@@ -11,7 +12,7 @@ export class Moon extends CelestialBody {
      * @param {THREE.Vector3} parentPosition - Position of the parent planet
      */
     constructor(parentPosition = new THREE.Vector3(0, 0, 0)) {
-        super(CONFIG.MOON.NAME, CONFIG.MOON.RADIUS, CONFIG.MOON.COLOR);
+        super(CONFIG.MOON.NAME, CONFIG.MOON.RADIUS, CONFIG.MOON.COLOR, false, null, 0.5); // isEmissive, customGeometry, ambientLightIntensity
         this.parentPosition = parentPosition;
         this.orbitRadius = CONFIG.MOON.ORBIT_RADIUS;
         this.orbitSpeed = CONFIG.MOON.ORBIT_SPEED;
@@ -32,13 +33,13 @@ export class Moon extends CelestialBody {
         const moonTexture = textureLoader.load('/textures/moon_8k.jpg');
         const moonNormalMap = textureLoader.load('/textures/moon_normal_8k.jpg');
         
-        // Use base class implementation for mesh creation with proper lighting
+        // Use base class implementation for mesh creation with even lighting
         this.createBaseMesh({
             map: moonTexture,
             normalMap: moonNormalMap,
             normalScale: new THREE.Vector2(0.04, 0.04),
-            shininess: 2,
-            specular: new THREE.Color(0x111111)
+            emissive: new THREE.Color(0x111111),
+            emissiveIntensity: 0.1
         });
     }
     

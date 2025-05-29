@@ -1,6 +1,7 @@
 import * as THREE from 'three';
-import CONFIG from '../config.js';
 import { CelestialBody } from './CelestialBody.js';
+import LightingUtils from '../utils/LightingUtils.js';
+import CONFIG from '../config.js';
 
 /**
  * Sun class with advanced shader-based visualization
@@ -13,154 +14,27 @@ export class Sun extends CelestialBody {
     }
 
     createMesh() {
-        // Load textures
+        // Load high-resolution textures
         const textureLoader = new THREE.TextureLoader();
-        const sunTexture = textureLoader.load('/textures/sun_8k.jpg');
+        const sunTexture = textureLoader.load('/textures/high_res/sun_8k_alt.jpg');
+        // Set texture properties for better quality
+        sunTexture.anisotropy = 16; // Improve texture quality at angles
+        sunTexture.encoding = THREE.sRGBEncoding; // Use proper color encoding
         
-        const sunGeometry = new THREE.SphereGeometry(this.radius, 128, 128); // Higher segments for smoother sun
-
-        // Vertex Shader for Sun Surface
-        const vertexShader = `
-            varying vec2 vUv;
-            varying vec3 vNormal;
-            varying vec3 vViewPosition; // Vertex position in view space
-
-            void main() {
-                vUv = uv;
-                vNormal = normalize(normalMatrix * normal);
-                vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
-                vViewPosition = -mvPosition.xyz; // Vector from vertex to camera
-                gl_Position = projectionMatrix * mvPosition;
-            }
-        `;
-
-        // Fragment Shader for Sun Surface (Photosphere, Granulation, Limb Darkening)
-        const fragmentShader = `
-            uniform float time;
-            uniform vec3 baseColor;
-            uniform sampler2D sunTexture;
-            uniform sampler2D noiseTexture; // For granulation
-            varying vec2 vUv;
-            varying vec3 vNormal;
-            varying vec3 vViewPosition; // Vector from fragment to camera in view space
-
-            // Basic pseudo-random number generator
-            float random(vec2 st) {
-                return fract(sin(dot(st.xy, vec2(12.9898,78.233))) * 43758.5453123);
-            }
-
-            // Simplex noise function (simplified)
-            float noise(vec2 st) {
-                vec2 i = floor(st);
-                vec2 f = fract(st);
-                float a = random(i);
-                float b = random(i + vec2(1.0, 0.0));
-                float c = random(i + vec2(0.0, 1.0));
-                float d = random(i + vec2(1.0, 1.0));
-                vec2 u = f * f * (3.0 - 2.0 * f);
-                return mix(a, b, u.x) + (c - a) * u.y * (1.0 - u.x) + (d - b) * u.y * u.x;
-            }
-
-            void main() {
-                // Sample base texture
-                vec4 texColor = texture2D(sunTexture, vUv);
-                
-                // Limb Darkening: Darker/redder towards the edges
-                float viewAngleFactor = dot(vNormal, normalize(vViewPosition)); // Cosine of angle between normal and view vector
-                float limbFactor = smoothstep(0.0, 0.8, viewAngleFactor); // Stronger effect near edge
-                limbFactor = pow(limbFactor, 2.5); // Adjust power for falloff
-                vec3 limbColor = mix(vec3(0.9, 0.3, 0.1), texColor.rgb * baseColor, limbFactor); // Redder at edges
-
-                // Enhanced Granulation: Use noise function with multiple layers, animated over time
-                float scaledTime = time * 0.05;
-                
-                // First noise layer - large scale granulation
-                vec2 uvAnimated1 = vUv * 25.0 + vec2(scaledTime * 0.2, scaledTime * 0.1);
-                float n1 = noise(uvAnimated1);
-                
-                // Second noise layer - medium scale details
-                vec2 uvAnimated2 = vUv * 40.0 + vec2(scaledTime * 0.15, scaledTime * 0.25);
-                float n2 = noise(uvAnimated2);
-                
-                // Third noise layer - fine details
-                vec2 uvAnimated3 = vUv * 60.0 + vec2(scaledTime * 0.3, -scaledTime * 0.2);
-                float n3 = noise(uvAnimated3);
-                
-                // Combine noise layers with different weights
-                float n = n1 * 0.5 + n2 * 0.3 + n3 * 0.2;
-                n = (n - 0.5) * 0.35 + 0.9; // Adjust combined noise intensity
-
-                vec3 finalColor = limbColor * n;
-
-                // Enhanced Sunspots with more realistic appearance
-                // Primary sunspot layer - larger spots
-                float spotNoise1 = noise(vUv * 4.0 + vec2(scaledTime * 0.03, scaledTime * 0.02));
-                float spotNoise2 = noise(vUv * 8.0 + vec2(-scaledTime * 0.04, scaledTime * 0.01));
-                
-                // Combine noise patterns for more organic shapes
-                float combinedSpotNoise = spotNoise1 * 0.7 + spotNoise2 * 0.3;
-                
-                // Create sunspot with umbra (darker center) and penumbra (lighter edge)
-                if (combinedSpotNoise > 0.75 && combinedSpotNoise < 0.85) {
-                    // Penumbra region (outer part of sunspot)
-                    float penumbraFactor = smoothstep(0.75, 0.78, combinedSpotNoise) * (1.0 - smoothstep(0.82, 0.85, combinedSpotNoise));
-                    finalColor *= mix(0.9, 0.7, penumbraFactor);
-                }
-                
-                // Add a few more smaller sunspots
-                float smallSpotNoise = noise(vUv * 12.0 + vec2(scaledTime * 0.02, -scaledTime * 0.03));
-                if (smallSpotNoise > 0.8 && smallSpotNoise < 0.85) {
-                    finalColor *= 0.85;
-                }
-
-                // Add solar flare effect (bright spots that move over time)
-                float flareNoise = noise(vUv * 8.0 + vec2(scaledTime * 0.3, scaledTime * 0.2));
-                if (flareNoise > 0.75) {
-                    finalColor += vec3(1.0, 0.7, 0.3) * 0.4 * (flareNoise - 0.75) * 4.0;
-                }
-
-                // Reduced corona effect
-                float edgeGlow = pow(1.0 - viewAngleFactor, 5.0); // Increased power for sharper falloff
-                vec3 coronaColor = mix(vec3(1.0, 0.6, 0.2), vec3(1.0, 0.8, 0.4), viewAngleFactor);
-                finalColor += coronaColor * edgeGlow * 0.9; // Reduced intensity from 1.5 to 0.9
-                
-                // Add overall glow and increase brightness
-                finalColor += baseColor * 0.4;
-                finalColor *= 1.5; // Increase overall brightness
-
-                gl_FragColor = vec4(finalColor, 1.0);
-            }
-        `;
-
-        // Create a simple noise texture programmatically
-        const noiseSize = 128;
-        const noiseData = new Uint8Array(noiseSize * noiseSize * 4);
-        for (let i = 0; i < noiseData.length; i += 4) {
-            const val = Math.random() * 255;
-            noiseData[i] = val;
-            noiseData[i+1] = val;
-            noiseData[i+2] = val;
-            noiseData[i+3] = 255;
-        }
-        const proceduralNoiseTexture = new THREE.DataTexture(noiseData, noiseSize, noiseSize, THREE.RGBAFormat || 1023);
-        proceduralNoiseTexture.wrapS = THREE.RepeatWrapping;
-        proceduralNoiseTexture.wrapT = THREE.RepeatWrapping;
-        proceduralNoiseTexture.needsUpdate = true;
-
-        const sunMaterial = new THREE.ShaderMaterial({
-            uniforms: {
-                time: { value: 0.0 },
-                baseColor: { value: new THREE.Color(this.primaryColor) },
-                sunTexture: { value: sunTexture },
-                noiseTexture: { value: proceduralNoiseTexture }
-            },
-            vertexShader: vertexShader,
-            fragmentShader: fragmentShader,
+        // Create slightly brighter color for the sun (5% brighter)
+        const brighterColor = new THREE.Color(this.primaryColor).multiplyScalar(1.05);
+        
+        // Use base class implementation but specify this is an emissive body
+        this.createBaseMesh({
+            map: sunTexture,
+            baseColor: brighterColor,
+            isEmissive: true // Important: mark as emissive body
         });
-
-        this.mesh = new THREE.Mesh(sunGeometry, sunMaterial);
-        this.mesh.name = this.name;
-        this.objectGroup.add(this.mesh);
+        
+        // Add a point light at the center of the sun
+        const sunLight = new THREE.PointLight(0xffffff, 0.84, 0, 1);
+        sunLight.position.set(0, 0, 0);
+        this.objectGroup.add(sunLight);
 
         // Add this line to make the Sun's material emissive for the bloom effect
         if (CONFIG.BLOOM_EFFECT && CONFIG.BLOOM_EFFECT.enabled) {
@@ -171,10 +45,5 @@ export class Sun extends CelestialBody {
     update(deltaTime) {
         // Sun rotation
         this.mesh.rotation.y += this.rotationSpeed * deltaTime;
-
-        // Update shader time for animations
-        if (this.mesh.material.uniforms && this.mesh.material.uniforms.time) {
-            this.mesh.material.uniforms.time.value += deltaTime;
-        }
     }
 }

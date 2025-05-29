@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import CONFIG from '../config.js';
 import { CelestialBody } from './CelestialBody.js';
 import { LabelUtils } from '../utils/LabelUtils.js';
+import PlanetShader from '../shaders/PlanetShader.js';
 
 /**
  * Earth class representing the planet Earth
@@ -11,7 +12,7 @@ export class Earth extends CelestialBody {
      * @param {THREE.Vector3} sunPosition - Position of the sun
      */
     constructor(sunPosition = new THREE.Vector3(0, 0, 0)) {
-        super('Earth', CONFIG.EARTH.RADIUS, CONFIG.EARTH.COLOR);
+        super(CONFIG.EARTH.NAME, CONFIG.EARTH.RADIUS, CONFIG.EARTH.COLOR, false, null, 2.2); // isEmissive, customGeometry, ambientLightIntensity
         this.sunPosition = sunPosition;
         this.orbitRadius = CONFIG.EARTH.ORBIT_RADIUS;
         this.orbitSpeed = CONFIG.EARTH.ORBIT_SPEED;
@@ -29,11 +30,6 @@ export class Earth extends CelestialBody {
     setSunPosition(position) {
         super.setSunPosition(position);
         
-        // Set fixed cloud opacity
-        if (this.cloudsMesh && this.cloudsMesh.material) {
-            this.cloudsMesh.material.opacity = 0.4;
-        }
-        
         // Update moon's sun position
         if (this.moon) {
             this.moon.setSunPosition(position);
@@ -43,37 +39,51 @@ export class Earth extends CelestialBody {
     createMesh() {
         // Load textures
         const textureLoader = new THREE.TextureLoader();
-        const earthDayTexture = textureLoader.load('/textures/earth_daymap_8k.jpg');
-        const earthCloudsTexture = textureLoader.load('/textures/earth_clouds_8k.jpg');
-        const earthNormalMap = textureLoader.load('/textures/earth_normal_8k.jpg');
-        const earthSpecularMap = textureLoader.load('/textures/earth_specular_8k.jpg');
+        const earthDayPath = '/textures/earth_daymap_8k.jpg';
+        const earthCloudsPath = '/textures/earth_clouds_8k.jpg';
+        const earthNormalPath = '/textures/earth_normal_8k.jpg';
+        const earthSpecularPath = '/textures/earth_specular_8k.jpg';
+
+        const earthDayTexture = textureLoader.load(earthDayPath,
+            () => { console.log(`Earth: ${earthDayPath} loaded successfully.`); },
+            undefined, // onProgress callback currently not used
+            (err) => { console.error(`Earth: Error loading ${earthDayPath}:`, err); }
+        );
+        const earthCloudsTexture = textureLoader.load(earthCloudsPath,
+            () => { console.log(`Earth: ${earthCloudsPath} loaded successfully.`); },
+            undefined,
+            (err) => { console.error(`Earth: Error loading ${earthCloudsPath}:`, err); }
+        );
+        const earthNormalMap = textureLoader.load(earthNormalPath,
+            () => { console.log(`Earth: ${earthNormalPath} loaded successfully.`); },
+            undefined,
+            (err) => { console.error(`Earth: Error loading ${earthNormalPath}:`, err); }
+        );
+        const earthSpecularMap = textureLoader.load(earthSpecularPath,
+            () => { console.log(`Earth: ${earthSpecularPath} loaded successfully.`); },
+            undefined,
+            (err) => { console.error(`Earth: Error loading ${earthSpecularPath}:`, err); }
+        );
         
-        // Use base class implementation for mesh creation with proper lighting
+        // Use base class implementation for mesh creation with maximum texture visibility
         this.createBaseMesh({
             map: earthDayTexture,
             normalMap: earthNormalMap,
-            normalScale: new THREE.Vector2(0.05, 0.05),
-            specularMap: earthSpecularMap,
-            shininess: 5,
-            specular: new THREE.Color(0x111111)
+            normalScale: new THREE.Vector2(0.05, 0.05)
         });
         
-        // Add cloud layer as a slightly larger sphere
+        // Add very subtle cloud layer for better Earth surface visibility
         const cloudsGeometry = new THREE.SphereGeometry(this.radius * 1.01, 64, 64);
-        const cloudsMaterial = new THREE.MeshPhongMaterial({
+        const cloudsMaterial = new THREE.MeshBasicMaterial({
             map: earthCloudsTexture,
             transparent: true,
-            opacity: 0.4,
-            shininess: 2,
-            specular: new THREE.Color(0x111111),
-            emissive: new THREE.Color(0x000000),
-            emissiveIntensity: 0,
+            opacity: 0.2, // Very low opacity for maximum surface visibility
             blending: THREE.NormalBlending
         });
         
         this.cloudsMesh = new THREE.Mesh(cloudsGeometry, cloudsMaterial);
-        this.cloudsMesh.castShadow = true;
-        this.cloudsMesh.receiveShadow = true;
+        this.cloudsMesh.castShadow = false;
+        this.cloudsMesh.receiveShadow = false;
         this.cloudsMesh.name = this.name + "Clouds";
         this.objectGroup.add(this.cloudsMesh);
     }
