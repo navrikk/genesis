@@ -5,3 +5,5 @@ dist/
 
 repomix.config.json
 claude.txt
+
+.netlify/
