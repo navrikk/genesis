@@ -93,7 +93,7 @@ export class Phobos extends CelestialBody {
      */
     updatePosition() {
         // Calculate position based on orbit angle
-        const effectiveOrbitRadius = this.orbitRadius * 0.999735; // User-specified value for fine-tuning
+        const effectiveOrbitRadius = this.orbitRadius * 0.9997325; // User-specified value for fine-tuning
         const x = Math.cos(this.orbitAngle) * effectiveOrbitRadius;
         const z = Math.sin(this.orbitAngle) * effectiveOrbitRadius;
         
