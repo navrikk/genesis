@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import CONFIG from '../config.js';
 import { CelestialBody } from './CelestialBody.js';
 import LightingUtils from '../utils/LightingUtils.js';
+import phobosTexturePath from '../../assets/textures/phobos_nasa_texture.jpg';
 
 
 /**
@@ -36,7 +37,7 @@ export class Phobos extends CelestialBody {
 
         const textureLoader = new THREE.TextureLoader();
         textureLoader.load(
-            '/assets/textures/phobos_nasa_texture.jpg',
+            phobosTexturePath,
             (phobosTexture) => { // Success callback
                 // Ensure texture settings if needed (e.g., anisotropy)
                 // phobosTexture.anisotropy = renderer.getMaxAnisotropy(); // If renderer is accessible
@@ -93,7 +94,7 @@ export class Phobos extends CelestialBody {
      */
     updatePosition() {
         // Calculate position based on orbit angle
-        const effectiveOrbitRadius = this.orbitRadius * 0.9997325; // User-specified value for fine-tuning
+        const effectiveOrbitRadius = this.orbitRadius * 0.9999811; // Adjusted for 512-segment path
         const x = Math.cos(this.orbitAngle) * effectiveOrbitRadius;
         const z = Math.sin(this.orbitAngle) * effectiveOrbitRadius;
         
@@ -150,8 +151,8 @@ export class Phobos extends CelestialBody {
         
         // Create orbit path with a resolution of 128 segments
         const orbitPoints = [];
-        for (let i = 0; i <= 128; i++) {
-            const angle = (i / 128) * Math.PI * 2;
+        for (let i = 0; i <= 512; i++) {
+            const angle = (i / 512) * Math.PI * 2;
             orbitPoints.push(
                 Math.cos(angle) * this.orbitRadius,
                 0,

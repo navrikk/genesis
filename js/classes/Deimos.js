@@ -3,6 +3,7 @@ import CONFIG from '../config.js';
 import { CelestialBody } from './CelestialBody.js';
 
 import LightingUtils from '../utils/LightingUtils.js';
+import deimosTexturePath from '../../assets/textures/deimos_nasa_texture.jpg';
 
 /**
  * Deimos class representing Mars' smaller moon
@@ -31,10 +32,8 @@ export class Deimos extends CelestialBody {
         const geometry = new THREE.SphereGeometry(this.radius, 32, 32);
 
         const textureLoader = new THREE.TextureLoader();
-        const deimosTextureUrl = '/assets/textures/deimos_nasa_texture.jpg'; // Ensure this texture exists
-
         textureLoader.load(
-            deimosTextureUrl,
+            deimosTexturePath,
             (deimosTexture) => { // Success callback
                 const material = LightingUtils.createNaturalLightingMaterial({
                     map: deimosTexture,
@@ -136,8 +135,8 @@ export class Deimos extends CelestialBody {
         
         // Create orbit path with a resolution of 128 segments
         const orbitPoints = [];
-        for (let i = 0; i <= 128; i++) {
-            const angle = (i / 128) * Math.PI * 2;
+        for (let i = 0; i <= 512; i++) {
+            const angle = (i / 512) * Math.PI * 2;
             orbitPoints.push(
                 Math.cos(angle) * this.orbitRadius,
                 0,

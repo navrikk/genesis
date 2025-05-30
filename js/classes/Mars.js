@@ -66,7 +66,7 @@ export class Mars extends CelestialBody {
         
         // Create a circle of points for the orbit
         const points = [];
-        const segments = 128;
+        const segments = 512;
         for (let i = 0; i <= segments; i++) {
             const angle = (i / segments) * Math.PI * 2;
             const x = Math.cos(angle) * this.orbitRadius;
@@ -107,7 +107,6 @@ export class Mars extends CelestialBody {
             
             // Update moons if they exist
             if (this.moons.length > 0) {
-                console.log(`[Mars] Position: X=${this.objectGroup.position.x.toFixed(2)}, Y=${this.objectGroup.position.y.toFixed(2)}, Z=${this.objectGroup.position.z.toFixed(2)}`);
                 this.moons.forEach(moon => {
                     moon.updateParentPosition(this.objectGroup.position);
                     moon.setSunPosition(this.sunPosition);
