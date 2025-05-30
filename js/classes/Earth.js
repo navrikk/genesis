@@ -74,7 +74,10 @@ export class Earth extends CelestialBody {
             map: earthCloudsTexture,
             transparent: true,
             opacity: 0.2, // Very low opacity for maximum surface visibility
-            blending: THREE.NormalBlending
+            blending: THREE.NormalBlending,
+            polygonOffset: true,
+            polygonOffsetFactor: -2, // Increased from -1
+            polygonOffsetUnits: -1   // Kept -1, or could also be -2
         });
         
         this.cloudsMesh = new THREE.Mesh(cloudsGeometry, cloudsMaterial);

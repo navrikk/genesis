@@ -276,6 +276,9 @@ export default class App {
       });
     }
 
+    // Setup object selection functionality
+    this.setupObjectSelection();
+
     // Post-processing for Bloom Effect (Sun Glow)
     if (CONFIG.BLOOM_EFFECT.enabled) {
       this.setupPostProcessing();

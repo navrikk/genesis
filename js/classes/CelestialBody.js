@@ -94,7 +94,7 @@ export class CelestialBody {
     addLighting() {
         // Add ambient lighting based on the body's specified intensity
         if (!this.isEmissive) {
-            LightingUtils.addAmbientLight(this.objectGroup, this.ambientLightIntensity);
+            LightingUtils.addAmbientLight(this.objectGroup, this.ambientLightIntensity * 3.25);
         }
     }
 

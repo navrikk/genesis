@@ -37,7 +37,8 @@ export class Deimos extends CelestialBody {
             (deimosTexture) => { // Success callback
                 const material = LightingUtils.createNaturalLightingMaterial({
                     map: deimosTexture,
-                    ambientLightIntensity: this.ambientLightIntensity,
+                    baseColor: new THREE.Color(0x333333), // Slightly darker base color for Deimos
+                    // ambientLightIntensity: this.ambientLightIntensity, // This is not used by createNaturalLightingMaterial directly
                 });
                 this.createBaseMesh(geometry, material);
             },

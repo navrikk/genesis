@@ -44,10 +44,8 @@ export class Phobos extends CelestialBody {
 
                 const material = LightingUtils.createNaturalLightingMaterial({
                     map: phobosTexture,
-                    // Phobos is quite dark, so ensure ambient/diffuse are appropriate
-                    // It doesn't have a significant normal map in most low-poly representations
-                    // baseColor: this.primaryColor, // primaryColor is from CelestialBody, might be too bright
-                    ambientLightIntensity: this.ambientLightIntensity, // Use the value set in constructor
+                    baseColor: new THREE.Color(0x333333), // Slightly darker base color for Phobos
+                    // ambientLightIntensity: this.ambientLightIntensity, // This is not used by createNaturalLightingMaterial directly
                     // No specular map for Phobos typically
                 });
 
