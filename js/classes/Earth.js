@@ -2,7 +2,6 @@ import * as THREE from 'three';
 import CONFIG from '../config.js';
 import { CelestialBody } from './CelestialBody.js';
 import { LabelUtils } from '../utils/LabelUtils.js';
-import PlanetShader from '../shaders/PlanetShader.js';
 
 /**
  * Earth class representing the planet Earth
@@ -42,28 +41,25 @@ export class Earth extends CelestialBody {
         const earthDayPath = '/textures/earth_daymap_8k.jpg';
         const earthCloudsPath = '/textures/earth_clouds_8k.jpg';
         const earthNormalPath = '/textures/earth_normal_8k.jpg';
-        const earthSpecularPath = '/textures/earth_specular_8k.jpg';
+        // const earthSpecularPath = '/textures/earth_specular_8k.jpg'; // Not used
 
         const earthDayTexture = textureLoader.load(earthDayPath,
-            () => { console.log(`Earth: ${earthDayPath} loaded successfully.`); },
             undefined, // onProgress callback currently not used
             (err) => { console.error(`Earth: Error loading ${earthDayPath}:`, err); }
         );
         const earthCloudsTexture = textureLoader.load(earthCloudsPath,
-            () => { console.log(`Earth: ${earthCloudsPath} loaded successfully.`); },
             undefined,
             (err) => { console.error(`Earth: Error loading ${earthCloudsPath}:`, err); }
         );
         const earthNormalMap = textureLoader.load(earthNormalPath,
-            () => { console.log(`Earth: ${earthNormalPath} loaded successfully.`); },
             undefined,
             (err) => { console.error(`Earth: Error loading ${earthNormalPath}:`, err); }
         );
-        const earthSpecularMap = textureLoader.load(earthSpecularPath,
-            () => { console.log(`Earth: ${earthSpecularPath} loaded successfully.`); },
-            undefined,
-            (err) => { console.error(`Earth: Error loading ${earthSpecularPath}:`, err); }
-        );
+        // const earthSpecularMap = textureLoader.load(earthSpecularPath, // Not used
+        //     () => { console.log(`Earth: ${earthSpecularPath} loaded successfully.`); },
+        //     undefined,
+        //     (err) => { console.error(`Earth: Error loading ${earthSpecularPath}:`, err); }
+        // );
         
         // Use base class implementation for mesh creation with maximum texture visibility
         this.createBaseMesh({

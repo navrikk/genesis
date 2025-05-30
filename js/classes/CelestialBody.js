@@ -38,12 +38,10 @@ export class CelestialBody {
 
         // Check if 'options' is actual geometry and 'customGeometry' is a pre-made material (our debug case)
         if (options instanceof THREE.BufferGeometry && customGeometry instanceof THREE.Material) {
-            console.log(`[${this.name}] Using pre-supplied geometry and material for debug (geometry from 1st arg, material from 2nd arg).`);
             geometry = options;     // 'options' (1st arg) is the geometry
             material = customGeometry; // 'customGeometry' (2nd arg) is the material
         } else if (customGeometry) {
             // Standard case: custom geometry provided, create material from options object
-            console.log(`[${this.name}] Using custom geometry, creating material from options.`);
             geometry = customGeometry;
             const isEmissive = options.isEmissive || false;
             const materialParams = {
@@ -59,7 +57,6 @@ export class CelestialBody {
             material = LightingUtils.createNaturalLightingMaterial(materialParams);
         } else {
             // Default case: no custom geometry, create sphere and material from options object
-            console.log(`[${this.name}] Creating default sphere geometry, creating material from options.`);
             geometry = new THREE.SphereGeometry(this.radius, 32, 32);
             const isEmissive = options.isEmissive || false;
             const materialParams = {
@@ -74,14 +71,6 @@ export class CelestialBody {
             }
             material = LightingUtils.createNaturalLightingMaterial(materialParams);
         }
-        
-        console.log(`[${this.name}] In createBaseMesh:`);
-        console.log(`  - Geometry type: ${geometry ? geometry.type : 'undefined'}`);
-        console.log(`  - Geometry UUID: ${geometry ? geometry.uuid : 'undefined'}`);
-        console.log(`  - Geometry parameters (if SphereGeometry):`, geometry && geometry.parameters ? geometry.parameters : 'N/A or not SphereGeometry');
-        console.log(`  - Material type: ${material ? material.type : 'undefined'}`);
-        console.log(`  - Material UUID: ${material ? material.uuid : 'undefined'}`);
-        console.log(`  - this.radius: ${this.radius}`);
 
         if (!geometry) {
             console.error(`[${this.name}] FATAL: Geometry is undefined in createBaseMesh!`);

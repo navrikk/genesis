@@ -1,5 +1,4 @@
 import * as THREE from 'three';
-import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import CONFIG from '../config.js';
 import { CelestialBody } from './CelestialBody.js';
 
@@ -37,7 +36,6 @@ export class Deimos extends CelestialBody {
         textureLoader.load(
             deimosTextureUrl,
             (deimosTexture) => { // Success callback
-                console.log(`[${this.name}] Applying Deimos texture.`);
                 const material = LightingUtils.createNaturalLightingMaterial({
                     map: deimosTexture,
                     ambientLightIntensity: this.ambientLightIntensity,
@@ -47,7 +45,7 @@ export class Deimos extends CelestialBody {
             undefined, // onProgress callback (optional)
             (error) => { // onError callback
                 console.error(`[${this.name}] Error loading texture from ${deimosTextureUrl}:`, error);
-                console.log(`[${this.name}] Texture load error. Applying fallback material.`);
+                console.warn(`[${this.name}] Texture load error. Applying fallback material.`);
                 const fallbackMaterial = new THREE.MeshLambertMaterial({ color: this.primaryColor || 0x777777 });
                 this.createBaseMesh(geometry, fallbackMaterial);
             }
@@ -162,9 +160,7 @@ export class Deimos extends CelestialBody {
     toggleOrbitPath(visible) {
         if (this.orbitPath) {
             this.orbitPath.visible = visible;
-            console.log(`[${this.name}] Orbit path visibility set to: ${visible}`);
         } else {
-            console.warn(`[${this.name}] Attempted to toggle orbit path, but orbitPath is null.`);
         }
     }
 }

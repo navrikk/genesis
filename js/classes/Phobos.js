@@ -41,7 +41,6 @@ export class Phobos extends CelestialBody {
                 // Ensure texture settings if needed (e.g., anisotropy)
                 // phobosTexture.anisotropy = renderer.getMaxAnisotropy(); // If renderer is accessible
 
-                console.log(`[${this.name}] Applying Phobos texture.`);
                 const material = LightingUtils.createNaturalLightingMaterial({
                     map: phobosTexture,
                     // Phobos is quite dark, so ensure ambient/diffuse are appropriate
@@ -163,11 +162,9 @@ export class Phobos extends CelestialBody {
         orbitGeometry.setAttribute('position', new THREE.Float32BufferAttribute(orbitPoints, 3));
         this.orbitPath = new THREE.Line(orbitGeometry, orbitMaterial);
         this.orbitPath.position.copy(this.parentPosition); // Path is centered on parent
-        console.log(`[Phobos createOrbitPath] Created for ${this.name} with radius ${this.orbitRadius.toFixed(3)} at parent X=${this.parentPosition.x.toFixed(3)}, Y=${this.parentPosition.y.toFixed(3)}, Z=${this.parentPosition.z.toFixed(3)}`);
         
         // Add the orbit path to the scene
         scene.add(this.orbitPath);
-        console.log(`[Phobos createOrbitPath] OrbitPath scale: X=${this.orbitPath.scale.x.toFixed(3)}, Y=${this.orbitPath.scale.y.toFixed(3)}, Z=${this.orbitPath.scale.z.toFixed(3)}`);
         
         return this.orbitPath;
     }
@@ -179,9 +176,7 @@ export class Phobos extends CelestialBody {
     toggleOrbitPath(visible) {
         if (this.orbitPath) {
             this.orbitPath.visible = visible;
-            console.log(`[${this.name}] Orbit path visibility set to: ${visible}`);
         } else {
-            console.warn(`[${this.name}] Attempted to toggle orbit path, but orbitPath is null.`);
         }
     }
 }

@@ -85,7 +85,6 @@ export default class App {
             CONFIG.BLOOM_EFFECT.threshold 
         );
         this.composer.addPass(this.bloomPass);
-        console.log('Post-processing setup complete with bloom effect.');
     }
 
     init() {
@@ -256,7 +255,6 @@ export default class App {
             if (this.composer) {
                 this.composer.setSize(window.innerWidth, window.innerHeight);
             }
-            console.log('Window resized, updated camera and renderer/composer.');
         }
     }
     
@@ -344,9 +342,9 @@ export default class App {
         
         if (playPromise !== undefined) {
             playPromise.then(() => {
-                console.log('Soundtrack started playing');
+
             }).catch(error => {
-                console.log('Autoplay prevented by browser. User interaction required to play audio.');
+
                 // We'll set a flag to try playing again after user interaction
                 this.soundtrack.setAttribute('data-autoplay-failed', 'true');
             });
@@ -363,7 +361,7 @@ export default class App {
                 muteButton.classList.add('muted');
             } else {
                 this.soundtrack.play().catch(error => {
-                    console.log('Failed to play audio:', error);
+                    console.error('Failed to play audio:', error);
                 });
                 muteButton.querySelector('i').className = 'fas fa-volume-up';
                 muteButton.setAttribute('data-tooltip', 'Mute Sound');
@@ -377,7 +375,7 @@ export default class App {
                 this.soundtrack.play().then(() => {
                     this.soundtrack.removeAttribute('data-autoplay-failed');
                 }).catch(error => {
-                    console.log('Still unable to play audio after user interaction:', error);
+                    console.error('Still unable to play audio after user interaction:', error);
                 });
             }
         }, { once: true });
@@ -644,7 +642,6 @@ export default class App {
 
     animate() {
         requestAnimationFrame(this.animate.bind(this));
-        // const time = this.clock.getElapsedTime(); // Not currently used, can be removed or kept for future use
         const deltaTime = this.clock.getDelta();
         
         // Get the Sun for lighting updates (assuming getSun() and getObject() are correctly implemented)
@@ -709,7 +706,6 @@ export default class App {
     }
 
     cleanup() {
-        console.log("Cleaning up App resources...");
         window.removeEventListener('resize', this.onWindowResize.bind(this));
         
         const resetButton = document.getElementById('resetCameraButton');
@@ -772,6 +768,5 @@ export default class App {
         this.geometriesToDispose = [];
         this.scene.children = []; // Clear scene children
 
-        console.log("App cleaned up.");
     }
 }
