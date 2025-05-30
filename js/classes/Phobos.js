@@ -3,6 +3,7 @@ import CONFIG from '../config.js';
 import { CelestialBody } from './CelestialBody.js';
 import LightingUtils from '../utils/LightingUtils.js';
 import phobosTexturePath from '../../assets/textures/phobos_nasa_texture.jpg';
+import { ColorUtils } from '../utils/ColorUtils.js';
 
 
 /**
@@ -70,21 +71,7 @@ export class Phobos extends CelestialBody {
      * @param {boolean} animate - Whether to animate the moon
      */
     update(deltaTime = 0, animate = true) {
-        if (animate && deltaTime) {
-            // Update orbit angle based on orbit speed
-            this.orbitAngle += this.orbitSpeed * deltaTime;
-            if (this.orbitAngle > Math.PI * 2) {
-                this.orbitAngle -= Math.PI * 2;
-            }
-            
-            // Apply rotation around own axis
-            if (this.mesh) {
-                this.mesh.rotation.y += this.rotationSpeed * deltaTime;
-            }
-            
-            // Update position
-            this.updatePosition();
-        }
+        // Completely static - no rotation or orbit movement
     }
     
     /**
@@ -141,8 +128,9 @@ export class Phobos extends CelestialBody {
     createOrbitPath(scene) {
         // Create the orbit path visualization
         const orbitGeometry = new THREE.BufferGeometry();
+        const randomColor = ColorUtils.getRandomColor();
         const orbitMaterial = new THREE.LineBasicMaterial({
-            color: 0xaaaaaa,
+            color: randomColor,
             opacity: 0.5,
             transparent: true
         });

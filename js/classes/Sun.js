@@ -21,8 +21,8 @@ export class Sun extends CelestialBody {
         sunTexture.anisotropy = 16; // Improve texture quality at angles
         sunTexture.encoding = THREE.sRGBEncoding; // Use proper color encoding
         
-        // Create slightly brighter color for the sun (5% brighter)
-        const brighterColor = new THREE.Color(this.primaryColor).multiplyScalar(1.05);
+        // Create moderately brighter color for the sun (25% brighter)
+        const brighterColor = new THREE.Color(this.primaryColor).multiplyScalar(1.25);
         
         // Use base class implementation but specify this is an emissive body
         this.createBaseMesh({
@@ -31,8 +31,8 @@ export class Sun extends CelestialBody {
             isEmissive: true // Important: mark as emissive body
         });
         
-        // Add a point light at the center of the sun
-        const sunLight = new THREE.PointLight(0xffffff, 0.84, 0, 1);
+        // Add a moderate point light at the center of the sun
+        const sunLight = new THREE.PointLight(0xffffff, 0.9, 0, 1);
         sunLight.position.set(0, 0, 0);
         this.objectGroup.add(sunLight);
 
@@ -40,10 +40,25 @@ export class Sun extends CelestialBody {
         if (CONFIG.BLOOM_EFFECT && CONFIG.BLOOM_EFFECT.enabled) {
             this.mesh.layers.enable(1); // BLOOM_SCENE layer
         }
+        
+        // Extremely minimal pulsation effect
+        this.pulseTime = 0;
+        this.pulseSpeed = 0.1; // Very slow pulsation
+        this.pulseIntensity = 0.003; // Extremely subtle intensity (0.3% variation)
+        this.baseSunScale = 1.0; // Base scale to animate around
     }
     
     update(deltaTime) {
-        // Sun rotation
-        this.mesh.rotation.y += this.rotationSpeed * deltaTime;
+        // Extremely minimal animation for the sun
+        this.pulseTime += deltaTime * this.pulseSpeed;
+        
+        // Calculate scale factor with extremely subtle variation
+        const scaleFactor = this.baseSunScale + Math.sin(this.pulseTime) * this.pulseIntensity;
+        
+        // Apply extremely subtle pulsating scale
+        this.mesh.scale.set(scaleFactor, scaleFactor, scaleFactor);
+        
+        // Extremely slow rotation to maintain texture visibility
+        this.mesh.rotation.y += this.rotationSpeed * deltaTime * 0.05;
     }
 }

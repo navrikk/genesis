@@ -283,6 +283,9 @@ export default class App {
     if (CONFIG.BLOOM_EFFECT.enabled) {
       this.setupPostProcessing();
     }
+    
+    // Hide orbit paths by default
+    this.solarSystem.toggleOrbitPaths(false);
 
     // Event Listeners
     window.addEventListener("resize", this.onWindowResize.bind(this), false);
@@ -323,45 +326,20 @@ export default class App {
       }
     });
 
-    // Create Play/Pause button with icon
-    const playPauseButton = document.createElement("button");
-    playPauseButton.id = "playPauseButton";
-    playPauseButton.className = "control-button control-tooltip";
-    playPauseButton.setAttribute("data-tooltip", "Pause Animation");
-
-    // Create icon element
-    const playPauseIcon = document.createElement("i");
-    playPauseIcon.className = "fas fa-pause";
-    playPauseButton.appendChild(playPauseIcon);
-
-    playPauseButton.addEventListener("click", () => {
-      const isPlaying = CONFIG.ANIMATION.enabled;
-      CONFIG.ANIMATION.enabled = !isPlaying;
-      this.solarSystem.toggleAnimation(!isPlaying);
-
-      // Update icon and tooltip based on state
-      if (!isPlaying) {
-        playPauseIcon.className = "fas fa-pause";
-        playPauseButton.setAttribute("data-tooltip", "Pause Animation");
-      } else {
-        playPauseIcon.className = "fas fa-play";
-        playPauseButton.setAttribute("data-tooltip", "Play Animation");
-      }
-    });
-    document.getElementById("controls").appendChild(playPauseButton);
+    // Play/Pause button removed - static solar system has no animation controls
 
     // Create Toggle Orbit Paths button with icon
     const toggleOrbitPathsButton = document.createElement("button");
     toggleOrbitPathsButton.id = "toggleOrbitPathsButton";
-    toggleOrbitPathsButton.className = "control-button control-tooltip active";
-    toggleOrbitPathsButton.setAttribute("data-tooltip", "Hide Orbit Paths");
+    toggleOrbitPathsButton.className = "control-button control-tooltip"; // Removed 'active' class
+    toggleOrbitPathsButton.setAttribute("data-tooltip", "Show Orbit Paths");
 
     // Create icon element
     const orbitPathsIcon = document.createElement("i");
     orbitPathsIcon.className = "fas fa-circle-notch";
     toggleOrbitPathsButton.appendChild(orbitPathsIcon);
 
-    let orbitPathsVisible = true;
+    let orbitPathsVisible = false; // Default to hidden
     toggleOrbitPathsButton.addEventListener("click", () => {
       orbitPathsVisible = !orbitPathsVisible;
       this.solarSystem.toggleOrbitPaths(orbitPathsVisible);
@@ -683,7 +661,7 @@ export default class App {
         // For other bodies, use screen ratio (fraction of screen height the body should occupy)
         let screenRatio;
         if (bodyName === "Sun")
-          screenRatio = 0.3; // Increased Sun zoom slightly
+          screenRatio = 0.5; // Increased Sun zoom significantly
         else if (
           ["Mercury", "Venus", "Earth", "Moon", "Mars"].includes(bodyName)
         )
@@ -801,30 +779,27 @@ export default class App {
       sunPosition = sun.getObject().position.clone();
     }
 
-    // Update all celestial bodies if simulation is not paused
-    if (!this.isSimulationPaused) {
-      const celestialBodies = this.solarSystem.getBodies(); // Make sure solarSystem has getBodies()
-      celestialBodies.forEach((body) => {
-        // Update the body's intrinsic properties (rotation, etc.)
-        body.update(deltaTime, CONFIG.ANIMATION.enabled); // Pass animation enabled flag
-
-        // Update lighting for non-emissive bodies (if setSunPosition is a method on them)
-        if (body.setSunPosition && !body.isEmissive) {
-          // Assuming isEmissive property exists
-          body.setSunPosition(sunPosition);
-        }
-
-        // If using custom shaders that need sun position:
-        if (
-          body.mesh &&
-          body.mesh.material &&
-          body.mesh.material.uniforms &&
-          body.mesh.material.uniforms.sunPosition
-        ) {
-          body.mesh.material.uniforms.sunPosition.value.copy(sunPosition);
-        }
-      });
-    }
+    // Update all celestial bodies - only rotation, no orbit movement
+    const celestialBodies = this.solarSystem.getBodies();
+    celestialBodies.forEach((body) => {
+      // Update only rotation
+      body.update(deltaTime, false);
+        
+      // Update lighting for non-emissive bodies (if setSunPosition is a method on them)
+      if (body.setSunPosition && !body.isEmissive) {
+        body.setSunPosition(sunPosition);
+      }
+        
+      // If using custom shaders that need sun position:
+      if (
+        body.mesh &&
+        body.mesh.material &&
+        body.mesh.material.uniforms &&
+        body.mesh.material.uniforms.sunPosition
+      ) {
+        body.mesh.material.uniforms.sunPosition.value.copy(sunPosition);
+      }
+    });
 
     // Update starfield
     if (this.starfield) {

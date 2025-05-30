@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import CONFIG from '../config.js';
 import { CelestialBody } from './CelestialBody.js';
 import { LabelUtils } from '../utils/LabelUtils.js';
+import { ColorUtils } from '../utils/ColorUtils.js';
 
 /**
  * Venus class representing the planet Venus
@@ -73,8 +74,9 @@ export class Venus extends CelestialBody {
 
     createOrbitPath(scene) {
         const orbitGeometry = new THREE.BufferGeometry();
+        const randomColor = ColorUtils.getRandomColor();
         const orbitMaterial = new THREE.LineBasicMaterial({ 
-            color: this.primaryColor,
+            color: randomColor,
             opacity: 0.5,
             transparent: true
         });
@@ -110,21 +112,7 @@ export class Venus extends CelestialBody {
     }
 
     update(deltaTime, animate = true) {
-        if (animate) {
-            // Update rotation
-            this.mesh.rotation.y += this.rotationSpeed * deltaTime;
-            
-            // Rotate clouds slightly faster for dynamic effect
-            if (this.cloudsMesh) {
-                this.cloudsMesh.rotation.y += this.rotationSpeed * 1.1 * deltaTime;
-            }
-            
-            // Update position
-            this.updatePosition();
-            
-            // Update orbit path position
-            this.updateOrbitPath();
-        }
+        // Completely static - no rotation or orbit movement
     }
     
     updatePosition() {

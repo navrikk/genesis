@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import LightingUtils from '../utils/LightingUtils.js';
+import { ColorUtils } from '../utils/ColorUtils.js';
 
 /**
  * Base class for all celestial bodies in the solar system
@@ -93,8 +94,9 @@ export class CelestialBody {
 
     addLighting() {
         // Add ambient lighting based on the body's specified intensity
+        // Increased by 20% for all non-emissive bodies
         if (!this.isEmissive) {
-            LightingUtils.addAmbientLight(this.objectGroup, this.ambientLightIntensity * 3.25);
+            LightingUtils.addAmbientLight(this.objectGroup, this.ambientLightIntensity * 3.9); // 20% increase from 3.25
         }
     }
 

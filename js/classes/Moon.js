@@ -3,6 +3,7 @@ import CONFIG from '../config.js';
 import { CelestialBody } from './CelestialBody.js';
 import { LabelUtils } from '../utils/LabelUtils.js';
 import PlanetShader from '../shaders/PlanetShader.js';
+import { ColorUtils } from '../utils/ColorUtils.js';
 
 /**
  * Moon class representing Earth's moon
@@ -45,8 +46,9 @@ export class Moon extends CelestialBody {
     
     createOrbitPath(scene) {
         const orbitGeometry = new THREE.BufferGeometry();
+        const randomColor = ColorUtils.getRandomColor();
         const orbitMaterial = new THREE.LineBasicMaterial({ 
-            color: this.primaryColor,
+            color: randomColor,
             opacity: 0.5,
             transparent: true
         });
@@ -82,19 +84,7 @@ export class Moon extends CelestialBody {
     }
     
     update(deltaTime, animate = true) {
-        if (animate) {
-            // Update orbit position
-            this.orbitAngle += this.orbitSpeed * deltaTime;
-            
-            // Update rotation - the Moon is tidally locked to Earth
-            this.mesh.rotation.y += this.rotationSpeed * deltaTime;
-            
-            // Update position
-            this.updatePosition();
-            
-            // Update orbit path position
-            this.updateOrbitPath();
-        }
+        // Completely static - no rotation or orbit movement
     }
     
     updatePosition() {

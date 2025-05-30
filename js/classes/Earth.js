@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import CONFIG from '../config.js';
 import { CelestialBody } from './CelestialBody.js';
 import { LabelUtils } from '../utils/LabelUtils.js';
+import { ColorUtils } from '../utils/ColorUtils.js';
 
 /**
  * Earth class representing the planet Earth
@@ -94,8 +95,9 @@ export class Earth extends CelestialBody {
 
     createOrbitPath(scene) {
         const orbitGeometry = new THREE.BufferGeometry();
+        const randomColor = ColorUtils.getRandomColor();
         const orbitMaterial = new THREE.LineBasicMaterial({ 
-            color: this.primaryColor,
+            color: randomColor,
             opacity: 0.5,
             transparent: true
         });
@@ -142,31 +144,7 @@ export class Earth extends CelestialBody {
     }
     
     update(deltaTime, animate = true) {
-        if (animate) {
-            // Update orbit position
-            this.orbitAngle += this.orbitSpeed * deltaTime;
-            
-            // Update rotation
-            this.mesh.rotation.y += this.rotationSpeed * deltaTime;
-            
-            // Rotate clouds slightly faster for dynamic effect
-            if (this.cloudsMesh) {
-                this.cloudsMesh.rotation.y += this.rotationSpeed * 1.1 * deltaTime;
-            }
-            
-            // Update position
-            this.updatePosition();
-            
-            // Update orbit path position
-            this.updateOrbitPath();
-            
-            // Update moon position if it exists
-            if (this.moon) {
-                this.moon.updateParentPosition(this.objectGroup.position);
-                this.moon.setSunPosition(this.sunPosition);
-                this.moon.update(deltaTime, animate);
-            }
-        }
+        // Completely static - no rotation or orbit movement
     }
     
     toggleOrbitPath(visible) {

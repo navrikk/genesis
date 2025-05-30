@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import CONFIG from '../config.js';
 import { CelestialBody } from './CelestialBody.js';
+import { ColorUtils } from '../utils/ColorUtils.js';
 
 /**
  * Mercury class representing the planet Mercury
@@ -43,8 +44,9 @@ export class Mercury extends CelestialBody {
 
     createOrbitPath(scene) {
         const orbitGeometry = new THREE.BufferGeometry();
+        const randomColor = ColorUtils.getRandomColor();
         const orbitMaterial = new THREE.LineBasicMaterial({ 
-            color: this.primaryColor,
+            color: randomColor,
             opacity: 0.5,
             transparent: true
         });
@@ -91,21 +93,7 @@ export class Mercury extends CelestialBody {
      * @param {boolean} animate - Whether to animate the planet
      */
     update(deltaTime, animate = true) {
-        if (animate) {
-            // Update orbit position
-            this.orbitAngle += this.orbitSpeed * deltaTime;
-            
-            // Update rotation
-            this.mesh.rotation.y += this.rotationSpeed * deltaTime;
-            
-            // Update position
-            this.updatePosition();
-            
-            // Update orbit path position
-            if (this.orbitPath) {
-                this.orbitPath.position.copy(this.sunPosition);
-            }
-        }
+        // Completely static - no rotation or orbit movement
     }
 
     /**

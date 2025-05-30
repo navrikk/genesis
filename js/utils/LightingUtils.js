@@ -26,15 +26,19 @@ const LightingUtils = {
         }
         
         // For non-emissive bodies like planets and moons, balance brightness with texture visibility
+        // Increase brightness by 20% for all non-emissive bodies
+        const baseColor = options.baseColor || new THREE.Color(0x777777);
+        const brighterColor = new THREE.Color().copy(baseColor).multiplyScalar(1.2); // 20% brighter
+        
         const materialOptions = {
             map: options.map,
-            color: options.baseColor || new THREE.Color(0x777777), // Darker base color to compensate for high ambient
+            color: brighterColor, // 20% brighter color for all non-Sun celestial bodies
             normalMap: options.normalMap,
             // Only add bump map if provided to avoid warnings
             // bumpMap: options.bumpMap, // This line will be handled conditionally
             // bumpScale: options.bumpScale || 0.01, // This line will be handled conditionally
-            emissive: new THREE.Color(0x111111), // Very subtle emission, relying on ambient light
-            reflectivity: 0.15, // Lower reflectivity to preserve texture detail with high ambient
+            emissive: new THREE.Color(0x151515), // Slightly increased emission for 20% more brightness
+            reflectivity: 0.18, // Slightly increased reflectivity for more brightness
         };
 
         if (options.bumpMap) {

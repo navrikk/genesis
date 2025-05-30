@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import CONFIG from '../config.js';
 import { CelestialBody } from './CelestialBody.js';
 import { LabelUtils } from '../utils/LabelUtils.js';
+import { ColorUtils } from '../utils/ColorUtils.js';
 
 /**
  * Mars class representing the planet Mars
@@ -58,10 +59,11 @@ export class Mars extends CelestialBody {
     
     createOrbitPath(scene) {
         const orbitGeometry = new THREE.BufferGeometry();
+        const randomColor = ColorUtils.getRandomColor();
         const orbitMaterial = new THREE.LineBasicMaterial({ 
-            color: 0x888888,
+            color: randomColor,
             transparent: true,
-            opacity: 0.3
+            opacity: 0.5
         });
         
         // Create a circle of points for the orbit
@@ -89,31 +91,7 @@ export class Mars extends CelestialBody {
     }
     
     update(deltaTime, animate = true) {
-        if (animate) {
-            // Update orbit position
-            this.orbitAngle += this.orbitSpeed * deltaTime;
-            
-            // Update rotation
-            this.mesh.rotation.y += this.rotationSpeed * deltaTime;
-            
-            // Update position
-            this.updatePosition();
-            
-            // Update orbit path position
-            // Update orbit path position (in case sunPosition could change)
-            if (this.orbitPath) {
-                this.orbitPath.position.copy(this.sunPosition);
-            }
-            
-            // Update moons if they exist
-            if (this.moons.length > 0) {
-                this.moons.forEach(moon => {
-                    moon.updateParentPosition(this.objectGroup.position);
-                    moon.setSunPosition(this.sunPosition);
-                    moon.update(deltaTime, animate);
-                });
-            }
-        }
+        // Completely static - no rotation or orbit movement
     }
     
     updatePosition() {

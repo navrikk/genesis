@@ -113,9 +113,9 @@ const CONFIG = {
     },
     BLOOM_EFFECT: {
         enabled: true,
-        threshold: 0.3,
-        strength: 1.5,
-        radius: 0.7
+        threshold: 0.4,   // Moderate threshold for balanced glow effect
+        strength: 1.2,   // Moderate strength for visible but not overwhelming bloom
+        radius: 0.6      // Moderate radius for a balanced glow
     }
 };
 

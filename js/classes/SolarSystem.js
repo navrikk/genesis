@@ -46,13 +46,8 @@ export class SolarSystem {
      */
     update(deltaTime) {
         this.celestialBodies.forEach(body => {
-            if (body.update.length > 1) {
-                // If the body's update method accepts an animation parameter
-                body.update(deltaTime, this.animationEnabled);
-            } else {
-                // For backward compatibility with bodies that don't have the animation parameter
-                body.update(deltaTime);
-            }
+            // Only update rotation, no orbit movement
+            body.update(deltaTime, false);
         });
     }
 
