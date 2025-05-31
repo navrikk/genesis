@@ -77,27 +77,6 @@ export class SolarSystem {
     }
     
     /**
-     * Toggle visibility of orbit paths for all planets
-     * @param {boolean} visible - Whether orbit paths should be visible
-     */
-    toggleOrbitPaths(visible) {
-        this.celestialBodies.forEach(body => {
-            if (body.toggleOrbitPath) {
-                body.toggleOrbitPath(visible);
-            }
-        });
-    }
-    
-    /**
-     * Toggle visibility of labels for all celestial bodies (placeholder for compatibility)
-     * @param {boolean} visible - Whether labels should be visible
-     */
-    toggleLabels(visible) {
-        // Labels have been completely removed from the system
-        // This method is kept for compatibility
-    }
-    
-    /**
      * Setup global lighting for the entire scene
      * This provides moderate lighting for all celestial bodies
      */
@@ -122,5 +101,18 @@ export class SolarSystem {
      */
     getSun() {
         return this.getBody('Sun');
+    }
+
+    /**
+     * Toggle visibility of all orbit paths in the solar system.
+     * @param {boolean} visible - True to show orbit paths, false to hide them.
+     */
+    toggleAllOrbitPaths(visible) {
+        this.celestialBodies.forEach(body => {
+            if (body.toggleOrbitPath) { // Check if the method exists
+                body.toggleOrbitPath(visible);
+            }
+        });
+        console.log(`All orbit paths set to visible: ${visible}`);
     }
 }

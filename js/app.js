@@ -145,20 +145,16 @@ export default class App {
     });
 
     // Create Sun
-    const sun = new Sun();
+    const sun = new Sun(this.scene);
     this.solarSystem.addBody(sun);
     if (sun.mesh) {
       if (sun.mesh.material) this.materialsToDispose.push(sun.mesh.material);
       if (sun.mesh.geometry) this.geometriesToDispose.push(sun.mesh.geometry);
     }
 
-    // Create Mercury with Sun's position
-    const sunPosition = this.solarSystem.getBody("Sun")
-      ? this.solarSystem.getBody("Sun").getObject().position
-      : new THREE.Vector3(0, 0, 0);
-    const mercury = new Mercury(sunPosition);
+    // Mercury will orbit the origin by default (Sun's assumed position)
+    const mercury = new Mercury(this.scene);
     this.solarSystem.addBody(mercury);
-    mercury.createOrbitPath(this.scene);
     if (mercury.mesh) {
       if (mercury.mesh.material)
         this.materialsToDispose.push(mercury.mesh.material);
@@ -167,9 +163,8 @@ export default class App {
     }
 
     // Create Venus
-    const venus = new Venus(sunPosition);
+    const venus = new Venus(this.scene);
     this.solarSystem.addBody(venus);
-    venus.createOrbitPath(this.scene);
     if (venus.mesh) {
       if (venus.mesh.material)
         this.materialsToDispose.push(venus.mesh.material);
@@ -178,9 +173,8 @@ export default class App {
     }
 
     // Create Earth
-    const earth = new Earth(sunPosition);
+    const earth = new Earth(this.scene);
     this.solarSystem.addBody(earth);
-    earth.createOrbitPath(this.scene);
     if (earth.mesh) {
       if (earth.mesh.material)
         this.materialsToDispose.push(earth.mesh.material);
@@ -189,29 +183,24 @@ export default class App {
     }
 
     // Create Earth's Moon
-    const moon = new Moon(earth.getObject().position);
+    const moon = new Moon(earth);
     this.solarSystem.addBody(moon);
-    moon.createOrbitPath(this.scene);
-    earth.moon = moon;
     if (moon.mesh) {
       if (moon.mesh.material) this.materialsToDispose.push(moon.mesh.material);
       if (moon.mesh.geometry) this.geometriesToDispose.push(moon.mesh.geometry);
     }
 
     // Create Mars
-    const mars = new Mars(sunPosition);
+    const mars = new Mars(this.scene);
     this.solarSystem.addBody(mars);
-    mars.createOrbitPath(this.scene);
     if (mars.mesh) {
       if (mars.mesh.material) this.materialsToDispose.push(mars.mesh.material);
       if (mars.mesh.geometry) this.geometriesToDispose.push(mars.mesh.geometry);
     }
 
     // Create Mars's moon Phobos
-    const phobos = new Phobos(mars.getObject().position);
+    const phobos = new Phobos(mars);
     this.solarSystem.addBody(phobos);
-    phobos.createOrbitPath(this.scene);
-    mars.addMoon(phobos);
     if (phobos.mesh) {
       if (phobos.mesh.material)
         this.materialsToDispose.push(phobos.mesh.material);
@@ -220,10 +209,8 @@ export default class App {
     }
 
     // Create Mars's moon Deimos
-    const deimos = new Deimos(mars.getObject().position);
+    const deimos = new Deimos(mars);
     this.solarSystem.addBody(deimos);
-    deimos.createOrbitPath(this.scene);
-    mars.addMoon(deimos);
     if (deimos.mesh) {
       if (deimos.mesh.material)
         this.materialsToDispose.push(deimos.mesh.material);
@@ -283,9 +270,6 @@ export default class App {
     if (CONFIG.BLOOM_EFFECT.enabled) {
       this.setupPostProcessing();
     }
-    
-    // Hide orbit paths by default
-    this.solarSystem.toggleOrbitPaths(false);
 
     // Event Listeners
     window.addEventListener("resize", this.onWindowResize.bind(this), false);
@@ -342,7 +326,7 @@ export default class App {
     let orbitPathsVisible = false; // Default to hidden
     toggleOrbitPathsButton.addEventListener("click", () => {
       orbitPathsVisible = !orbitPathsVisible;
-      this.solarSystem.toggleOrbitPaths(orbitPathsVisible);
+      this.solarSystem.toggleAllOrbitPaths(orbitPathsVisible);
 
       // Update tooltip and active state based on visibility
       if (orbitPathsVisible) {
@@ -635,6 +619,21 @@ export default class App {
       if (!bodyObject) return; // Should not happen if body exists
       const bodyPosition = bodyObject.getWorldPosition(new THREE.Vector3());
 
+                // Check for NaN positions to prevent camera errors
+                if (isNaN(bodyPosition.x) || isNaN(bodyPosition.y) || isNaN(bodyPosition.z)) {
+                    console.error(`Focus target ${bodyName} has NaN world position:`, bodyPosition.clone());
+                    console.error(`Body details: name=${body.name}, orbitalRadius=${body.orbitalRadius}, orbitAngle=${body.orbitAngle}, orbitalInclination=${body.orbitalInclination}, radius=${body.radius}`);
+                    if (body.parentBody && body.parentBody.getObject()) {
+                        const parentObject = body.parentBody.getObject();
+                        const parentPos = parentObject.getWorldPosition(new THREE.Vector3());
+                        console.error(`Parent ${body.parentBody.name} world position:`, parentPos.clone());
+                        console.error(`Parent details: name=${body.parentBody.name}, orbitalRadius=${body.parentBody.orbitalRadius}, orbitAngle=${body.parentBody.orbitAngle}, orbitalInclination=${body.parentBody.orbitalInclination}, radius=${body.parentBody.radius}`);
+                        console.error(`Parent ${body.parentBody.name} local position:`, parentObject.position.clone());
+                    }
+                    console.error(`Body ${bodyName} local position:`, bodyObject.position.clone());
+                    return; // Avoid focusing on NaN
+                }
+
       // IMPORTANT: Set OrbitControls target immediately
       this.controls.target.copy(bodyPosition);
 
@@ -678,11 +677,7 @@ export default class App {
         .copy(bodyPosition)
         .addScaledVector(cameraOffsetDirection, distance);
 
-      // The lerp calls here provide an immediate partial snap, animateCameraToPosition does the smooth transition.
-      // Consider if these are needed or if animateCameraToPosition is sufficient.
-      // For now, keeping them for responsiveness before the main animation kicks in.
-      this.camera.position.lerp(targetCameraPosition, 0.9);
-      this.controls.target.lerp(bodyPosition, 0.9);
+      // Removed immediate lerp. animateCameraToPosition will handle the full smooth transition.
 
       // Simulation pause logic and time panel visibility
       if (bodyName === "Sun") {
@@ -696,7 +691,7 @@ export default class App {
           this.timeControlsPanel.classList.add("hidden");
       }
 
-      this.animateCameraToPosition(targetCameraPosition, bodyPosition, 1500);
+      this.animateCameraToPosition(targetCameraPosition, bodyPosition, 2500);
     } // This closes the 'if (body)' block
   }
 
@@ -732,7 +727,7 @@ export default class App {
     this.animateCameraToPosition(
       resetPosition,
       new THREE.Vector3(0, 0, 0),
-      1500,
+      2500,
     );
   }
 
@@ -744,15 +739,16 @@ export default class App {
 
     const animateReset = () => {
       const elapsed = Date.now() - startTime;
-      const progress = Math.min(elapsed / duration, 1);
+      const linearProgress = Math.min(elapsed / duration, 1);
+      const easedProgress = linearProgress * (2 - linearProgress); // Quadratic ease-out
 
-      if (progress < 1) {
+      if (linearProgress < 1) {
         this.camera.position.lerpVectors(
           startPosition,
           targetPosition,
-          progress,
+          easedProgress,
         );
-        this.controls.target.lerpVectors(startTarget, targetLookAt, progress);
+        this.controls.target.lerpVectors(startTarget, targetLookAt, easedProgress);
         this.controls.update();
 
         this.currentAnimation = requestAnimationFrame(animateReset);
@@ -784,11 +780,6 @@ export default class App {
     celestialBodies.forEach((body) => {
       // Update only rotation
       body.update(deltaTime, false);
-        
-      // Update lighting for non-emissive bodies (if setSunPosition is a method on them)
-      if (body.setSunPosition && !body.isEmissive) {
-        body.setSunPosition(sunPosition);
-      }
         
       // If using custom shaders that need sun position:
       if (

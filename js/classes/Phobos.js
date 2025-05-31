@@ -3,7 +3,7 @@ import CONFIG from '../config.js';
 import { CelestialBody } from './CelestialBody.js';
 import LightingUtils from '../utils/LightingUtils.js';
 import phobosTexturePath from '../../assets/textures/phobos_nasa_texture.jpg';
-import { ColorUtils } from '../utils/ColorUtils.js';
+
 
 
 /**
@@ -13,17 +13,27 @@ import { ColorUtils } from '../utils/ColorUtils.js';
  */
 export class Phobos extends CelestialBody {
     /**
-     * @param {THREE.Vector3} parentPosition - Position of Mars
+     * @param {CelestialBody} parentBody - The parent celestial body (Mars)
      */
-    constructor(parentPosition = new THREE.Vector3(0, 0, 0)) {
-        super(CONFIG.PHOBOS.NAME, CONFIG.PHOBOS.RADIUS, CONFIG.PHOBOS.COLOR, false, null, 0.15); // Further reduced ambientLightIntensity // isEmissive, customGeometry (null for now, handled in createMesh), ambientLightIntensity
-        this.parentPosition = parentPosition;
-        this.orbitRadius = CONFIG.PHOBOS.ORBIT_RADIUS;
+    constructor(parentBody) {
+        const inclinationDegrees = 1.09; // Phobos's orbital inclination to Mars's equator
+        const inclinationRadians = inclinationDegrees * Math.PI / 180;
+        super(
+            CONFIG.PHOBOS.NAME,
+            CONFIG.PHOBOS.RADIUS,
+            CONFIG.PHOBOS.COLOR,
+            CONFIG.PHOBOS.ORBIT_RADIUS,
+            inclinationRadians,
+            false,                    // isEmissive
+            null,                     // customGeometry (handled in createMesh)
+            0.15                      // ambientLightIntensity
+        );
+        this.parentBody = parentBody;
         this.orbitSpeed = CONFIG.PHOBOS.ORBIT_SPEED;
         this.rotationSpeed = CONFIG.PHOBOS.ROTATION_SPEED;
         this.orbitAngle = Math.random() * Math.PI * 2; // Random starting position
-        this.orbitPath = null;
         this.createMesh();
+        this.createOrbitPath(this.parentBody.getObject(), true);
         this.updatePosition();
     }
     
@@ -43,14 +53,11 @@ export class Phobos extends CelestialBody {
                 // Ensure texture settings if needed (e.g., anisotropy)
                 // phobosTexture.anisotropy = renderer.getMaxAnisotropy(); // If renderer is accessible
 
-                const material = LightingUtils.createNaturalLightingMaterial({
+                const materialOptions = {
                     map: phobosTexture,
-                    baseColor: new THREE.Color(0x333333), // Slightly darker base color for Phobos
-                    // ambientLightIntensity: this.ambientLightIntensity, // This is not used by createNaturalLightingMaterial directly
-                    // No specular map for Phobos typically
-                });
-
-                this.createBaseMesh(geometry, material);
+                    baseColor: new THREE.Color(0x333333) // Slightly darker base color for Phobos
+                };
+                super.createBaseMesh(materialOptions, geometry);
                 // If there's an update loop or a need to refresh the scene, ensure it happens.
                 // For example, if App.js has a render function, this change should be picked up.
             },
@@ -59,8 +66,10 @@ export class Phobos extends CelestialBody {
                 console.error(`[${this.name}] Error loading texture:`, error);
                 // Fallback: Create mesh with a basic material or color
                 console.error(`[${this.name}] Texture load error. Falling back to basic material.`);
-                const fallbackMaterial = new THREE.MeshLambertMaterial({ color: this.primaryColor || 0x888888 });
-                this.createBaseMesh(geometry, fallbackMaterial);
+                const fallbackMaterialOptions = {
+                    baseColor: new THREE.Color(this.primaryColor) // Use primaryColor from constructor
+                };
+                super.createBaseMesh(fallbackMaterialOptions, geometry);
             }
         );
     }
@@ -71,99 +80,18 @@ export class Phobos extends CelestialBody {
      * @param {boolean} animate - Whether to animate the moon
      */
     update(deltaTime = 0, animate = true) {
-        // Completely static - no rotation or orbit movement
-    }
-    
-    /**
-     * Update the position based on current orbit angle
-     */
-    updatePosition() {
-        // Calculate position based on orbit angle
-        const effectiveOrbitRadius = this.orbitRadius * 0.9999811; // Adjusted for 512-segment path
-        const x = Math.cos(this.orbitAngle) * effectiveOrbitRadius;
-        const z = Math.sin(this.orbitAngle) * effectiveOrbitRadius;
-        
-        // Update position relative to Mars
-        const calculatedX = this.parentPosition.x + x;
-        const calculatedY = this.parentPosition.y; // Assuming orbit is in Y=0 plane relative to parent
-        const calculatedZ = this.parentPosition.z + z;
-        
-        this.objectGroup.position.set(calculatedX, calculatedY, calculatedZ);
+        if (animate && this.orbitSpeed > 0) {
+            this.orbitAngle += this.orbitSpeed * deltaTime;
+            if (this.orbitAngle > Math.PI * 2) {
+                this.orbitAngle -= Math.PI * 2;
+            }
+        }
 
-    }
-    
-    /**
-     * Update the parent planet's position
-     * @param {THREE.Vector3} position - New parent position
-     */
-    updateParentPosition(position) {
-        this.parentPosition.copy(position);
-        if (this.orbitPath) {
-            const oldPathPos = this.orbitPath.position.clone();
-            this.orbitPath.position.copy(this.parentPosition); // Update orbit path position when parent moves
+        if (animate && this.rotationSpeed > 0 && this.mesh) {
+            this.mesh.rotation.y += this.rotationSpeed * deltaTime;
         }
-    }
-    
-    /**
-     * Set the sun position (used for lighting effects)
-     * @param {THREE.Vector3} position - Sun position
-     */
-    setSunPosition(position) {
-        // We're using the base class implementation which doesn't need this
-        // but we need to implement it for compatibility with Mars.js
-    }
-    
-    /**
-     * Get the orbit path for external use
-     * @returns {THREE.Line} The orbit path visualization
-     */
-    getOrbitPath() {
-        return this.orbitPath;
-    }
-    
-    /**
-     * Creates an orbit path visualization and adds it to the scene
-     * @param {THREE.Scene} scene - Scene to add the orbit path to
-     */
-    createOrbitPath(scene) {
-        // Create the orbit path visualization
-        const orbitGeometry = new THREE.BufferGeometry();
-        const randomColor = ColorUtils.getRandomColor();
-        const orbitMaterial = new THREE.LineBasicMaterial({
-            color: randomColor,
-            opacity: 0.5,
-            transparent: true
-        });
-        
-        // Create orbit path with a resolution of 128 segments
-        const orbitPoints = [];
-        for (let i = 0; i <= 512; i++) {
-            const angle = (i / 512) * Math.PI * 2;
-            orbitPoints.push(
-                Math.cos(angle) * this.orbitRadius,
-                0,
-                Math.sin(angle) * this.orbitRadius
-            );
-        }
-        
-        orbitGeometry.setAttribute('position', new THREE.Float32BufferAttribute(orbitPoints, 3));
-        this.orbitPath = new THREE.Line(orbitGeometry, orbitMaterial);
-        this.orbitPath.position.copy(this.parentPosition); // Path is centered on parent
-        
-        // Add the orbit path to the scene
-        scene.add(this.orbitPath);
-        
-        return this.orbitPath;
-    }
 
-    /**
-     * Toggles the visibility of the orbit path.
-     * @param {boolean} visible - Whether the orbit path should be visible.
-     */
-    toggleOrbitPath(visible) {
-        if (this.orbitPath) {
-            this.orbitPath.visible = visible;
-        } else {
-        }
+        // After updating angles, update the position using the base class method
+        this.updatePosition(); 
     }
 }

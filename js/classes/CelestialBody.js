@@ -1,11 +1,11 @@
 import * as THREE from 'three';
 import LightingUtils from '../utils/LightingUtils.js';
-import { ColorUtils } from '../utils/ColorUtils.js';
 
 /**
  * Base class for all celestial bodies in the solar system
  */
 export class CelestialBody {
+    static ORBIT_SEGMENTS = 128; // Number of segments for orbit lines
     /**
      * @param {string} name - Name of the celestial body
      * @param {number} radius - Radius in scene units
@@ -13,13 +13,16 @@ export class CelestialBody {
      * @param {boolean} isEmissive - Whether the body is emissive
      * @param {THREE.Geometry} customGeometry - Optional custom geometry
      */
-    constructor(name, radius, primaryColor, isEmissive = false, customGeometry = null, ambientLightIntensity = 1.0) { // Default ambient intensity
+    constructor(name, radius, primaryColor, orbitalRadius = 0, orbitalInclination = 0, isEmissive = false, customGeometry = null, ambientLightIntensity = 1.0) {
         this.name = name;
         this.radius = radius;
         this.primaryColor = primaryColor;
         this.ambientLightIntensity = ambientLightIntensity; // Store it
         this.mesh = null;
         this.objectGroup = new THREE.Group(); // Group to hold mesh and any effects
+        this.orbitalRadius = orbitalRadius;
+        this.orbitalInclination = orbitalInclination; // In radians
+        this.orbitPath = null;
     }
 
     /**
@@ -117,6 +120,38 @@ export class CelestialBody {
     }
 
     /**
+     * Updates the celestial body's position based on its orbital parameters.
+     * Considers orbital radius, angle, and inclination.
+     * If it's a moon (has a parentBody), position is relative to the parent.
+     */
+    updatePosition() {
+        if (this.orbitalRadius === 0 && !this.parentBody) { // Sun or body not orbiting anything
+            this.setPosition(0, 0, 0);
+            return;
+        }
+
+        // Calculate position in the orbital plane (XZ before inclination)
+        // this.orbitAngle should be updated by child classes or a central system if dynamic orbits are needed
+        const xPlane = Math.cos(this.orbitAngle || 0) * this.orbitalRadius; // Default orbitAngle to 0 if undefined
+        const zPlane = Math.sin(this.orbitAngle || 0) * this.orbitalRadius;
+
+        // Apply inclination (rotation around X-axis for an orbit initially in XZ plane)
+        // x' = x_plane
+        // y' = 0 * cos(inclination) - z_plane * sin(inclination) = -z_plane * sin(inclination)
+        // z' = 0 * sin(inclination) + z_plane * cos(inclination) =  z_plane * cos(inclination)
+        const x = xPlane;
+        const y = -zPlane * Math.sin(this.orbitalInclination);
+        const z =  zPlane * Math.cos(this.orbitalInclination);
+
+        if (this.parentBody && this.parentBody.getObject) { // Check if parentBody and getObject method exist
+            const parentPos = this.parentBody.getObject().position;
+            this.setPosition(parentPos.x + x, parentPos.y + y, parentPos.z + z);
+        } else {
+            this.setPosition(x, y, z);
+        }
+    }
+
+    /**
      * Set position of the entire celestial body group
      * @param {number} x - X coordinate
      * @param {number} y - Y coordinate
@@ -127,38 +162,54 @@ export class CelestialBody {
     }
 
     /**
-     * Set the sun position (no longer used for lighting)
-     * @param {THREE.Vector3} position - Position of the sun
+     * Creates the visual orbit path for this celestial body.
+     * @param {THREE.Object3D} targetContainer - The scene or group to add the orbit path to.
+     * @param {boolean} isMoon - Flag indicating if this body is a moon (for specific logic if needed, currently unused).
      */
-    setSunPosition(position) {
-        // Update the material to ensure shine only appears on the side facing the Sun
-        if (this.mesh && this.mesh.material) {
-            // Create a directional light that points from the sun to this object
-            const sunDirection = new THREE.Vector3()
-                .subVectors(this.objectGroup.position, position)
-                .normalize();
-            
-            // Update the material's light direction
-            if (!this.mesh.material.userData.sunDirection) {
-                this.mesh.material.userData.sunDirection = new THREE.Vector3();
-            }
-            this.mesh.material.userData.sunDirection.copy(sunDirection);
-            
-            // Reduce specular intensity based on angle to sun (only shine on sun-facing side)
-            if (this.mesh.material.specular) {
-                // Store original specular color if not already stored
-                if (!this.mesh.material.userData.originalSpecular) {
-                    this.mesh.material.userData.originalSpecular = this.mesh.material.specular.clone();
-                }
-            }
+    createOrbitPath(targetContainer, isMoon = false) {
+        if (this.orbitalRadius === 0) {
+            // console.warn(`[${this.name}] Orbital radius is 0, not creating orbit path.`);
+            return;
         }
+
+        const points = [];
+        for (let i = 0; i <= CelestialBody.ORBIT_SEGMENTS; i++) {
+            const angle = (i / CelestialBody.ORBIT_SEGMENTS) * Math.PI * 2;
+            const x = Math.cos(angle) * this.orbitalRadius;
+            const z = Math.sin(angle) * this.orbitalRadius;
+            points.push(new THREE.Vector3(x, 0, z)); // Orbit in XZ plane
+        }
+
+        const geometry = new THREE.BufferGeometry().setFromPoints(points);
+
+        const material = new THREE.LineBasicMaterial({ color: 0xEEEEEE, transparent: true, opacity: 0.4 });
+        this.orbitPath = new THREE.Line(geometry, material);
+        this.orbitPath.name = `${this.name}OrbitPath`;
+
+        // Apply orbital inclination (rotation around X-axis for XZ plane orbit)
+        if (this.orbitalInclination) {
+            this.orbitPath.rotation.x = this.orbitalInclination;
+        }
+
+        // The orbit path is centered at (0,0,0) relative to its targetContainer.
+        // targetContainer (parent group or scene) is assumed to be correctly positioned.
+        if (isMoon && this.parentBody) {
+            // The orbit path vertices are already relative to the parent's origin.
+            // Simply add it to the parent's object group.
+            this.parentBody.getObject().add(this.orbitPath);
+        } else {
+            targetContainer.add(this.orbitPath);
+        }
+        this.orbitPath.visible = false; // Initially hidden
     }
-    
+
     /**
-     * Toggle label visibility (placeholder for backward compatibility)
-     * @param {boolean} visible - Whether the label should be visible
+     * Toggles the visibility of the orbit path.
+     * @param {boolean} visible - True to show, false to hide.
      */
-    toggleLabel(visible) {
-        // Labels have been removed, this is just a placeholder for compatibility
+    toggleOrbitPath(visible) {
+        if (this.orbitPath) {
+            this.orbitPath.visible = visible;
+        }
     }
 }

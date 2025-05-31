@@ -3,7 +3,7 @@ import CONFIG from '../config.js';
 import { CelestialBody } from './CelestialBody.js';
 import LightingUtils from '../utils/LightingUtils.js';
 import deimosTexturePath from '../../assets/textures/deimos_nasa_texture.jpg';
-import { ColorUtils } from '../utils/ColorUtils.js';
+
 
 /**
  * Deimos class representing Mars' smaller moon
@@ -12,17 +12,27 @@ import { ColorUtils } from '../utils/ColorUtils.js';
  */
 export class Deimos extends CelestialBody {
     /**
-     * @param {THREE.Vector3} parentPosition - Position of Mars
+     * @param {CelestialBody} parentBody - The parent celestial body (Mars)
      */
-    constructor(parentPosition = new THREE.Vector3(0, 0, 0)) {
-        super(CONFIG.DEIMOS.NAME, CONFIG.DEIMOS.RADIUS, CONFIG.DEIMOS.COLOR, false, null, 0.02); // Further reduced ambientLightIntensity, isEmissive, customGeometry (sphere), ambientLightIntensity
-        this.parentPosition = parentPosition;
-        this.orbitRadius = CONFIG.DEIMOS.ORBIT_RADIUS;
+    constructor(parentBody) {
+        const inclinationDegrees = 0.93; // Deimos's orbital inclination to Mars's equator
+        const inclinationRadians = inclinationDegrees * Math.PI / 180;
+        super(
+            CONFIG.DEIMOS.NAME,
+            CONFIG.DEIMOS.RADIUS,
+            CONFIG.DEIMOS.COLOR,
+            CONFIG.DEIMOS.ORBIT_RADIUS,
+            inclinationRadians,
+            false,                    // isEmissive
+            null,                     // customGeometry (handled in createMesh)
+            0.02                      // ambientLightIntensity
+        );
+        this.parentBody = parentBody;
         this.orbitSpeed = CONFIG.DEIMOS.ORBIT_SPEED;
         this.rotationSpeed = CONFIG.DEIMOS.ROTATION_SPEED;
         this.orbitAngle = Math.random() * Math.PI * 2; // Random starting position
-        this.orbitPath = null;
         this.createMesh();
+        this.createOrbitPath(this.parentBody.getObject(), true);
         this.updatePosition(); // Ensure initial position is set
     }
     
@@ -35,19 +45,20 @@ export class Deimos extends CelestialBody {
         textureLoader.load(
             deimosTexturePath,
             (deimosTexture) => { // Success callback
-                const material = LightingUtils.createNaturalLightingMaterial({
+                const materialOptions = {
                     map: deimosTexture,
-                    baseColor: new THREE.Color(0x333333), // Slightly darker base color for Deimos
-                    // ambientLightIntensity: this.ambientLightIntensity, // This is not used by createNaturalLightingMaterial directly
-                });
-                this.createBaseMesh(geometry, material);
+                    baseColor: new THREE.Color(0x333333) // Slightly darker base color for Deimos
+                };
+                super.createBaseMesh(materialOptions, geometry);
             },
             undefined, // onProgress callback (optional)
             (error) => { // onError callback
                 console.error(`[${this.name}] Error loading texture from ${deimosTextureUrl}:`, error);
                 console.warn(`[${this.name}] Texture load error. Applying fallback material.`);
-                const fallbackMaterial = new THREE.MeshLambertMaterial({ color: this.primaryColor || 0x777777 });
-                this.createBaseMesh(geometry, fallbackMaterial);
+                const fallbackMaterialOptions = {
+                    baseColor: new THREE.Color(this.primaryColor) // Use primaryColor from constructor
+                };
+                super.createBaseMesh(fallbackMaterialOptions, geometry);
             }
         );
     }
@@ -60,94 +71,18 @@ export class Deimos extends CelestialBody {
      * @param {boolean} animate - Whether to animate the moon
      */
     update(deltaTime = 0, animate = true) {
-        // Completely static - no rotation or orbit movement
-    }
-    
-    /**
-     * Update the position based on current orbit angle
-     */
-    updatePosition() {
-        // Calculate position based on orbit angle
-        const x = Math.cos(this.orbitAngle) * this.orbitRadius;
-        const z = Math.sin(this.orbitAngle) * this.orbitRadius;
-        
-        // Update position relative to Mars
-        this.objectGroup.position.set(
-            this.parentPosition.x + x,
-            this.parentPosition.y,
-            this.parentPosition.z + z
-        );
-    }
-    
-    /**
-     * Update the parent planet's position
-     * @param {THREE.Vector3} position - New parent position
-     */
-    updateParentPosition(position) {
-        this.parentPosition.copy(position);
-        if (this.orbitPath) {
-            this.orbitPath.position.copy(this.parentPosition); // Update orbit path position when parent moves
+        if (animate && this.orbitSpeed > 0) {
+            this.orbitAngle += this.orbitSpeed * deltaTime;
+            if (this.orbitAngle > Math.PI * 2) {
+                this.orbitAngle -= Math.PI * 2;
+            }
         }
-    }
-    
-    /**
-     * Set the sun position (used for lighting effects)
-     * @param {THREE.Vector3} position - Sun position
-     */
-    setSunPosition(position) {
-        // We're using the base class implementation which doesn't need this
-        // but we need to implement it for compatibility with Mars.js
-    }
-    
-    /**
-     * Get the orbit path for external use
-     * @returns {THREE.Line} The orbit path visualization
-     */
-    getOrbitPath() {
-        return this.orbitPath;
-    }
-    
-    /**
-     * Creates an orbit path visualization and adds it to the scene
-     * @param {THREE.Scene} scene - Scene to add the orbit path to
-     */
-    createOrbitPath(scene) {
-        // Create the orbit path visualization
-        const orbitGeometry = new THREE.BufferGeometry();
-        const randomColor = ColorUtils.getRandomColor();
-        const orbitMaterial = new THREE.LineBasicMaterial({
-            color: randomColor,
-            opacity: 0.5,
-            transparent: true
-        });
-        
-        // Create orbit path with a resolution of 128 segments
-        const orbitPoints = [];
-        for (let i = 0; i <= 512; i++) {
-            const angle = (i / 512) * Math.PI * 2;
-            orbitPoints.push(
-                Math.cos(angle) * this.orbitRadius,
-                0,
-                Math.sin(angle) * this.orbitRadius
-            );
-        }
-        
-        orbitGeometry.setAttribute('position', new THREE.Float32BufferAttribute(orbitPoints, 3));
-        this.orbitPath = new THREE.Line(orbitGeometry, orbitMaterial);
-        this.orbitPath.position.copy(this.parentPosition); // Set orbit path position to parent's position
-        scene.add(this.orbitPath);
-        
-        return this.orbitPath;
-    }
 
-    /**
-     * Toggles the visibility of the orbit path.
-     * @param {boolean} visible - Whether the orbit path should be visible.
-     */
-    toggleOrbitPath(visible) {
-        if (this.orbitPath) {
-            this.orbitPath.visible = visible;
-        } else {
+        if (animate && this.rotationSpeed > 0 && this.mesh) {
+            this.mesh.rotation.y += this.rotationSpeed * deltaTime;
         }
+
+        // After updating angles, update the position using the base class method
+        this.updatePosition(); 
     }
-}
+    }
