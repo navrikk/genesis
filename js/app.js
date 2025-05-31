@@ -312,41 +312,23 @@ export default class App {
 
     // Play/Pause button removed - static solar system has no animation controls
 
-    // Create Toggle Orbit Paths button with icon
-    const toggleOrbitPathsButton = document.createElement("button");
-    toggleOrbitPathsButton.id = "toggleOrbitPathsButton";
-    toggleOrbitPathsButton.className = "control-button control-tooltip"; // Removed 'active' class
-    toggleOrbitPathsButton.setAttribute("data-tooltip", "Show Orbit Paths");
-
-    // Create icon element
-    const orbitPathsIcon = document.createElement("i");
-    orbitPathsIcon.className = "fas fa-circle-notch";
-    toggleOrbitPathsButton.appendChild(orbitPathsIcon);
-
-    let orbitPathsVisible = false; // Default to hidden
-    toggleOrbitPathsButton.addEventListener("click", () => {
-      orbitPathsVisible = !orbitPathsVisible;
-      this.solarSystem.toggleAllOrbitPaths(orbitPathsVisible);
-
-      // Update tooltip and active state based on visibility
-      if (orbitPathsVisible) {
-        toggleOrbitPathsButton.setAttribute("data-tooltip", "Hide Orbit Paths");
-        toggleOrbitPathsButton.classList.add("active");
-      } else {
-        toggleOrbitPathsButton.setAttribute("data-tooltip", "Show Orbit Paths");
-        toggleOrbitPathsButton.classList.remove("active"); // This was missing the remove('active') part
-      }
-    });
-    document.getElementById("controls").appendChild(toggleOrbitPathsButton); // Ensure this is outside the listener
+    // Orbit paths functionality removed
 
     // Controls Visibility Setup
     this.bottomControlsPanel = document.getElementById("controls");
     this.toggleControlsButton = document.getElementById("toggleControlsButton");
 
     if (this.toggleControlsButton) {
-      this.toggleControlsButton.addEventListener("click", () =>
-        this.toggleAllControlsVisibility(),
-      );
+      // Set initial state
+      this.toggleControlsButton.innerHTML = '<i class="fas fa-eye-slash"></i>';
+      this.toggleControlsButton.setAttribute("data-tooltip", "Hide Controls");
+      this.areControlsVisible = true;
+      
+      // Add click event listener
+      this.toggleControlsButton.addEventListener("click", (e) => {
+        e.stopPropagation(); // Prevent event bubbling
+        this.toggleAllControlsVisibility();
+      });
     }
 
     // Listener for Escape key to show controls if hidden
@@ -434,30 +416,105 @@ export default class App {
     const focusContainer = document.createElement("div");
     focusContainer.className = "focus-container";
 
-    // Create list of celestial bodies as clickable items instead of a dropdown
-    const celestialBodiesList = [
+    // Create hierarchical list of celestial bodies
+    const celestialBodiesHierarchy = [
       { name: "Sun", icon: "fa-sun" },
       { name: "Mercury", icon: "fa-circle" },
       { name: "Venus", icon: "fa-circle" },
-      { name: "Earth", icon: "fa-earth-americas" },
-      { name: "Moon", icon: "fa-moon" },
-      { name: "Mars", icon: "fa-circle" },
-      { name: "Phobos", icon: "fa-circle" },
-      { name: "Deimos", icon: "fa-circle" },
+      { 
+        name: "Earth", 
+        icon: "fa-earth-americas",
+        moons: [
+          { name: "Moon", icon: "fa-moon" }
+        ]
+      },
+      { 
+        name: "Mars", 
+        icon: "fa-circle",
+        moons: [
+          { name: "Phobos", icon: "fa-circle" },
+          { name: "Deimos", icon: "fa-circle" }
+        ]
+      },
     ];
 
-    // Create clickable items for each celestial body
-    celestialBodiesList.forEach((body) => {
-      const bodyOption = document.createElement("div");
-      bodyOption.className = "focus-option";
-      bodyOption.innerHTML = `<i class="fas ${body.icon}"></i> ${body.name}`;
-      bodyOption.addEventListener("click", () => {
-        this.focusOnBody(body.name);
-        this.showBodyInfo(body.name); // Show info panel when focused via dropdown
-        // Hide dropdown after selection
-        focusButton.blur();
-      });
-      focusContainer.appendChild(bodyOption);
+    // Create hierarchical dropdown menu
+    celestialBodiesHierarchy.forEach((body) => {
+      if (body.moons && body.moons.length > 0) {
+        // Create parent body option with submenu
+        const parentOption = document.createElement("div");
+        parentOption.className = "focus-option parent-option";
+        parentOption.innerHTML = `<i class="fas ${body.icon}"></i> ${body.name} <i class="fas fa-chevron-right submenu-icon"></i>`;
+        
+        // Create submenu container
+        const submenu = document.createElement("div");
+        submenu.className = "submenu";
+        
+        // Add hover and click handlers for the parent body
+        parentOption.addEventListener("mouseenter", (e) => {
+          // Show submenu on hover
+          submenu.classList.add("show-submenu");
+        });
+        
+        parentOption.addEventListener("mouseleave", (e) => {
+          // Hide submenu when mouse leaves the parent option
+          // Only if not hovering over the submenu itself
+          setTimeout(() => {
+            if (!submenu.matches(':hover')) {
+              submenu.classList.remove("show-submenu");
+            }
+          }, 100);
+        });
+        
+        submenu.addEventListener("mouseleave", (e) => {
+          // Hide submenu when mouse leaves the submenu
+          setTimeout(() => {
+            if (!parentOption.matches(':hover')) {
+              submenu.classList.remove("show-submenu");
+            }
+          }, 100);
+        });
+        
+        // Add click handler for the parent body
+        parentOption.addEventListener("click", (e) => {
+          // Only focus on body if clicked directly (not on submenu icon)
+          if (!e.target.classList.contains("submenu-icon") && 
+              !e.target.parentElement.classList.contains("submenu-icon")) {
+            this.focusOnBody(body.name);
+            this.showBodyInfo(body.name);
+            focusButton.blur();
+          }
+          e.stopPropagation();
+        });
+        
+        // Add moon options to submenu
+        body.moons.forEach(moon => {
+          const moonOption = document.createElement("div");
+          moonOption.className = "focus-option moon-option";
+          moonOption.innerHTML = `<i class="fas ${moon.icon}"></i> ${moon.name}`;
+          moonOption.addEventListener("click", (e) => {
+            e.stopPropagation();
+            this.focusOnBody(moon.name);
+            this.showBodyInfo(moon.name);
+            focusButton.blur();
+          });
+          submenu.appendChild(moonOption);
+        });
+        
+        parentOption.appendChild(submenu);
+        focusContainer.appendChild(parentOption);
+      } else {
+        // Create regular option for bodies without moons
+        const bodyOption = document.createElement("div");
+        bodyOption.className = "focus-option";
+        bodyOption.innerHTML = `<i class="fas ${body.icon}"></i> ${body.name}`;
+        bodyOption.addEventListener("click", () => {
+          this.focusOnBody(body.name);
+          this.showBodyInfo(body.name);
+          focusButton.blur();
+        });
+        focusContainer.appendChild(bodyOption);
+      }
     });
 
     // Append the dropdown to the focus button
@@ -481,10 +538,23 @@ export default class App {
   }
 
   hideAllControls() {
-    if (this.bottomControlsPanel)
-      this.bottomControlsPanel.classList.add("hidden");
-    if (this.timeControlsPanel) this.timeControlsPanel.classList.add("hidden"); // Assuming timeControlsPanel can also be hidden
+    // Completely hide the controls panel except for the toggle button
+    if (this.bottomControlsPanel) {
+      // Hide all children except the toggle button
+      Array.from(this.bottomControlsPanel.children).forEach(child => {
+        if (child !== this.toggleControlsButton) {
+          child.classList.add("hidden");
+        }
+      });
+    }
+    
+    // Hide time controls panel if it exists
+    if (this.timeControlsPanel) {
+      this.timeControlsPanel.classList.add("hidden");
+    }
+    
     this.areControlsVisible = false;
+    
     if (this.toggleControlsButton) {
       this.toggleControlsButton.innerHTML = '<i class="fas fa-eye"></i>';
       this.toggleControlsButton.setAttribute("data-tooltip", "Show Controls");
@@ -492,11 +562,20 @@ export default class App {
   }
 
   showAllControls() {
-    if (this.bottomControlsPanel)
-      this.bottomControlsPanel.classList.remove("hidden");
-    if (this.timeControlsPanel)
+    // Show all controls by removing hidden class from all children
+    if (this.bottomControlsPanel) {
+      Array.from(this.bottomControlsPanel.children).forEach(child => {
+        child.classList.remove("hidden");
+      });
+    }
+    
+    // Show time controls panel if it exists and we're focused on the Sun
+    if (this.timeControlsPanel && this.focusedBody && this.focusedBody.name === "Sun") {
       this.timeControlsPanel.classList.remove("hidden");
+    }
+    
     this.areControlsVisible = true;
+    
     if (this.toggleControlsButton) {
       this.toggleControlsButton.innerHTML = '<i class="fas fa-eye-slash"></i>';
       this.toggleControlsButton.setAttribute("data-tooltip", "Hide Controls");
@@ -619,20 +698,20 @@ export default class App {
       if (!bodyObject) return; // Should not happen if body exists
       const bodyPosition = bodyObject.getWorldPosition(new THREE.Vector3());
 
-                // Check for NaN positions to prevent camera errors
-                if (isNaN(bodyPosition.x) || isNaN(bodyPosition.y) || isNaN(bodyPosition.z)) {
-                    console.error(`Focus target ${bodyName} has NaN world position:`, bodyPosition.clone());
-                    console.error(`Body details: name=${body.name}, orbitalRadius=${body.orbitalRadius}, orbitAngle=${body.orbitAngle}, orbitalInclination=${body.orbitalInclination}, radius=${body.radius}`);
-                    if (body.parentBody && body.parentBody.getObject()) {
-                        const parentObject = body.parentBody.getObject();
-                        const parentPos = parentObject.getWorldPosition(new THREE.Vector3());
-                        console.error(`Parent ${body.parentBody.name} world position:`, parentPos.clone());
-                        console.error(`Parent details: name=${body.parentBody.name}, orbitalRadius=${body.parentBody.orbitalRadius}, orbitAngle=${body.parentBody.orbitAngle}, orbitalInclination=${body.parentBody.orbitalInclination}, radius=${body.parentBody.radius}`);
-                        console.error(`Parent ${body.parentBody.name} local position:`, parentObject.position.clone());
-                    }
-                    console.error(`Body ${bodyName} local position:`, bodyObject.position.clone());
-                    return; // Avoid focusing on NaN
-                }
+      // Check for NaN positions to prevent camera errors
+      if (isNaN(bodyPosition.x) || isNaN(bodyPosition.y) || isNaN(bodyPosition.z)) {
+        console.error(`Focus target ${bodyName} has NaN world position:`, bodyPosition.clone());
+        console.error(`Body details: name=${body.name}, orbitalRadius=${body.orbitalRadius}, orbitAngle=${body.orbitAngle}, orbitalInclination=${body.orbitalInclination}, radius=${body.radius}`);
+        if (body.parentBody && body.parentBody.getObject()) {
+          const parentObject = body.parentBody.getObject();
+          const parentPos = parentObject.getWorldPosition(new THREE.Vector3());
+          console.error(`Parent ${body.parentBody.name} world position:`, parentPos.clone());
+          console.error(`Parent details: name=${body.parentBody.name}, orbitalRadius=${body.parentBody.orbitalRadius}, orbitAngle=${body.parentBody.orbitAngle}, orbitalInclination=${body.parentBody.orbitalInclination}, radius=${body.parentBody.radius}`);
+          console.error(`Parent ${body.parentBody.name} local position:`, parentObject.position.clone());
+        }
+        console.error(`Body ${bodyName} local position:`, bodyObject.position.clone());
+        return; // Avoid focusing on NaN
+      }
 
       // IMPORTANT: Set OrbitControls target immediately
       this.controls.target.copy(bodyPosition);
@@ -677,8 +756,6 @@ export default class App {
         .copy(bodyPosition)
         .addScaledVector(cameraOffsetDirection, distance);
 
-      // Removed immediate lerp. animateCameraToPosition will handle the full smooth transition.
-
       // Simulation pause logic and time panel visibility
       if (bodyName === "Sun") {
         this.isSimulationPaused = false; // Default to playing when Sun is focused
@@ -691,7 +768,14 @@ export default class App {
           this.timeControlsPanel.classList.add("hidden");
       }
 
-      this.animateCameraToPosition(targetCameraPosition, bodyPosition, 2500);
+      // Hide info panel when focusing on any body
+      if (this.infoPanel && this.infoPanel.classList) {
+        this.infoPanel.classList.add("hidden");
+      }
+
+      // Animate to the target position using the current camera position as the starting point
+      // Using a longer duration (3000ms) for a slower, more gentle animation
+      this.animateCameraToPosition(targetCameraPosition, bodyPosition, 3000);
     } // This closes the 'if (body)' block
   }
 
@@ -701,58 +785,84 @@ export default class App {
       this.currentAnimation = null;
     }
 
-    this.focusedBody = null; // Clear focused body
-    this.isSimulationPaused = false; // Ensure simulation runs when camera is reset
-    if (this.timeControlsPanel) this.timeControlsPanel.classList.add("hidden"); // Hide time controls
-
-    const dropdown = document.getElementById("focusDropdown");
-    if (dropdown) {
-      dropdown.value = "";
-    }
-
-    let maxOrbitRadius = 0;
-    this.solarSystem.celestialBodies.forEach((body) => {
-      if (body.orbitRadius && body.orbitRadius > maxOrbitRadius) {
-        maxOrbitRadius = body.orbitRadius;
+    // Focus on Sun without showing details panel
+    const sun = this.solarSystem.getBody("Sun");
+    if (sun) {
+      // Always hide info panel when resetting camera
+      this.hideInfoPanel();
+      
+      // Clear selected body
+      this.selectedBody = null;
+      
+      this.focusedBody = sun;
+      this.isSimulationPaused = false; // Ensure simulation runs when focused on Sun
+      
+      // Show time controls when focused on Sun
+      if (this.timeControlsPanel) {
+        this.timeControlsPanel.classList.remove("hidden");
       }
-    });
-
-    const viewRadius = maxOrbitRadius * 1.5;
-    const resetPosition = new THREE.Vector3(
-      viewRadius * 0.5,
-      viewRadius * 0.5,
-      viewRadius,
-    );
-
-    this.animateCameraToPosition(
-      resetPosition,
-      new THREE.Vector3(0, 0, 0),
-      2500,
-    );
+      
+      // Reset dropdown selection
+      const dropdown = document.getElementById("focusDropdown");
+      if (dropdown) {
+        dropdown.value = "Sun";
+      }
+      
+      // Get Sun position
+      const sunObject = sun.getObject();
+      if (!sunObject) return;
+      const sunPosition = sunObject.getWorldPosition(new THREE.Vector3());
+      
+      // Calculate appropriate distance for Sun view
+      const fovRadians = THREE.MathUtils.degToRad(this.camera.fov);
+      const screenRatio = 0.5; // Sun takes up half the screen height
+      const distance = sun.radius / screenRatio / Math.tan(fovRadians / 2);
+      
+      // Define camera position offset from Sun
+      const cameraOffsetDirection = new THREE.Vector3(0.3, 0.3, 1).normalize();
+      
+      // Calculate target camera position
+      const targetCameraPosition = new THREE.Vector3()
+        .copy(sunPosition)
+        .addScaledVector(cameraOffsetDirection, distance);
+      
+      // Animate to the Sun position with a slower animation
+      this.animateCameraToPosition(
+        targetCameraPosition,
+        sunPosition,
+        3000 // Duration in milliseconds - increased for slower animation
+      );
+    }
   }
 
   animateCameraToPosition(targetPosition, targetLookAt, duration) {
+    // Use the current camera position as the starting point
     const startPosition = this.camera.position.clone();
     const startTarget = this.controls.target.clone();
-
     const startTime = Date.now();
 
     const animateReset = () => {
       const elapsed = Date.now() - startTime;
       const linearProgress = Math.min(elapsed / duration, 1);
+      
+      // Simple smooth easing function
       const easedProgress = linearProgress * (2 - linearProgress); // Quadratic ease-out
 
       if (linearProgress < 1) {
+        // Camera position animation
         this.camera.position.lerpVectors(
           startPosition,
           targetPosition,
-          easedProgress,
+          easedProgress
         );
+        
+        // Camera target animation
         this.controls.target.lerpVectors(startTarget, targetLookAt, easedProgress);
         this.controls.update();
 
         this.currentAnimation = requestAnimationFrame(animateReset);
       } else {
+        // Animation complete
         this.camera.position.copy(targetPosition);
         this.controls.target.copy(targetLookAt);
         this.controls.update();

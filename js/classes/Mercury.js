@@ -24,7 +24,6 @@ export class Mercury extends CelestialBody {
         this.rotationSpeed = CONFIG.MERCURY.ROTATION_SPEED;
         this.orbitAngle = Math.random() * Math.PI * 2; // Random starting position
         this.createMesh();
-        this.createOrbitPath(scene);
         this.updatePosition();
     }
 

@@ -24,7 +24,6 @@ export class Mars extends CelestialBody {
         this.rotationSpeed = CONFIG.MARS.ROTATION_SPEED;
         this.orbitAngle = Math.random() * Math.PI * 2; // Random starting position
         this.createMesh();
-        this.createOrbitPath(scene);
         this.updatePosition();
     }
     

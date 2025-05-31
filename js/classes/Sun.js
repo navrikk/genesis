@@ -11,7 +11,6 @@ export class Sun extends CelestialBody {
         super(CONFIG.SUN.NAME, CONFIG.SUN.RADIUS, 0xFFCC33); // Base yellow color
         this.rotationSpeed = CONFIG.SUN.ROTATION_SPEED;
         this.createMesh();
-        this.createOrbitPath(scene); // Call for consistency, though Sun's orbitalRadius is 0
     }
 
     createMesh() {

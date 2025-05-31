@@ -125,7 +125,7 @@ canvas {
     backdrop-filter: blur(10px);
     border-radius: 8px;
     padding: 10px;
-    width: 150px;
+    width: 180px;
     box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
     border: 1px solid rgba(255, 255, 255, 0.1);
     display: none;
@@ -169,6 +169,47 @@ canvas {
     display: block;
     margin-bottom: 4px;
     font-size: 0.9em;
+    position: relative;
+}
+
+.parent-option {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: relative;
+}
+
+.submenu-icon {
+    font-size: 0.8em;
+    opacity: 0.7;
+}
+
+.submenu {
+    display: none;
+    position: absolute;
+    top: -5px;
+    left: calc(100% + 5px);
+    background-color: rgba(0, 0, 0, 0.8);
+    backdrop-filter: blur(10px);
+    border-radius: 8px;
+    padding: 10px;
+    width: 160px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    z-index: 25;
+    transition: opacity 0.2s ease;
+    opacity: 0;
+}
+
+.submenu.show-submenu {
+    display: block;
+    opacity: 1;
+}
+
+.moon-option {
+    font-size: 0.85em;
+    padding: 5px 10px;
+    margin-bottom: 3px;
 }
 
 .focus-option:hover {
@@ -205,15 +246,28 @@ canvas {
     display: flex;
     gap: 8px;
     z-index: 10;
-    background-color: rgba(0, 0, 0, 0.6);
-    backdrop-filter: blur(10px);
+    background-color: rgba(0, 0, 0, 0.15);
+    backdrop-filter: blur(5px);
     padding: 8px;
     border-radius: 12px;
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    transition: all 0.3s ease;
+}
+
+#controls.ultra-transparent {
+    background-color: rgba(0, 0, 0, 0.05);
+    backdrop-filter: blur(2px);
+    border: 1px solid rgba(255, 255, 255, 0.02);
+}
+
+#controls:hover, #controls.ultra-transparent:hover {
+    background-color: rgba(0, 0, 0, 0.8);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(10px);
 }
 
 .control-button {
-    background-color: rgba(255, 255, 255, 0.1);
+    background-color: rgba(255, 255, 255, 0.05);
     color: white;
     width: 40px;
     height: 40px;
@@ -225,6 +279,28 @@ canvas {
     display: flex;
     align-items: center;
     justify-content: center;
+    opacity: 0.5;
+}
+
+#controls.ultra-transparent .control-button {
+    opacity: 0.3;
+}
+
+#controls.ultra-transparent:hover .control-button {
+    opacity: 0.5;
+}
+
+#controls.ultra-transparent #toggleControlsButton {
+    opacity: 0.5; /* Keep the toggle button slightly more visible */
+}
+
+#controls.ultra-transparent:hover #toggleControlsButton {
+    opacity: 1;
+}
+
+#controls:hover .control-button {
+    opacity: 1;
+    background-color: rgba(255, 255, 255, 0.15);
 }
 
 .control-button:hover {
@@ -255,21 +331,33 @@ canvas {
     position: absolute;
     bottom: 100%;
     left: 50%;
-    transform: translateX(-50%) translateY(-5px);
+    transform: translateX(-50%);
     background-color: rgba(0, 0, 0, 0.8);
     color: white;
     padding: 5px 10px;
     border-radius: 5px;
-    font-size: 0.8em;
+    font-size: 12px;
     white-space: nowrap;
     opacity: 0;
-    pointer-events: none;
-    transition: all 0.2s ease;
+    visibility: hidden;
+    transition: opacity 0.3s, visibility 0.3s;
+    z-index: 100;
+    margin-bottom: 10px;
+}
+
+/* Special case for focus button tooltip */
+#focusButton.control-tooltip::after {
+    bottom: auto;
+    top: 50%;
+    left: 100%;
+    transform: translateY(-50%);
+    margin-bottom: 0;
+    margin-left: 10px;
 }
 
 .control-tooltip:hover::after {
     opacity: 1;
-    transform: translateX(-50%) translateY(-10px);
+    visibility: visible;
 }
 
 #loadingScreen {
@@ -289,6 +377,9 @@ canvas {
 
 .loader {
     border: 8px solid #f3f3f3; /* Light grey */
+}
+
+.loader {
     border-top: 8px solid #fb923c; /* Orange-400 for sun-like color */
     border-radius: 50%;
     width: 60px;

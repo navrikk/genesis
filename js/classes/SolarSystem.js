@@ -103,16 +103,5 @@ export class SolarSystem {
         return this.getBody('Sun');
     }
 
-    /**
-     * Toggle visibility of all orbit paths in the solar system.
-     * @param {boolean} visible - True to show orbit paths, false to hide them.
-     */
-    toggleAllOrbitPaths(visible) {
-        this.celestialBodies.forEach(body => {
-            if (body.toggleOrbitPath) { // Check if the method exists
-                body.toggleOrbitPath(visible);
-            }
-        });
-        console.log(`All orbit paths set to visible: ${visible}`);
-    }
+
 }

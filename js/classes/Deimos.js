@@ -32,7 +32,6 @@ export class Deimos extends CelestialBody {
         this.rotationSpeed = CONFIG.DEIMOS.ROTATION_SPEED;
         this.orbitAngle = Math.random() * Math.PI * 2; // Random starting position
         this.createMesh();
-        this.createOrbitPath(this.parentBody.getObject(), true);
         this.updatePosition(); // Ensure initial position is set
     }
     

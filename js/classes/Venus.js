@@ -25,7 +25,6 @@ export class Venus extends CelestialBody {
         this.orbitAngle = Math.random() * Math.PI * 2; // Random starting position
         this.cloudsMesh = null;
         this.createMesh();
-        this.createOrbitPath(scene);
         this.updatePosition();
     }
     

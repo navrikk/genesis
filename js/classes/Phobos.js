@@ -33,7 +33,6 @@ export class Phobos extends CelestialBody {
         this.rotationSpeed = CONFIG.PHOBOS.ROTATION_SPEED;
         this.orbitAngle = Math.random() * Math.PI * 2; // Random starting position
         this.createMesh();
-        this.createOrbitPath(this.parentBody.getObject(), true);
         this.updatePosition();
     }
     

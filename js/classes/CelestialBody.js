@@ -5,7 +5,7 @@ import LightingUtils from '../utils/LightingUtils.js';
  * Base class for all celestial bodies in the solar system
  */
 export class CelestialBody {
-    static ORBIT_SEGMENTS = 128; // Number of segments for orbit lines
+
     /**
      * @param {string} name - Name of the celestial body
      * @param {number} radius - Radius in scene units
@@ -22,7 +22,7 @@ export class CelestialBody {
         this.objectGroup = new THREE.Group(); // Group to hold mesh and any effects
         this.orbitalRadius = orbitalRadius;
         this.orbitalInclination = orbitalInclination; // In radians
-        this.orbitPath = null;
+
     }
 
     /**
@@ -161,55 +161,5 @@ export class CelestialBody {
         this.objectGroup.position.set(x, y, z);
     }
 
-    /**
-     * Creates the visual orbit path for this celestial body.
-     * @param {THREE.Object3D} targetContainer - The scene or group to add the orbit path to.
-     * @param {boolean} isMoon - Flag indicating if this body is a moon (for specific logic if needed, currently unused).
-     */
-    createOrbitPath(targetContainer, isMoon = false) {
-        if (this.orbitalRadius === 0) {
-            // console.warn(`[${this.name}] Orbital radius is 0, not creating orbit path.`);
-            return;
-        }
 
-        const points = [];
-        for (let i = 0; i <= CelestialBody.ORBIT_SEGMENTS; i++) {
-            const angle = (i / CelestialBody.ORBIT_SEGMENTS) * Math.PI * 2;
-            const x = Math.cos(angle) * this.orbitalRadius;
-            const z = Math.sin(angle) * this.orbitalRadius;
-            points.push(new THREE.Vector3(x, 0, z)); // Orbit in XZ plane
-        }
-
-        const geometry = new THREE.BufferGeometry().setFromPoints(points);
-
-        const material = new THREE.LineBasicMaterial({ color: 0xEEEEEE, transparent: true, opacity: 0.4 });
-        this.orbitPath = new THREE.Line(geometry, material);
-        this.orbitPath.name = `${this.name}OrbitPath`;
-
-        // Apply orbital inclination (rotation around X-axis for XZ plane orbit)
-        if (this.orbitalInclination) {
-            this.orbitPath.rotation.x = this.orbitalInclination;
-        }
-
-        // The orbit path is centered at (0,0,0) relative to its targetContainer.
-        // targetContainer (parent group or scene) is assumed to be correctly positioned.
-        if (isMoon && this.parentBody) {
-            // The orbit path vertices are already relative to the parent's origin.
-            // Simply add it to the parent's object group.
-            this.parentBody.getObject().add(this.orbitPath);
-        } else {
-            targetContainer.add(this.orbitPath);
-        }
-        this.orbitPath.visible = false; // Initially hidden
-    }
-
-    /**
-     * Toggles the visibility of the orbit path.
-     * @param {boolean} visible - True to show, false to hide.
-     */
-    toggleOrbitPath(visible) {
-        if (this.orbitPath) {
-            this.orbitPath.visible = visible;
-        }
-    }
 }
