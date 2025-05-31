@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import CONFIG from '../config.js';
+import milkyWayTextureURL from '../../assets/textures/skybox/milkyway_eso_16k_processed.jpg?url';
 
 /**
  * Creates and manages the Milky Way galaxy backdrop using a local panoramic texture.
@@ -7,12 +8,14 @@ import CONFIG from '../config.js';
 export class MilkyWay {
     /**
      * @param {THREE.Scene} scene - The three.js scene to add the Milky Way to.
+     * @param {function} [onLoadCallback] - Optional callback to execute when texture loading is complete or fails.
      */
-    constructor(scene) {
+    constructor(scene, onLoadCallback = null) {
         this.scene = scene;
         this.mesh = null;
         this.geometry = null;
         this.material = null;
+        this.onLoadCallback = onLoadCallback;
         this.createMilkyWay();
     }
 
@@ -31,12 +34,12 @@ export class MilkyWay {
         });
 
         const textureLoader = new THREE.TextureLoader();
-        const localTexturePath = 'assets/textures/skybox/milkyway_8k_panorama.jpg';
+        // const localTexturePath = 'assets/textures/skybox/milkyway_8k_panorama.jpg'; // Replaced by imported URL
 
         textureLoader.load(
-            localTexturePath,
+            milkyWayTextureURL,
             (loadedTexture) => {
-                console.log(`Local Milky Way texture loaded successfully: ${localTexturePath}`);
+                console.log(`Local 16K Milky Way texture loaded successfully: ${milkyWayTextureURL}`);
                 // Ensure any pre-existing map (e.g., from a previous attempt or fallback) is disposed.
                 if (this.material.map) {
                     this.material.map.dispose();
@@ -44,8 +47,9 @@ export class MilkyWay {
                 loadedTexture.mapping = THREE.EquirectangularReflectionMapping;
                 loadedTexture.encoding = THREE.sRGBEncoding; // sRGB is common for color textures.
                 this.material.map = loadedTexture;
-                this.material.color.set(0x606060); // Darken the texture to 37.5% brightness.
+                this.material.color.set(0x303030); // Darken the texture further to ~18.8% brightness.
                 this.material.needsUpdate = true;
+                if (this.onLoadCallback) this.onLoadCallback();
             },
             undefined, // onProgress callback, not used here.
             (error) => {
@@ -58,6 +62,7 @@ export class MilkyWay {
                 this.material.color.set(0x000010); // Re-ensure fallback color is active.
                 this.material.needsUpdate = true;
                 console.error('Using fallback color for Milky Way backdrop.');
+                if (this.onLoadCallback) this.onLoadCallback();
             }
         );
         

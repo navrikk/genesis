@@ -10,7 +10,7 @@ const CONFIG = {
         FOV: 45,
         NEAR: 0.0001, // Significantly reduced for very close zoom on tiny objects like Phobos/Deimos
         FAR: 10000,
-        INITIAL_POSITION: new THREE.Vector3(0, 50, 150), // Adjusted for better initial view
+        INITIAL_POSITION: new THREE.Vector3(0, 60, -80), // Positioned to view Milky Way center/arms
         LOOK_AT: new THREE.Vector3(0, 0, 0)
     },
     SUN: {

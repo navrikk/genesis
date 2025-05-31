@@ -52,7 +52,7 @@ export class CelestialBody {
                 map: options.map,
                 bumpMap: options.bumpMap,
                 bumpScale: options.bumpScale || 0.01,
-                baseColor: options.baseColor || new THREE.Color(0x333333),
+                baseColor: options.baseColor || new THREE.Color(0x333333), // Original default base color
                 emissive: isEmissive
             };
             if (options.normalMap) {
@@ -67,7 +67,7 @@ export class CelestialBody {
                 map: options.map,
                 bumpMap: options.bumpMap,
                 bumpScale: options.bumpScale || 0.01,
-                baseColor: options.baseColor || new THREE.Color(0x333333),
+                baseColor: options.baseColor || new THREE.Color(0x333333), // Original default base color
                 emissive: isEmissive
             };
             if (options.normalMap) {
