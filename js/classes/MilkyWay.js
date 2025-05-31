@@ -45,7 +45,7 @@ export class MilkyWay {
                     this.material.map.dispose();
                 }
                 loadedTexture.mapping = THREE.EquirectangularReflectionMapping;
-                loadedTexture.encoding = THREE.sRGBEncoding; // sRGB is common for color textures.
+                loadedTexture.colorSpace = THREE.SRGBColorSpace; // sRGB is common for color textures.
                 this.material.map = loadedTexture;
                 this.material.color.set(0x303030); // Darken the texture further to ~18.8% brightness.
                 this.material.needsUpdate = true;

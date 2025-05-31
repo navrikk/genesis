@@ -19,7 +19,7 @@ export class Sun extends CelestialBody {
         const sunTexture = textureLoader.load('/textures/high_res/sun_8k_alt.jpg');
         // Set texture properties for better quality
         sunTexture.anisotropy = 16; // Improve texture quality at angles
-        sunTexture.encoding = THREE.sRGBEncoding; // Use proper color encoding
+        sunTexture.colorSpace = THREE.SRGBColorSpace; // Use proper color encoding
         
         // Create moderately brighter color for the sun (25% brighter)
         const brighterColor = new THREE.Color(this.primaryColor).multiplyScalar(1.25);
