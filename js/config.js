@@ -106,10 +106,11 @@ const CONFIG = {
         get ROTATION_SPEED() { return (2 * Math.PI) / (this.ROTATION_PERIOD_DAYS * 24 * 60 * 0.1); } // Sped up for visualization
     },
     STARFIELD: {
-        COUNT: 20000, // Reduced star count for a less overwhelming background
-        RADIUS: 100000, // Increased radius for better depth perception
-        MIN_SIZE: 0.3,  // Smaller minimum size for more variation
-        MAX_SIZE: 2.0   // Maximum star size
+        COUNT: 5000, // Accurate count of stars visible to naked eye from Earth
+        RADIUS: 100000, // Large radius for proper depth perception
+        MIN_SIZE: 0.2,  // Smaller minimum size for more variation
+        MAX_SIZE: 2.0,   // Maximum star size
+        MILKY_WAY_ENABLED: true // Enable Milky Way backdrop
     },
     BLOOM_EFFECT: {
         enabled: true,

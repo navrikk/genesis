@@ -16,6 +16,7 @@ import { Mars } from "./classes/Mars.js";
 import { Phobos } from "./classes/Phobos.js";
 import { Deimos } from "./classes/Deimos.js";
 import { Starfield } from "./classes/Starfield.js";
+import { MilkyWay } from "./classes/MilkyWay.js";
 import { getBodyData } from "./utils/CelestialBodyData.js";
 
 /**
@@ -44,6 +45,7 @@ export default class App {
     this.controls = null;
     this.solarSystem = new SolarSystem(this.scene);
     this.starfield = null;
+    this.milkyWay = null;
     this.clock = new THREE.Clock();
     this.composer = null;
     this.bloomPass = null;
@@ -228,6 +230,13 @@ export default class App {
     );
     this.materialsToDispose.push(this.starfield.material);
     this.geometriesToDispose.push(this.starfield.geometry);
+    
+    // Create Milky Way backdrop if enabled
+    if (CONFIG.STARFIELD.MILKY_WAY_ENABLED) {
+      this.milkyWay = new MilkyWay(this.scene);
+      this.materialsToDispose.push(this.milkyWay.material);
+      this.geometriesToDispose.push(this.milkyWay.geometry);
+    }
 
     // Time Controls UI
     this.timeControlsPanel = document.getElementById("timeControlsPanel");
@@ -906,6 +915,11 @@ export default class App {
     if (this.starfield) {
       this.starfield.update(deltaTime, this.camera.position);
     }
+    
+    // Update Milky Way backdrop
+    if (this.milkyWay) {
+      this.milkyWay.update(deltaTime);
+    }
 
     // Update OrbitControls (should be done regardless of pause state for camera interaction)
     if (this.controls) {
@@ -983,6 +997,10 @@ export default class App {
 
     if (this.starfield) {
       this.starfield.dispose();
+    }
+    
+    if (this.milkyWay) {
+      this.milkyWay.dispose();
     }
 
     if (this.composer) {
