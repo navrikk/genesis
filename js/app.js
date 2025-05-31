@@ -388,7 +388,33 @@ export default class App {
       { once: true },
     );
 
-    // Create Focus button with dropdown
+    // Setup Fullscreen button
+        const fullscreenButton = document.getElementById('fullscreenButton');
+        if (fullscreenButton) {
+            fullscreenButton.addEventListener('click', () => {
+                if (!document.fullscreenElement) {
+                    document.documentElement.requestFullscreen().catch(err => {
+                        console.error(`Error attempting to enable full-screen mode: ${err.message} (${err.name})`);
+                    });
+                } else {
+                    if (document.exitFullscreen) {
+                        document.exitFullscreen();
+                    }
+                }
+            });
+
+            document.addEventListener('fullscreenchange', () => {
+                if (document.fullscreenElement) {
+                    fullscreenButton.innerHTML = '<i class="fas fa-compress"></i>';
+                    fullscreenButton.setAttribute('data-tooltip', 'Exit Fullscreen');
+                } else {
+                    fullscreenButton.innerHTML = '<i class="fas fa-expand"></i>';
+                    fullscreenButton.setAttribute('data-tooltip', 'Enter Fullscreen');
+                }
+            });
+        }
+
+        // Create Focus button with dropdown
     const focusButton = document.createElement("button");
     focusButton.id = "focusButton";
     focusButton.className = "control-button control-tooltip";
