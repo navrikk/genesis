@@ -1,5 +1,15 @@
+/* Global Font Variables */
+:root {
+    --font-heading: 'Montserrat', sans-serif;
+    --font-body: 'Lato', sans-serif;
+    --font-weight-normal: 400;
+    --font-weight-medium: 500;
+    --font-weight-semibold: 600;
+    --font-weight-bold: 700;
+}
+
 body {
-    font-family: 'Inter', sans-serif;
+    font-family: var(--font-body);
     margin: 0;
     overflow: hidden;
     background-color: #000000; /* Fallback background */
@@ -9,6 +19,8 @@ body {
     align-items: center;
     justify-content: center;
     height: 100vh;
+    font-weight: var(--font-weight-normal);
+    letter-spacing: 0.01em;
 }
 
 #container {
@@ -56,8 +68,10 @@ canvas {
 
 .info-header h2 {
     margin: 0;
-    font-size: 1.2rem;
-    font-weight: 600;
+    font-size: 1.3rem;
+    font-family: var(--font-heading);
+    font-weight: var(--font-weight-bold);
+    letter-spacing: 0.02em;
 }
 
 .close-button {
@@ -85,10 +99,12 @@ canvas {
 }
 
 .info-section h3 {
+    font-family: var(--font-heading);
     font-size: 1rem;
     margin: 0 0 10px 0;
     color: #fb923c; /* Orange color for headings */
-    font-weight: 600;
+    font-weight: var(--font-weight-bold);
+    letter-spacing: 0.02em;
 }
 
 .info-grid {
@@ -103,18 +119,23 @@ canvas {
 }
 
 .info-label {
+    font-family: var(--font-body);
     font-size: 0.8rem;
+    font-weight: var(--font-weight-medium);
     opacity: 0.7;
     margin-bottom: 2px;
+    letter-spacing: 0.01em;
 }
 
 .info-value {
-    font-weight: 600;
+    font-weight: var(--font-weight-semibold);
 }
 
 .info-description {
+    font-family: var(--font-body);
     line-height: 1.5;
     margin: 0;
+    letter-spacing: 0.01em;
 }
 
 .focus-container {
@@ -143,17 +164,22 @@ canvas {
     display: block;
 }
 
-.focus-dropdown {
-    background-color: rgba(255, 255, 255, 0.1);
+.focus-dropdown-toggle {
+    background-color: rgba(0, 0, 0, 0.7);
     color: white;
-    border: none;
+    border: 1px solid rgba(255, 255, 255, 0.2);
     border-radius: 5px;
     padding: 8px;
     font-size: 0.9em;
+    font-family: var(--font-heading);
+    font-weight: var(--font-weight-medium);
     cursor: pointer;
     width: 100%;
     margin-bottom: 5px;
-    transition: background-color 0.2s;
+    text-align: left;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
 }
 
 .focus-dropdown:hover {
@@ -169,6 +195,9 @@ canvas {
     display: block;
     margin-bottom: 4px;
     font-size: 0.9em;
+    font-family: var(--font-body);
+    font-weight: var(--font-weight-normal);
+    letter-spacing: 0.01em;
     position: relative;
 }
 
@@ -210,6 +239,9 @@ canvas {
     font-size: 0.85em;
     padding: 5px 10px;
     margin-bottom: 3px;
+    font-family: var(--font-body);
+    font-weight: var(--font-weight-normal);
+    letter-spacing: 0.01em;
 }
 
 .focus-option:hover {
@@ -219,44 +251,51 @@ canvas {
 .info-footer {
     padding: 15px 20px;
     border-top: 1px solid rgba(255, 255, 255, 0.1);
+    font-family: var(--font-body);
+    letter-spacing: 0.01em;
     display: flex;
     justify-content: flex-end;
 }
 
-.focus-button {
+.button-primary {
     background-color: #fb923c;
-    color: black;
+    color: #000000;
     border: none;
     padding: 8px 16px;
     border-radius: 6px;
-    font-weight: 600;
+    font-family: var(--font-heading);
+    font-weight: var(--font-weight-semibold);
+    font-size: 0.95rem;
+    letter-spacing: 0.02em;
     cursor: pointer;
-    transition: background-color 0.2s;
+    transition: all 0.2s ease;
 }
 
-.focus-button:hover {
-    background-color: #f97316;
+.button-primary:hover {
+background-color: #f97316;
 }
 
 #controls {
-    position: absolute;
-    bottom: 20px;
-    left: 20px;
-    transform: none;
-    display: flex;
-    gap: 8px;
-    z-index: 10;
-    background-color: rgba(0, 0, 0, 0.15);
-    backdrop-filter: blur(5px);
-    padding: 8px;
-    border-radius: 12px;
-    border: 1px solid rgba(255, 255, 255, 0.05);
-    transition: all 0.3s ease;
+position: fixed;
+bottom: 20px;
+left: 20px;
+transform: none;
+display: flex;
+gap: 4px; /* Reduced gap between buttons */
+z-index: 10;
+background-color: rgba(0, 0, 0, 0.15);
+backdrop-filter: blur(5px);
+padding: 6px; /* Reduced padding */
+border-radius: 12px;
+border: 1px solid rgba(255, 255, 255, 0.05);
+transition: all 0.3s ease;
+width: auto; /* Allow panel to shrink to content */
 }
 
 #controls.ultra-transparent {
-    background-color: rgba(0, 0, 0, 0.05);
-    backdrop-filter: blur(2px);
+background-color: rgba(0, 0, 0, 0.05);
+backdrop-filter: blur(2px);
+border: 1px solid rgba(255, 255, 255, 0.02);
     border: 1px solid rgba(255, 255, 255, 0.02);
 }
 
@@ -266,20 +305,26 @@ canvas {
     backdrop-filter: blur(10px);
 }
 
-.control-button {
-    background-color: rgba(255, 255, 255, 0.05);
+#controls button {
+    background-color: rgba(0, 0, 0, 0.7);
     color: white;
-    width: 40px;
-    height: 40px;
     border: none;
     border-radius: 8px;
     font-size: 1.1em;
+    font-family: var(--font-heading);
     cursor: pointer;
     transition: all 0.2s ease;
     display: flex;
     align-items: center;
     justify-content: center;
-    opacity: 0.5;
+    padding: 8px; /* Reduced padding */
+    margin: 2px; /* Reduced margin */
+    min-width: 38px; /* Slightly smaller buttons */
+    min-height: 38px; /* Slightly smaller buttons */
+}
+
+.control-button {
+    opacity: 0.3;
 }
 
 #controls.ultra-transparent .control-button {
@@ -329,30 +374,33 @@ canvas {
 .control-tooltip::after {
     content: attr(data-tooltip);
     position: absolute;
-    bottom: 100%;
-    left: 50%;
-    transform: translateX(-50%);
+    white-space: nowrap;
     background-color: rgba(0, 0, 0, 0.8);
     color: white;
     padding: 5px 10px;
     border-radius: 5px;
-    font-size: 12px;
-    white-space: nowrap;
+    font-family: var(--font-body);
+    font-size: 0.8rem;
+    font-weight: var(--font-weight-medium);
     opacity: 0;
     visibility: hidden;
-    transition: opacity 0.3s, visibility 0.3s;
-    z-index: 100;
-    margin-bottom: 10px;
+    transition: opacity 0.2s, visibility 0.2s;
+    z-index: 1000;
+    top: -35px; /* Position tooltip above the button */
+    left: 50%;
+    transform: translateX(-50%); /* Center horizontally */
+    margin-bottom: 0;
+    margin-left: 0;
+    letter-spacing: 0.01em;
 }
 
-/* Special case for focus button tooltip */
+/* Special case for Focus on Body button tooltip - show to the right */
 #focusButton.control-tooltip::after {
-    bottom: auto;
     top: 50%;
     left: 100%;
     transform: translateY(-50%);
-    margin-bottom: 0;
     margin-left: 10px;
+    margin-bottom: 0;
 }
 
 .control-tooltip:hover::after {
@@ -374,6 +422,38 @@ canvas {
     z-index: 1000;
     color: white;
     transition: opacity 0.5s ease;
+}
+
+#webgl-compatibility {
+    position: fixed;
+    inset: 0;
+    background-color: #991b1b;
+    color: white;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    padding: 2rem;
+    z-index: 2000;
+}
+
+#webgl-compatibility h2 {
+    font-family: var(--font-heading);
+    font-size: 1.5rem;
+    font-weight: var(--font-weight-bold);
+    margin-bottom: 1rem;
+    letter-spacing: 0.02em;
+}
+
+#webgl-compatibility p {
+    font-family: var(--font-body);
+    font-size: 1rem;
+    font-weight: var(--font-weight-normal);
+    margin-bottom: 1rem;
+    letter-spacing: 0.01em;
+    line-height: 1.5;
+    max-width: 600px;
 }
 
 .loader {
@@ -437,21 +517,29 @@ canvas {
 }
 
 .loading-title {
-    font-size: 1.8rem;
-    font-weight: bold;
+    font-family: var(--font-heading);
+    font-size: 2rem;
+    font-weight: var(--font-weight-bold);
     margin: 0 0 5px 0;
     color: #fb923c;
     text-shadow: 0 0 10px rgba(251, 146, 60, 0.5);
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
 }
 
 .loading-subtitle {
-    font-size: 1rem;
+    font-family: var(--font-body);
+    font-size: 1.1rem;
+    font-weight: var(--font-weight-medium);
     margin: 0 0 25px 0;
     opacity: 0.8;
+    letter-spacing: 0.02em;
 }
 
 .loading-percentage {
-    font-size: 1rem;
-    font-weight: bold;
+    font-family: var(--font-heading);
+    font-size: 1.2rem;
+    font-weight: var(--font-weight-bold);
     margin: 10px 0 0 0;
+    letter-spacing: 0.02em;
 }

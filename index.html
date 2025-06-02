@@ -10,7 +10,7 @@
     <link rel="icon" href="favicon.ico" type="image/x-icon">
     <link rel="shortcut icon" href="favicon.ico" type="image/x-icon">
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Lato:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="styles/main.css">
 </head>
@@ -25,8 +25,8 @@
     <p class="loading-percentage">0%</p>
 </div>
 
-<div id="webgl-compatibility"
-     class="hidden fixed inset-0 bg-red-800 text-white flex flex-col justify-center items-center text-center p-8">
+<div id="webgl-compatibility" style="display: none;"
+     class="fixed inset-0 bg-red-800 text-white flex flex-col justify-center items-center text-center p-8">
     <h2 class="text-2xl font-bold mb-4">WebGL Not Supported</h2>
     <p>Your browser or device does not support WebGL, which is required for this 3D experience.</p>
     <p>Please try a different browser (like Chrome or Firefox) or update your current browser.</p>
@@ -84,9 +84,8 @@
             <p id="bodyDescription" class="info-description">Select a celestial body to see its details.</p>
         </div>
     </div>
-    <div class="info-footer">
-        <button id="focusBodyButton" class="focus-button">Focus Camera</button>
-    </div>
+    <!-- Focus Camera button removed as requested -->
+    <div class="info-footer"></div>
 </div>
 
 <div id="controls">

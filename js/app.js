@@ -5,7 +5,7 @@ import { RenderPass } from "three/addons/postprocessing/RenderPass.js";
 import { UnrealBloomPass } from "three/addons/postprocessing/UnrealBloomPass.js";
 
 import CONFIG from "./config.js";
-import { isWebGLAvailable } from "./utils/webgl-check.js";
+import { isWebGLAvailable, getWebGLDiagnostics } from "./utils/webgl-check.js";
 import { SolarSystem } from "./classes/SolarSystem.js";
 import { Sun } from "./classes/Sun.js";
 import { Mercury } from "./classes/Mercury.js";
@@ -24,11 +24,20 @@ import { getBodyData } from "./utils/CelestialBodyData.js";
  */
 export default class App {
   constructor() {
-    if (!isWebGLAvailable()) {
-      document.getElementById("webgl-compatibility").classList.remove("hidden");
+    // Check if WebGL is available and log diagnostics
+    const webGLAvailable = isWebGLAvailable();
+    const diagnostics = getWebGLDiagnostics();
+    console.info("WebGL Diagnostics:", diagnostics);
+    
+    if (!webGLAvailable) {
+      // Show WebGL compatibility error
+      document.getElementById("webgl-compatibility").style.display = "flex";
       document.getElementById("loadingScreen").style.display = "none";
       console.error("WebGL is not supported or available.");
       return;
+    } else {
+      // Hide WebGL compatibility error
+      document.getElementById("webgl-compatibility").style.display = "none";
     }
 
     this.container = document.getElementById("container");
@@ -298,11 +307,8 @@ export default class App {
       this.selectedBody = null;
     });
 
-    document.getElementById("focusBodyButton").addEventListener("click", () => {
-      if (this.selectedBody) {
-        this.focusOnBody(this.selectedBody);
-      }
-    });
+    // Focus button in side panel was removed as requested
+    // Focus functionality is still available through the dynamic focus button in controls
 
     // Play/Pause button removed - static solar system has no animation controls
 
