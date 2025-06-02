@@ -58,8 +58,4 @@ export class Mars extends CelestialBody {
         this.objectGroup.add(this.atmosphereMesh);
     }
     
-    // Get the object group for positioning
-    getObject() {
-        return this.objectGroup;
-    }
     }

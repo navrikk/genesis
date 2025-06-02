@@ -49,18 +49,7 @@ export class Mercury extends CelestialBody {
      * @param {boolean} animate - Whether to animate the planet
      */
     update(deltaTime, animate = true) {
-        if (animate && this.orbitSpeed > 0) {
-            this.orbitAngle += this.orbitSpeed * deltaTime;
-            if (this.orbitAngle > Math.PI * 2) {
-                this.orbitAngle -= Math.PI * 2;
-            }
-        }
-
-        if (animate && this.rotationSpeed > 0 && this.mesh) {
-            this.mesh.rotation.y += this.rotationSpeed * deltaTime;
-        }
-
-        this.updatePosition(); // Use base class method
+        // Completely static - no rotation or orbit movement
     }
 
 }

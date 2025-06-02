@@ -34,7 +34,6 @@ export class MilkyWay {
         });
 
         const textureLoader = new THREE.TextureLoader();
-        // const localTexturePath = 'assets/textures/skybox/milkyway_8k_panorama.jpg'; // Replaced by imported URL
 
         textureLoader.load(
             milkyWayTextureURL,
@@ -53,7 +52,7 @@ export class MilkyWay {
             },
             undefined, // onProgress callback, not used here.
             (error) => {
-                console.error(`Error loading local Milky Way texture from ${localTexturePath}:`, error);
+                console.error(`Error loading local Milky Way texture from ${milkyWayTextureURL}:`, error);
                 // Fallback color is already set, but ensure map is null if it was partially set.
                 if (this.material.map) {
                      this.material.map.dispose();

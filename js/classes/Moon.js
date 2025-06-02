@@ -47,8 +47,4 @@ export class Moon extends CelestialBody {
         });
     }
     
-    update(deltaTime, animate = true) {
-        // Completely static - no rotation or orbit movement
-    }
-    
     }

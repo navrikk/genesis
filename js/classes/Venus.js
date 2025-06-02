@@ -68,4 +68,12 @@ export class Venus extends CelestialBody {
         }
     }
 
+    /**
+     * Update method for animations, rotations, etc.
+     * @param {number} deltaTime - Time since last frame in seconds
+     * @param {boolean} animate - Whether to animate the planet
+     */
+    update(deltaTime, animate = true) {
+        // Completely static - no rotation or orbit movement
     }
+}

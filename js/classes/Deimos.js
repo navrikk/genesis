@@ -52,7 +52,7 @@ export class Deimos extends CelestialBody {
             },
             undefined, // onProgress callback (optional)
             (error) => { // onError callback
-                console.error(`[${this.name}] Error loading texture from ${deimosTextureUrl}:`, error);
+                console.error(`[${this.name}] Error loading texture from ${deimosTexturePath}:`, error);
                 console.warn(`[${this.name}] Texture load error. Applying fallback material.`);
                 const fallbackMaterialOptions = {
                     baseColor: new THREE.Color(this.primaryColor) // Use primaryColor from constructor
@@ -62,8 +62,7 @@ export class Deimos extends CelestialBody {
         );
     }
 
-    // createFallbackSphereMesh method removed as GLTF loading is removed.
-    
+
     /**
      * Update the position based on orbit around Mars
      * @param {number} deltaTime - Time since last frame in seconds
@@ -84,4 +83,4 @@ export class Deimos extends CelestialBody {
         // After updating angles, update the position using the base class method
         this.updatePosition(); 
     }
-    }
+}

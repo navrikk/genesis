@@ -49,8 +49,7 @@ export class Phobos extends CelestialBody {
         textureLoader.load(
             phobosTexturePath,
             (phobosTexture) => { // Success callback
-                // Ensure texture settings if needed (e.g., anisotropy)
-                // phobosTexture.anisotropy = renderer.getMaxAnisotropy(); // If renderer is accessible
+
 
                 const materialOptions = {
                     map: phobosTexture,

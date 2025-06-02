@@ -32,7 +32,6 @@ export class Earth extends CelestialBody {
         const earthDayPath = '/textures/earth_daymap_8k.jpg';
         const earthCloudsPath = '/textures/earth_clouds_8k.jpg';
         const earthNormalPath = '/textures/earth_normal_8k.jpg';
-        // const earthSpecularPath = '/textures/earth_specular_8k.jpg'; // Not used
 
         const earthDayTexture = textureLoader.load(earthDayPath,
             undefined, // onProgress callback currently not used
@@ -46,11 +45,7 @@ export class Earth extends CelestialBody {
             undefined,
             (err) => { console.error(`Earth: Error loading ${earthNormalPath}:`, err); }
         );
-        // const earthSpecularMap = textureLoader.load(earthSpecularPath, // Not used
-        //     () => { console.log(`Earth: ${earthSpecularPath} loaded successfully.`); },
-        //     undefined,
-        //     (err) => { console.error(`Earth: Error loading ${earthSpecularPath}:`, err); }
-        // );
+
         
         // Use base class implementation for mesh creation with maximum texture visibility
         super.createBaseMesh({
@@ -87,7 +82,4 @@ export class Earth extends CelestialBody {
         }
     }
 
-    update(deltaTime, animate = true) {
-        // Completely static - no rotation or orbit movement
-    }
 }

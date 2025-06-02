@@ -263,10 +263,8 @@ export default class App {
       }
     }
 
-    // Event Listeners (example, ensure all original listeners are here or in setupUIControls)
+    // Event Listeners
     window.addEventListener("resize", this.onWindowResize.bind(this), false);
-    // Assuming resetCameraButton is setup in setupUIControls or here previously
-    // document.getElementById("resetCameraButton").addEventListener("click", this.resetCamera.bind(this));
 
     // Setup UI controls
     this.setupUIControls();
@@ -299,7 +297,7 @@ export default class App {
 
     // Play/Pause button removed - static solar system has no animation controls
 
-    // Orbit paths functionality removed
+
 
     // Controls Visibility Setup
     this.bottomControlsPanel = document.getElementById("controls");
@@ -944,14 +942,9 @@ export default class App {
   }
 
   updateCameraFocus() {
-    // Placeholder: Actual camera focusing logic will be implemented here.
-    // This could involve smoothly moving the camera to keep the this.focusedBody in view,
-    // or implementing a gentle orbiting behavior if no specific body is focused but the camera is not idle.
-    // For now, this stub prevents the TypeError.
+    // Placeholder for camera focusing logic
     if (this.focusedBody && !this.userControlActive) {
-      // Example: Simple re-targeting, but actual smooth animation is more complex.
-      // const targetPosition = this.focusedBody.getObject().getWorldPosition(new THREE.Vector3());
-      // this.controls.target.lerp(targetPosition, 0.02); // Gentle lerp
+      // Camera focus logic would go here if implemented
     }
   }
 
@@ -992,7 +985,7 @@ export default class App {
         }
       }
       // Remove event listeners from objects if any were added
-      // Example: if (object.removeEventListener) object.removeEventListener(...);
+      // Clean up any additional event listeners here if needed
     });
 
     if (this.solarSystem) {
