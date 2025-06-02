@@ -10,7 +10,9 @@ const CONFIG = {
         FOV: 45,
         NEAR: 0.0001, // Significantly reduced for very close zoom on tiny objects like Phobos/Deimos
         FAR: 10000,
-        INITIAL_POSITION: new THREE.Vector3(0, 60, -80), // Positioned to view Milky Way center/arms
+        // Initial position to show the Sun with Milky Way galaxy arms from the top-right
+        // Positioned to maintain a reduced zoom level (0.35) on the Sun
+        INITIAL_POSITION: new THREE.Vector3(45, 15, 25), // Position camera even further to the right to show Milky Way arms
         LOOK_AT: new THREE.Vector3(0, 0, 0)
     },
     SUN: {
@@ -114,9 +116,9 @@ const CONFIG = {
     },
     BLOOM_EFFECT: {
         enabled: true,
-        threshold: 0.4,   // Moderate threshold for balanced glow effect
-        strength: 1.2,   // Moderate strength for visible but not overwhelming bloom
-        radius: 0.6      // Moderate radius for a balanced glow
+        threshold: 0.6,   // Moderate threshold for balanced glow effect
+        strength: 1.8,   // Moderate strength for visible but not overwhelming bloom
+        radius: 1.5      // Moderate radius for a balanced glow
     }
 };
 

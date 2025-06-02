@@ -85,6 +85,7 @@ export default class App {
     this.loadingManager = {
       assetsToLoad: 0,
       assetsLoaded: 0,
+      onProgress: (item) => this.updateLoadingProgress(),
       onComplete: () => this.hideLoadingScreen(),
     };
     this.loadingScreenElement = document.getElementById("loadingScreen");
@@ -165,8 +166,16 @@ export default class App {
       this.lastUserInteractionTime = Date.now();
     });
 
+    // Create a group for the solar system that will be initially invisible
+    this.solarSystemGroup = new THREE.Group();
+    this.scene.add(this.solarSystemGroup);
+    this.solarSystemGroup.visible = false; // Hide until loading is complete
+    
+    // Ensure the scene is completely black during loading
+    this.renderer.setClearColor(0x000000, 1.0); // Pure black background
+    
     // Create Sun
-    const sun = new Sun(this.scene);
+    const sun = new Sun(this.solarSystemGroup); // Add to group instead of scene
     this.solarSystem.addBody(sun);
     if (sun.mesh) {
       if (sun.mesh.material) this.materialsToDispose.push(sun.mesh.material);
@@ -174,7 +183,7 @@ export default class App {
     }
 
     // Mercury will orbit the origin by default (Sun's assumed position)
-    const mercury = new Mercury(this.scene);
+    const mercury = new Mercury(this.solarSystemGroup);
     this.solarSystem.addBody(mercury);
     if (mercury.mesh) {
       if (mercury.mesh.material)
@@ -184,7 +193,7 @@ export default class App {
     }
 
     // Create Venus
-    const venus = new Venus(this.scene);
+    const venus = new Venus(this.solarSystemGroup);
     this.solarSystem.addBody(venus);
     if (venus.mesh) {
       if (venus.mesh.material)
@@ -194,7 +203,7 @@ export default class App {
     }
 
     // Create Earth
-    const earth = new Earth(this.scene);
+    const earth = new Earth(this.solarSystemGroup);
     this.solarSystem.addBody(earth);
     if (earth.mesh) {
       if (earth.mesh.material)
@@ -212,7 +221,7 @@ export default class App {
     }
 
     // Create Mars
-    const mars = new Mars(this.scene);
+    const mars = new Mars(this.solarSystemGroup);
     this.solarSystem.addBody(mars);
     if (mars.mesh) {
       if (mars.mesh.material) this.materialsToDispose.push(mars.mesh.material);
@@ -531,6 +540,12 @@ export default class App {
     // Append the dropdown to the focus button
     focusButton.appendChild(focusContainer);
     document.getElementById("controls").appendChild(focusButton);
+
+    // Setup Reset Camera button
+    const resetCameraButton = document.getElementById('resetCameraButton');
+    if (resetCameraButton) {
+      resetCameraButton.addEventListener('click', this.resetCamera.bind(this));
+    }
   } // End of setupUIControls
 
   hideInfoPanel() {
@@ -747,15 +762,8 @@ export default class App {
           CONFIG.CAMERA.NEAR * 2,
         );
       } else {
-        // For other bodies, use screen ratio (fraction of screen height the body should occupy)
-        let screenRatio;
-        if (bodyName === "Sun")
-          screenRatio = 0.5; // Increased Sun zoom significantly
-        else if (
-          ["Mercury", "Venus", "Earth", "Moon", "Mars"].includes(bodyName)
-        )
-          screenRatio = 0.6;
-        else screenRatio = 0.5; // Default for other bodies
+        // For all bodies, use a consistent screen ratio (fraction of screen height the body should occupy)
+        const screenRatio = 0.4; // Reduced zoom level for all celestial bodies
         distance = body.radius / screenRatio / Math.tan(fovRadians / 2);
       }
 
@@ -826,21 +834,20 @@ export default class App {
       
       // Calculate appropriate distance for Sun view
       const fovRadians = THREE.MathUtils.degToRad(this.camera.fov);
-      const screenRatio = 0.5; // Sun takes up half the screen height
+      const screenRatio = 0.35; // Further reduced zoom for the Sun specifically
       const distance = sun.radius / screenRatio / Math.tan(fovRadians / 2);
       
-      // Define camera position offset from Sun
-      const cameraOffsetDirection = new THREE.Vector3(0.3, 0.3, 1).normalize();
+      // Position the camera to show the Milky Way galaxy arms from the top-right
+      // Using a direct approach rather than offset calculation for more precise positioning
+      const targetCameraPosition = new THREE.Vector3(45, 15, 25); // Position camera even further to the right to show Milky Way arms
       
-      // Calculate target camera position
-      const targetCameraPosition = new THREE.Vector3()
-        .copy(sunPosition)
-        .addScaledVector(cameraOffsetDirection, distance);
+      // Ensure we're looking directly at the Sun
+      const lookAtPosition = new THREE.Vector3().copy(sunPosition);
       
       // Animate to the Sun position with a slower animation
       this.animateCameraToPosition(
         targetCameraPosition,
-        sunPosition,
+        lookAtPosition,
         3000 // Duration in milliseconds - increased for slower animation
       );
     }
@@ -1027,13 +1034,66 @@ export default class App {
     }
   }
 
+  updateLoadingProgress() {
+    // Calculate loading percentage
+    if (this.loadingManager.assetsToLoad === 0) return; // Avoid division by zero
+    
+    const percentComplete = Math.floor((this.loadingManager.assetsLoaded / this.loadingManager.assetsToLoad) * 100);
+    
+    // Update progress bar and percentage text
+    const progressBar = document.querySelector('.progress-bar');
+    const percentageText = document.querySelector('.loading-percentage');
+    const loadingSubtitle = document.querySelector('.loading-subtitle');
+    
+    if (progressBar) {
+      progressBar.style.width = `${percentComplete}%`;
+    }
+    
+    if (percentageText) {
+      percentageText.textContent = `${percentComplete}%`;
+    }
+    
+    // Update loading message based on progress
+    if (loadingSubtitle) {
+      if (percentComplete < 30) {
+        loadingSubtitle.textContent = 'Loading celestial bodies and textures...';
+      } else if (percentComplete < 60) {
+        loadingSubtitle.textContent = 'Positioning planets and moons...';
+      } else if (percentComplete < 90) {
+        loadingSubtitle.textContent = 'Preparing star field and galaxy backdrop...';
+      } else {
+        loadingSubtitle.textContent = 'Almost ready...';
+      }
+    }
+    
+    // Log progress to console for debugging
+    console.log(`Loading progress: ${percentComplete}% (${this.loadingManager.assetsLoaded}/${this.loadingManager.assetsToLoad})`);
+  }
+
   hideLoadingScreen() {
     if (this.loadingScreenElement && this.loadingScreenElement.style.display !== 'none') {
-        this.loadingScreenElement.style.opacity = '0'; // Start fade out
+        // Final update to ensure 100% is shown
+        const progressBar = document.querySelector('.progress-bar');
+        const percentageText = document.querySelector('.loading-percentage');
+        
+        if (progressBar) progressBar.style.width = '100%';
+        if (percentageText) percentageText.textContent = '100%';
+        
+        // Short delay before fade out to show 100% completion
         setTimeout(() => {
-            if (this.loadingScreenElement) this.loadingScreenElement.style.display = 'none';
-        }, 500); // Match this duration to your CSS transition (assuming 0.5s)
-        console.log("All critical assets loaded. Hiding loading screen.");
+            this.loadingScreenElement.style.opacity = '0'; // Start fade out
+            
+            // Make the solar system visible as the loading screen fades out
+            if (this.solarSystemGroup) {
+                this.solarSystemGroup.visible = true;
+            }
+            
+            setTimeout(() => {
+                if (this.loadingScreenElement) this.loadingScreenElement.style.display = 'none';
+            }, 500); // Match this duration to your CSS transition (assuming 0.5s)
+        }, 300); // Short delay to show 100% completion
+        
+        console.log("All critical assets loaded. Hiding loading screen and showing solar system.");
     }
   }
 

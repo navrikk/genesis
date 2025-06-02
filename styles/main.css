@@ -366,29 +366,92 @@ canvas {
     left: 0;
     width: 100%;
     height: 100%;
-    background-color: rgba(0,0,0,0.9);
+    background-color: #000000; /* Completely black background */
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
     z-index: 1000;
     color: white;
+    transition: opacity 0.5s ease;
 }
 
 .loader {
-    border: 8px solid #f3f3f3; /* Light grey */
+    position: relative;
+    width: 80px;
+    height: 80px;
+    margin-bottom: 30px;
 }
 
-.loader {
-    border-top: 8px solid #fb923c; /* Orange-400 for sun-like color */
+.loader:before, .loader:after {
+    content: '';
+    position: absolute;
     border-radius: 50%;
-    width: 60px;
-    height: 60px;
-    animation: spin 1s linear infinite;
-    margin-bottom: 20px;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
 }
 
-@keyframes spin {
+.loader:before {
+    background: radial-gradient(circle, #fb923c 0%, rgba(251, 146, 60, 0) 70%);
+    animation: pulse 2s ease-out infinite;
+}
+
+.loader:after {
+    background: #fb923c;
+    animation: orbit 2s linear infinite;
+    width: 15px;
+    height: 15px;
+    top: 0;
+    left: 50%;
+    transform-origin: 0 40px;
+}
+
+@keyframes pulse {
+    0% { transform: scale(0.8); opacity: 0.8; }
+    50% { transform: scale(1.2); opacity: 0.3; }
+    100% { transform: scale(0.8); opacity: 0.8; }
+}
+
+@keyframes orbit {
     0% { transform: rotate(0deg); }
     100% { transform: rotate(360deg); }
+}
+
+.loading-progress {
+    width: 300px;
+    height: 10px;
+    background-color: rgba(255, 255, 255, 0.1);
+    border-radius: 5px;
+    margin: 20px 0 10px;
+    overflow: hidden;
+}
+
+.progress-bar {
+    height: 100%;
+    width: 0%; /* Will be updated via JavaScript */
+    background-color: #fb923c; /* Match the loader color */
+    border-radius: 5px;
+    transition: width 0.3s ease;
+}
+
+.loading-title {
+    font-size: 1.8rem;
+    font-weight: bold;
+    margin: 0 0 5px 0;
+    color: #fb923c;
+    text-shadow: 0 0 10px rgba(251, 146, 60, 0.5);
+}
+
+.loading-subtitle {
+    font-size: 1rem;
+    margin: 0 0 25px 0;
+    opacity: 0.8;
+}
+
+.loading-percentage {
+    font-size: 1rem;
+    font-weight: bold;
+    margin: 10px 0 0 0;
 }
