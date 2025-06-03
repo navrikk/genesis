@@ -543,3 +543,8 @@ border: 1px solid rgba(255, 255, 255, 0.02);
     margin: 10px 0 0 0;
     letter-spacing: 0.02em;
 }
+
+/* General hidden class for hiding elements */
+.hidden {
+    display: none !important;
+}
