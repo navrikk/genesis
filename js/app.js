@@ -301,18 +301,13 @@ export default class App {
 
   setupUIControls() {
     this.infoPanel = document.getElementById("infoPanel");
-    this.showDetailsButton = document.getElementById("showDetailsButton");
+
     
     // Close info panel button
     document.getElementById("closeInfoPanel").addEventListener("click", () => {
       this.hideInfoPanel();
     });
     
-    // Show details button
-    this.showDetailsButton.addEventListener("click", () => {
-      this.showDetailsButton.classList.add("hidden");
-      this.infoPanel.classList.remove("hidden");
-    });
 
     // Controls Visibility Setup
     this.bottomControlsPanel = document.getElementById("controls");
@@ -568,10 +563,7 @@ export default class App {
    */
   hideInfoPanel() {
     this.infoPanel.classList.add("hidden");
-    // Show the 'Show Details' button when the panel is closed and a body is selected
-    if (this.selectedBody) {
-      this.showDetailsButton.classList.remove("hidden");
-    }
+
   }
 
   hideAllControls() {
@@ -587,9 +579,8 @@ export default class App {
       this.timeControlsPanel.classList.add("hidden");
     }
     
-    // Hide info panel and show details button
+    // Hide info panel
     this.infoPanel.classList.add("hidden");
-    this.showDetailsButton.classList.add("hidden");
     
     this.areControlsVisible = false;
     
@@ -613,10 +604,7 @@ export default class App {
       this.timeControlsPanel.classList.remove("hidden");
     }
     
-    // Don't automatically show the info panel, but do show the 'Show Details' button if a body is selected
-    if (this.selectedBody) {
-      this.showDetailsButton.classList.remove("hidden");
-    }
+
     
     this.areControlsVisible = true;
     
@@ -722,9 +710,8 @@ export default class App {
     document.getElementById("bodyDescription").textContent =
       bodyData.description;
 
-    // Show the panel and hide the 'Show Details' button
+    // Show the panel
     this.infoPanel.classList.remove("hidden");
-    this.showDetailsButton.classList.add("hidden");
   }
 
   focusOnBody(bodyName) {
