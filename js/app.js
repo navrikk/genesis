@@ -495,8 +495,8 @@ export default class App {
           // Only focus on body if clicked directly (not on submenu icon)
           if (!e.target.classList.contains("submenu-icon") && 
               !e.target.parentElement.classList.contains("submenu-icon")) {
+            // Only call focusOnBody - showBodyInfo will be called after animation completes
             this.focusOnBody(body.name);
-            this.showBodyInfo(body.name);
             focusButton.blur();
           }
           e.stopPropagation();
@@ -509,8 +509,8 @@ export default class App {
           moonOption.innerHTML = `<i class="fas ${moon.icon}"></i> ${moon.name}`;
           moonOption.addEventListener("click", (e) => {
             e.stopPropagation();
+            // Only call focusOnBody - showBodyInfo will be called after animation completes
             this.focusOnBody(moon.name);
-            this.showBodyInfo(moon.name);
             focusButton.blur();
           });
           submenu.appendChild(moonOption);
@@ -524,8 +524,8 @@ export default class App {
         bodyOption.className = "focus-option";
         bodyOption.innerHTML = `<i class="fas ${body.icon}"></i> ${body.name}`;
         bodyOption.addEventListener("click", () => {
+          // Only call focusOnBody - showBodyInfo will be called after animation completes
           this.focusOnBody(body.name);
-          this.showBodyInfo(body.name);
           focusButton.blur();
         });
         focusContainer.appendChild(bodyOption);
@@ -674,8 +674,7 @@ export default class App {
             lastClickedBody === selectedBody.name
           ) {
             // Double-click detected
-            this.showBodyInfo(selectedBody.name);
-            // Focus on the selected body
+            // Only call focusOnBody - showBodyInfo will be called after animation completes
             this.focusOnBody(selectedBody.name);
           }
 
@@ -710,8 +709,15 @@ export default class App {
     document.getElementById("bodyDescription").textContent =
       bodyData.description;
 
-    // Show the panel
+    // Prepare the panel for animation
+    // We'll add a CSS class for the animation
     this.infoPanel.classList.remove("hidden");
+    this.infoPanel.classList.add("animate-in");
+    
+    // Remove the animation class after the animation completes
+    setTimeout(() => {
+      this.infoPanel.classList.remove("animate-in");
+    }, 500); // Match this to the CSS animation duration
   }
 
   focusOnBody(bodyName) {
@@ -798,9 +804,16 @@ export default class App {
         this.infoPanel.classList.add("hidden");
       }
 
+      // Store the body name for use in the callback
+      const currentBodyName = bodyName;
+      
       // Animate to the target position using the current camera position as the starting point
       // Using a longer duration (3000ms) for a slower, more gentle animation
-      this.animateCameraToPosition(targetCameraPosition, bodyPosition, 3000);
+      // After animation completes, show the body info panel
+      this.animateCameraToPosition(targetCameraPosition, bodyPosition, 3000, () => {
+        // Show the body info panel after camera animation completes
+        this.showBodyInfo(currentBodyName);
+      });
     } // This closes the 'if (body)' block
   }
 
@@ -859,7 +872,7 @@ export default class App {
     }
   }
 
-  animateCameraToPosition(targetPosition, targetLookAt, duration) {
+  animateCameraToPosition(targetPosition, targetLookAt, duration, onComplete = null) {
     // Use the current camera position as the starting point
     const startPosition = this.camera.position.clone();
     const startTarget = this.controls.target.clone();
@@ -891,6 +904,9 @@ export default class App {
         this.controls.target.copy(targetLookAt);
         this.controls.update();
         this.currentAnimation = null;
+        
+        // Call the completion callback if provided
+        if (onComplete) onComplete();
       }
     };
 
@@ -1072,20 +1088,14 @@ export default class App {
       }
     }
     
-    // Log progress to console for debugging
-    console.log(`Loading progress: ${percentComplete}% (${this.loadingManager.assetsLoaded}/${this.loadingManager.assetsToLoad})`);
+    // Progress logging removed
   }
 
   hideLoadingScreen() {
     if (this.loadingScreenElement && this.loadingScreenElement.style.display !== 'none') {
-        // Final update to ensure 100% is shown
-        const progressBar = document.querySelector('.progress-bar');
-        const percentageText = document.querySelector('.loading-percentage');
+        // Skip showing 100% progress and go straight to fade out
         
-        if (progressBar) progressBar.style.width = '100%';
-        if (percentageText) percentageText.textContent = '100%';
-        
-        // Short delay before fade out to show 100% completion
+        // Immediately fade out the loading screen
         setTimeout(() => {
             this.loadingScreenElement.style.opacity = '0'; // Start fade out
             
@@ -1097,9 +1107,9 @@ export default class App {
             setTimeout(() => {
                 if (this.loadingScreenElement) this.loadingScreenElement.style.display = 'none';
             }, 500); // Match this duration to your CSS transition (assuming 0.5s)
-        }, 300); // Short delay to show 100% completion
+        }, 100); // Minimal delay before fade out
         
-        console.log("All critical assets loaded. Hiding loading screen and showing solar system.");
+        // Loading complete notification removed
     }
   }
 
