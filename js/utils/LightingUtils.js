@@ -17,28 +17,22 @@ const LightingUtils = {
      * @returns {THREE.Material} Material with natural lighting
      */
     createNaturalLightingMaterial(options) {
-        // For emissive bodies like the Sun, use MeshBasicMaterial
         if (options.emissive) {
             return new THREE.MeshBasicMaterial({
                 map: options.map,
                 color: options.baseColor || 0xffffff,
             });
         }
-        
-        // For non-emissive bodies like planets and moons, balance brightness with texture visibility
-        // Increase brightness by 20% for all non-emissive bodies
+
         const baseColor = options.baseColor || new THREE.Color(0x777777);
-        const brighterColor = new THREE.Color().copy(baseColor).multiplyScalar(1.2); // 20% brighter
+        const brighterColor = new THREE.Color().copy(baseColor).multiplyScalar(1.2);
         
         const materialOptions = {
             map: options.map,
-            color: brighterColor, // 20% brighter color for all non-Sun celestial bodies
+            color: brighterColor,
             normalMap: options.normalMap,
-            // Only add bump map if provided to avoid warnings
-            // bumpMap: options.bumpMap, // This line will be handled conditionally
-            // bumpScale: options.bumpScale || 0.01, // This line will be handled conditionally
-            emissive: new THREE.Color(0x151515), // Slightly increased emission for 20% more brightness
-            reflectivity: 0.18, // Slightly increased reflectivity for more brightness
+            emissive: new THREE.Color(0x151515),
+            reflectivity: 0.18,
         };
 
         if (options.bumpMap) {

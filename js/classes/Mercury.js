@@ -8,31 +8,31 @@ import { CelestialBody } from './CelestialBody.js';
  */
 export class Mercury extends CelestialBody {
     constructor(scene) {
-        const inclinationDegrees = 7.0; // Mercury's orbital inclination
+        const inclinationDegrees = 7.0;
         const inclinationRadians = inclinationDegrees * Math.PI / 180;
         super(
             CONFIG.MERCURY.NAME,
             CONFIG.MERCURY.RADIUS,
             CONFIG.MERCURY.COLOR,
-            CONFIG.MERCURY.ORBIT_RADIUS, // orbitalRadius
-            inclinationRadians,         // orbitalInclination
-            false,                      // isEmissive
-            null,                       // customGeometry
-            2.2                         // ambientLightIntensity
+            CONFIG.MERCURY.ORBIT_RADIUS,
+            inclinationRadians,
+            false,
+            null,
+            2.2
         );
         this.orbitSpeed = CONFIG.MERCURY.ORBIT_SPEED;
         this.rotationSpeed = CONFIG.MERCURY.ROTATION_SPEED;
-        this.orbitAngle = Math.random() * Math.PI * 2; // Random starting position
+        this.orbitAngle = Math.random() * Math.PI * 2;
         this.createMesh();
         this.updatePosition();
     }
 
     createMesh() {
-        // Load high-resolution textures
+
         const textureLoader = new THREE.TextureLoader();
         const mercuryTexture = textureLoader.load('/textures/mercury_8k.jpg');
         
-        // Use base class implementation for mesh creation with proper lighting
+
         super.createBaseMesh({
             map: mercuryTexture,
             bumpMap: mercuryTexture,

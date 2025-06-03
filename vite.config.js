@@ -1,19 +1,16 @@
-// vite.config.js
 export default {
   root: './',
   publicDir: 'assets',
   build: {
     outDir: 'dist',
-    assetsInlineLimit: 0, // Don't inline any assets as base64
+    assetsInlineLimit: 0,
     rollupOptions: {
       output: {
-        manualChunks: undefined, // Ensure proper code splitting
+        manualChunks: undefined,
         assetFileNames: 'assets/[name].[hash][extname]'
       }
     },
-    // Ensure assets are copied to the correct directory
     copyPublicDir: true
   },
-  // Ensure proper asset handling
   assetsInclude: ['**/*.jpg', '**/*.png', '**/*.mp3']
 };

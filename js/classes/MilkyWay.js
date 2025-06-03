@@ -23,14 +23,11 @@ export class MilkyWay {
      * Creates the Milky Way backdrop using a local panoramic texture on a sphere.
      */
     createMilkyWay() {
-        // Use a slightly smaller radius than the starfield to avoid z-fighting.
         this.geometry = new THREE.SphereGeometry(CONFIG.STARFIELD.RADIUS * 0.95, 64, 64);
-        
-        // Initialize material with a fallback color and basic properties.
-        // The texture will be loaded and applied asynchronously.
+
         this.material = new THREE.MeshBasicMaterial({
-            side: THREE.BackSide, // Render on the inside of the sphere.
-            color: 0x000010,      // Dark blue/black fallback if texture fails.
+            side: THREE.BackSide,
+            color: 0x000010,
         });
 
         const textureLoader = new THREE.TextureLoader();
@@ -39,26 +36,26 @@ export class MilkyWay {
             milkyWayTextureURL,
             (loadedTexture) => {
                 console.log(`Local 16K Milky Way texture loaded successfully: ${milkyWayTextureURL}`);
-                // Ensure any pre-existing map (e.g., from a previous attempt or fallback) is disposed.
+
                 if (this.material.map) {
                     this.material.map.dispose();
                 }
                 loadedTexture.mapping = THREE.EquirectangularReflectionMapping;
-                loadedTexture.colorSpace = THREE.SRGBColorSpace; // sRGB is common for color textures.
+                loadedTexture.colorSpace = THREE.SRGBColorSpace;
                 this.material.map = loadedTexture;
-                this.material.color.set(0x303030); // Darken the texture further to ~18.8% brightness.
+                this.material.color.set(0x303030);
                 this.material.needsUpdate = true;
                 if (this.onLoadCallback) this.onLoadCallback();
             },
-            undefined, // onProgress callback, not used here.
+            undefined,
             (error) => {
                 console.error(`Error loading local Milky Way texture from ${milkyWayTextureURL}:`, error);
-                // Fallback color is already set, but ensure map is null if it was partially set.
+
                 if (this.material.map) {
                      this.material.map.dispose();
                      this.material.map = null;
                 }
-                this.material.color.set(0x000010); // Re-ensure fallback color is active.
+                this.material.color.set(0x000010);
                 this.material.needsUpdate = true;
                 console.error('Using fallback color for Milky Way backdrop.');
                 if (this.onLoadCallback) this.onLoadCallback();
@@ -67,11 +64,9 @@ export class MilkyWay {
         
         this.mesh = new THREE.Mesh(this.geometry, this.material);
         
-        // Adjust rotation to position the galaxy.
-        // This aims for a horizontal galactic plane, slightly tilted.
-        this.mesh.rotation.order = 'YXZ'; // Set rotation order for clarity.
-        this.mesh.rotation.y = Math.PI;    // Rotate to orient a specific part of the panorama (e.g., galactic center).
-        this.mesh.rotation.x = Math.PI / 6;  // Tilt for a more 'realistic' view from an Earth-like perspective (approx 30 deg).
+        this.mesh.rotation.order = 'YXZ';
+        this.mesh.rotation.y = Math.PI;
+        this.mesh.rotation.x = Math.PI / 6;
         
         this.scene.add(this.mesh);
     }
@@ -81,7 +76,6 @@ export class MilkyWay {
      * @param {number} deltaTime - Time since the last frame (in seconds).
      */
     update(deltaTime) {
-        // The backdrop is static, so no updates are typically needed here.
     }
 
     /**
@@ -97,13 +91,11 @@ export class MilkyWay {
         }
         if (this.material) {
             if (this.material.map) {
-                this.material.map.dispose(); // Dispose the texture.
+                this.material.map.dispose();
             }
-            this.material.dispose();     // Dispose the material.
+            this.material.dispose();
             this.material = null;
         }
         this.mesh = null;
     }
 }
-
-

@@ -6,15 +6,15 @@ export function isWebGLAvailable() {
     try {
         const canvas = document.createElement('canvas');
         
-        // Try WebGL 2.0 first (modern browsers)
+
         if (window.WebGL2RenderingContext && canvas.getContext('webgl2')) {
             console.log('WebGL 2.0 is supported');
             return true;
         }
         
-        // Fall back to WebGL 1.0
+
         if (window.WebGLRenderingContext) {
-            // Try to get standard context
+
             const context = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
             if (context) {
                 console.log('WebGL 1.0 is supported');
@@ -22,7 +22,7 @@ export function isWebGLAvailable() {
             }
         }
         
-        // WebGL not supported
+
         console.warn('WebGL not supported');
         return false;
     } catch (e) {
@@ -50,7 +50,7 @@ export function getWebGLDiagnostics() {
     try {
         const canvas = document.createElement('canvas');
         
-        // Check WebGL 1.0
+
         const gl1 = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
         if (gl1) {
             diagnostics.webgl1Supported = true;
@@ -58,7 +58,7 @@ export function getWebGLDiagnostics() {
             diagnostics.vendor = gl1.getParameter(gl1.VENDOR);
             diagnostics.maxTextureSize = gl1.getParameter(gl1.MAX_TEXTURE_SIZE);
             
-            // Try to get unmasked info (may not be available in all browsers)
+
             const debugInfo = gl1.getExtension('WEBGL_debug_renderer_info');
             if (debugInfo) {
                 diagnostics.unmaskedRenderer = gl1.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL);
@@ -66,7 +66,7 @@ export function getWebGLDiagnostics() {
             }
         }
         
-        // Check WebGL 2.0
+
         const gl2 = canvas.getContext('webgl2');
         if (gl2) {
             diagnostics.webgl2Supported = true;

@@ -16,7 +16,7 @@ export class Phobos extends CelestialBody {
      * @param {CelestialBody} parentBody - The parent celestial body (Mars)
      */
     constructor(parentBody) {
-        const inclinationDegrees = 1.09; // Phobos's orbital inclination to Mars's equator
+        const inclinationDegrees = 1.09;
         const inclinationRadians = inclinationDegrees * Math.PI / 180;
         super(
             CONFIG.PHOBOS.NAME,
@@ -24,48 +24,47 @@ export class Phobos extends CelestialBody {
             CONFIG.PHOBOS.COLOR,
             CONFIG.PHOBOS.ORBIT_RADIUS,
             inclinationRadians,
-            false,                    // isEmissive
-            null,                     // customGeometry (handled in createMesh)
-            0.15                      // ambientLightIntensity
+            false,
+            null,
+            0.15
         );
         this.parentBody = parentBody;
         this.orbitSpeed = CONFIG.PHOBOS.ORBIT_SPEED;
         this.rotationSpeed = CONFIG.PHOBOS.ROTATION_SPEED;
-        this.orbitAngle = Math.random() * Math.PI * 2; // Random starting position
+        this.orbitAngle = Math.random() * Math.PI * 2;
         this.createMesh();
         this.updatePosition();
     }
     
     createMesh() {
-        // Phobos's actual dimensions (approximate): 27 km x 22 km x 18 km
+
         const radiusX = (27 / 2) / CONFIG.SCALE_FACTOR;
         const radiusY = (22 / 2) / CONFIG.SCALE_FACTOR;
         const radiusZ = (18 / 2) / CONFIG.SCALE_FACTOR;
 
         const geometry = new THREE.SphereGeometry(1, 32, 32); 
-        geometry.scale(radiusX, radiusY, radiusZ); // Scale to approximate Phobos' shape
+        geometry.scale(radiusX, radiusY, radiusZ);
 
         const textureLoader = new THREE.TextureLoader();
         textureLoader.load(
             phobosTexturePath,
-            (phobosTexture) => { // Success callback
+            (phobosTexture) => {
 
 
                 const materialOptions = {
                     map: phobosTexture,
-                    baseColor: new THREE.Color(0x333333) // Slightly darker base color for Phobos
+                    baseColor: new THREE.Color(0x333333)
                 };
                 super.createBaseMesh(materialOptions, geometry);
-                // If there's an update loop or a need to refresh the scene, ensure it happens.
-                // For example, if App.js has a render function, this change should be picked up.
+
             },
-            undefined, // onProgress callback (optional)
-            (error) => { // onError callback
+            undefined,
+            (error) => {
                 console.error(`[${this.name}] Error loading texture:`, error);
-                // Fallback: Create mesh with a basic material or color
+
                 console.error(`[${this.name}] Texture load error. Falling back to basic material.`);
                 const fallbackMaterialOptions = {
-                    baseColor: new THREE.Color(this.primaryColor) // Use primaryColor from constructor
+                    baseColor: new THREE.Color(this.primaryColor)
                 };
                 super.createBaseMesh(fallbackMaterialOptions, geometry);
             }
@@ -89,7 +88,7 @@ export class Phobos extends CelestialBody {
             this.mesh.rotation.y += this.rotationSpeed * deltaTime;
         }
 
-        // After updating angles, update the position using the base class method
+
         this.updatePosition(); 
     }
 }

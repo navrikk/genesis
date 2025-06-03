@@ -44,44 +44,41 @@ const PlanetShader = {
         varying vec3 vWorldPosition;
         
         void main() {
-            // Base color from texture
+
             vec4 diffuseColor = texture2D(map, vUv);
             
-            // Normal mapping
+
             vec3 normal = normalize(vNormal);
             
             #ifdef USE_NORMALMAP
                 vec3 normalMapValue = texture2D(normalMap, vUv).xyz * 2.0 - 1.0;
-                normal = normalize(normal + normalMapValue * 0.05); // Reduced normal map strength
+                normal = normalize(normal + normalMapValue * 0.05);
             #endif
             
-            // Calculate direction to sun
+
             vec3 sunDirection = normalize(sunPosition - vWorldPosition);
             
-            // Calculate direction to camera
+
             vec3 viewDirection = normalize(vViewPosition);
             
-            // Improved diffuse lighting with smoother transition to dark side
+
             float diffuseFactor = max(dot(normal, sunDirection), 0.0);
             
-            // Create a more realistic falloff for the terminator (day/night boundary)
-            float terminatorSoftness = 0.05; // Controls the softness of the day/night transition
+            float terminatorSoftness = 0.05;
             float softDiffuse = smoothstep(-terminatorSoftness, terminatorSoftness, dot(normal, sunDirection));
             
-            // Ambient lighting with slight color variation (bluish for dark side, warm for light side)
-            float ambientFactor = 0.15; // Slightly reduced ambient for better contrast
-            vec3 darkSideColor = vec3(0.1, 0.1, 0.2); // Slightly bluish dark side
-            vec3 lightSideAmbient = vec3(0.2, 0.15, 0.1); // Slightly warm light side ambient
+            float ambientFactor = 0.15;
+            vec3 darkSideColor = vec3(0.1, 0.1, 0.2);
+            vec3 lightSideAmbient = vec3(0.2, 0.15, 0.1);
             
-            // Only calculate specular on the sun-facing side with smoother falloff
+
             float specularFactor = 0.0;
             if (diffuseFactor > 0.0) {
-                // Improved specular lighting (Blinn-Phong with better falloff)
+
                 vec3 halfwayDir = normalize(sunDirection + viewDirection);
                 float specAngle = max(dot(normal, halfwayDir), 0.0);
                 
-                // Apply specular with sharper falloff and sun-angle attenuation
-                float sunAngleFactor = pow(diffuseFactor, 0.5); // Reduce specular as sun angle becomes more glancing
+                float sunAngleFactor = pow(diffuseFactor, 0.5);
                 specularFactor = pow(specAngle, shininess * 64.0) * specularStrength * sunAngleFactor;
                 
                 #ifdef USE_SPECULARMAP
@@ -89,11 +86,11 @@ const PlanetShader = {
                     specularFactor *= specMapValue;
                 #endif
                 
-                // Ensure specular is completely gone on the dark side
+
                 specularFactor *= softDiffuse;
             }
             
-            // Combine lighting components with improved color blending
+
             vec3 ambientColor = mix(darkSideColor, lightSideAmbient, softDiffuse);
             vec3 diffuseContribution = diffuseColor.rgb * (ambientFactor * ambientColor + diffuseFactor * vec3(1.0));
             vec3 finalColor = diffuseContribution + vec3(specularFactor);

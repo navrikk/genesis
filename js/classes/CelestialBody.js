@@ -5,7 +5,6 @@ import LightingUtils from '../utils/LightingUtils.js';
  * Base class for all celestial bodies in the solar system
  */
 export class CelestialBody {
-
     /**
      * @param {string} name - Name of the celestial body
      * @param {number} radius - Radius in scene units
@@ -17,11 +16,11 @@ export class CelestialBody {
         this.name = name;
         this.radius = radius;
         this.primaryColor = primaryColor;
-        this.ambientLightIntensity = ambientLightIntensity; // Store it
+        this.ambientLightIntensity = ambientLightIntensity;
         this.mesh = null;
-        this.objectGroup = new THREE.Group(); // Group to hold mesh and any effects
+        this.objectGroup = new THREE.Group();
         this.orbitalRadius = orbitalRadius;
-        this.orbitalInclination = orbitalInclination; // In radians
+        this.orbitalInclination = orbitalInclination;
 
     }
 
@@ -40,19 +39,17 @@ export class CelestialBody {
     createBaseMesh(options, customGeometry = null) {
         let geometry, material;
 
-        // Check if 'options' is actual geometry and 'customGeometry' is a pre-made material (our debug case)
         if (options instanceof THREE.BufferGeometry && customGeometry instanceof THREE.Material) {
-            geometry = options;     // 'options' (1st arg) is the geometry
-            material = customGeometry; // 'customGeometry' (2nd arg) is the material
+            geometry = options;
+            material = customGeometry;
         } else if (customGeometry) {
-            // Standard case: custom geometry provided, create material from options object
             geometry = customGeometry;
             const isEmissive = options.isEmissive || false;
             const materialParams = {
                 map: options.map,
                 bumpMap: options.bumpMap,
                 bumpScale: options.bumpScale || 0.01,
-                baseColor: options.baseColor || new THREE.Color(0x333333), // Original default base color
+                baseColor: options.baseColor || new THREE.Color(0x333333),
                 emissive: isEmissive
             };
             if (options.normalMap) {
@@ -60,14 +57,13 @@ export class CelestialBody {
             }
             material = LightingUtils.createNaturalLightingMaterial(materialParams);
         } else {
-            // Default case: no custom geometry, create sphere and material from options object
             geometry = new THREE.SphereGeometry(this.radius, 32, 32);
             const isEmissive = options.isEmissive || false;
             const materialParams = {
                 map: options.map,
                 bumpMap: options.bumpMap,
                 bumpScale: options.bumpScale || 0.01,
-                baseColor: options.baseColor || new THREE.Color(0x333333), // Original default base color
+                baseColor: options.baseColor || new THREE.Color(0x333333),
                 emissive: isEmissive
             };
             if (options.normalMap) {
@@ -78,7 +74,6 @@ export class CelestialBody {
 
         if (!geometry) {
             console.error(`[${this.name}] FATAL: Geometry is undefined in createBaseMesh!`);
-            // Optionally, create a tiny fallback cube to prevent further errors down the line
             geometry = new THREE.BoxGeometry(0.001, 0.001, 0.001); 
         }
         if (!material) {
@@ -87,19 +82,16 @@ export class CelestialBody {
         }
 
         this.mesh = new THREE.Mesh(geometry, material);
-        this.mesh.castShadow = false; // Disable shadows for better visibility
-        this.mesh.receiveShadow = true; // But do receive shadows for natural appearance
+        this.mesh.castShadow = false;
+        this.mesh.receiveShadow = true;
         this.mesh.name = this.name;
         this.objectGroup.add(this.mesh);
         this.addLighting();
-        
     }
 
     addLighting() {
-        // Add ambient lighting based on the body's specified intensity
-        // Increased by 20% for all non-emissive bodies
         if (!this.isEmissive) {
-            LightingUtils.addAmbientLight(this.objectGroup, this.ambientLightIntensity * 3.9); // 20% increase from 3.25
+            LightingUtils.addAmbientLight(this.objectGroup, this.ambientLightIntensity * 3.9);
         }
     }
 
@@ -108,7 +100,6 @@ export class CelestialBody {
      * @param {number} deltaTime - Time since last frame in seconds
      */
     update(deltaTime) {
-        // To be implemented by subclasses if needed (e.g., rotation)
     }
 
     /**
@@ -125,25 +116,19 @@ export class CelestialBody {
      * If it's a moon (has a parentBody), position is relative to the parent.
      */
     updatePosition() {
-        if (this.orbitalRadius === 0 && !this.parentBody) { // Sun or body not orbiting anything
+        if (this.orbitalRadius === 0 && !this.parentBody) {
             this.setPosition(0, 0, 0);
             return;
         }
 
-        // Calculate position in the orbital plane (XZ before inclination)
-        // this.orbitAngle should be updated by child classes or a central system if dynamic orbits are needed
-        const xPlane = Math.cos(this.orbitAngle || 0) * this.orbitalRadius; // Default orbitAngle to 0 if undefined
+        const xPlane = Math.cos(this.orbitAngle || 0) * this.orbitalRadius;
         const zPlane = Math.sin(this.orbitAngle || 0) * this.orbitalRadius;
 
-        // Apply inclination (rotation around X-axis for an orbit initially in XZ plane)
-        // x' = x_plane
-        // y' = 0 * cos(inclination) - z_plane * sin(inclination) = -z_plane * sin(inclination)
-        // z' = 0 * sin(inclination) + z_plane * cos(inclination) =  z_plane * cos(inclination)
         const x = xPlane;
         const y = -zPlane * Math.sin(this.orbitalInclination);
         const z =  zPlane * Math.cos(this.orbitalInclination);
 
-        if (this.parentBody && this.parentBody.getObject) { // Check if parentBody and getObject method exist
+        if (this.parentBody && this.parentBody.getObject) {
             const parentPos = this.parentBody.getObject().position;
             this.setPosition(parentPos.x + x, parentPos.y + y, parentPos.z + z);
         } else {
@@ -160,6 +145,4 @@ export class CelestialBody {
     setPosition(x, y, z) {
         this.objectGroup.position.set(x, y, z);
     }
-
-
 }

@@ -11,33 +11,33 @@ export class Moon extends CelestialBody {
      * @param {CelestialBody} parentBody - The parent celestial body (e.g., Earth)
      */
     constructor(parentBody) {
-        const inclinationDegrees = 5.1; // Moon's orbital inclination to the ecliptic
+        const inclinationDegrees = 5.1;
         const inclinationRadians = inclinationDegrees * Math.PI / 180;
         super(
             CONFIG.MOON.NAME,
             CONFIG.MOON.RADIUS,
             CONFIG.MOON.COLOR,
-            CONFIG.MOON.ORBIT_RADIUS, // orbitalRadius
-            inclinationRadians,       // orbitalInclination
-            false,                    // isEmissive
-            null,                     // customGeometry
-            0.5                       // ambientLightIntensity
+            CONFIG.MOON.ORBIT_RADIUS,
+            inclinationRadians,
+            false,
+            null,
+            0.5
         );
         this.parentBody = parentBody;
         this.orbitSpeed = CONFIG.MOON.ORBIT_SPEED;
         this.rotationSpeed = CONFIG.MOON.ROTATION_SPEED;
-        this.orbitAngle = Math.random() * Math.PI * 2; // Random starting position
+        this.orbitAngle = Math.random() * Math.PI * 2;
         this.createMesh();
         this.updatePosition();
     }
     
     createMesh() {
-        // Load high-resolution textures
+
         const textureLoader = new THREE.TextureLoader();
         const moonTexture = textureLoader.load('/textures/moon_8k.jpg');
         const moonNormalMap = textureLoader.load('/textures/moon_normal_8k.jpg');
         
-        // Use base class implementation for mesh creation with even lighting
+
         this.createBaseMesh({
             map: moonTexture,
             normalMap: moonNormalMap,

@@ -2,7 +2,6 @@ import * as THREE from 'three';
 import CONFIG from '../config.js';
 import { CelestialBody } from './CelestialBody.js';
 
-
 /**
  * Earth class representing the planet Earth
  */
@@ -12,29 +11,28 @@ export class Earth extends CelestialBody {
             CONFIG.EARTH.NAME,
             CONFIG.EARTH.RADIUS,
             CONFIG.EARTH.COLOR,
-            CONFIG.EARTH.ORBIT_RADIUS, // orbitalRadius
-            0,                          // orbitalInclination (default to 0)
-            false,                      // isEmissive
-            null,                       // customGeometry
-            2.2                         // ambientLightIntensity
+            CONFIG.EARTH.ORBIT_RADIUS,
+            0,
+            false,
+            null,
+            2.2
         );
         this.orbitSpeed = CONFIG.EARTH.ORBIT_SPEED;
         this.rotationSpeed = CONFIG.EARTH.ROTATION_SPEED;
-        this.orbitAngle = Math.random() * Math.PI * 2; // Random starting position
+        this.orbitAngle = Math.random() * Math.PI * 2;
         this.cloudsMesh = null;
         this.createMesh();
         this.updatePosition();
     }
     
     createMesh() {
-        // Load textures
         const textureLoader = new THREE.TextureLoader();
         const earthDayPath = '/textures/earth_daymap_8k.jpg';
         const earthCloudsPath = '/textures/earth_clouds_8k.jpg';
         const earthNormalPath = '/textures/earth_normal_8k.jpg';
 
         const earthDayTexture = textureLoader.load(earthDayPath,
-            undefined, // onProgress callback currently not used
+            undefined,
             (err) => { console.error(`Earth: Error loading ${earthDayPath}:`, err); }
         );
         const earthCloudsTexture = textureLoader.load(earthCloudsPath,
@@ -46,24 +44,21 @@ export class Earth extends CelestialBody {
             (err) => { console.error(`Earth: Error loading ${earthNormalPath}:`, err); }
         );
 
-        
-        // Use base class implementation for mesh creation with maximum texture visibility
         super.createBaseMesh({
             map: earthDayTexture,
             normalMap: earthNormalMap,
             normalScale: new THREE.Vector2(0.05, 0.05)
         });
-        
-        // Add very subtle cloud layer for better Earth surface visibility
+
         const cloudsGeometry = new THREE.SphereGeometry(this.radius * 1.01, 64, 64);
         const cloudsMaterial = new THREE.MeshBasicMaterial({
             map: earthCloudsTexture,
             transparent: true,
-            opacity: 0.2, // Very low opacity for maximum surface visibility
+            opacity: 0.2,
             blending: THREE.NormalBlending,
             polygonOffset: true,
-            polygonOffsetFactor: -2, // Increased from -1
-            polygonOffsetUnits: -1   // Kept -1, or could also be -2
+            polygonOffsetFactor: -2,
+            polygonOffsetUnits: -1
         });
         
         this.cloudsMesh = new THREE.Mesh(cloudsGeometry, cloudsMaterial);
@@ -72,7 +67,6 @@ export class Earth extends CelestialBody {
         this.cloudsMesh.name = this.name + "Clouds";
         this.objectGroup.add(this.cloudsMesh);
 
-        // Apply axial tilt
         const axialTilt = 23.5 * Math.PI / 180;
         if (this.mesh) {
             this.mesh.rotation.x = axialTilt;

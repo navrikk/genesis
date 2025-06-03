@@ -2,38 +2,35 @@ import * as THREE from 'three';
 import CONFIG from '../config.js';
 import { CelestialBody } from './CelestialBody.js';
 
-
 /**
  * Mars class representing the planet Mars
  */
 export class Mars extends CelestialBody {
     constructor(scene) {
-        const inclinationDegrees = 1.85; // Mars's orbital inclination
+        const inclinationDegrees = 1.85;
         const inclinationRadians = inclinationDegrees * Math.PI / 180;
         super(
             CONFIG.MARS.NAME,
             CONFIG.MARS.RADIUS,
             CONFIG.MARS.COLOR,
-            CONFIG.MARS.ORBIT_RADIUS, // orbitalRadius
-            inclinationRadians,       // orbitalInclination
-            false,                    // isEmissive
-            null,                     // customGeometry
-            2.2                       // ambientLightIntensity
+            CONFIG.MARS.ORBIT_RADIUS,
+            inclinationRadians,
+            false,
+            null,
+            2.2
         );
         this.orbitSpeed = CONFIG.MARS.ORBIT_SPEED;
         this.rotationSpeed = CONFIG.MARS.ROTATION_SPEED;
-        this.orbitAngle = Math.random() * Math.PI * 2; // Random starting position
+        this.orbitAngle = Math.random() * Math.PI * 2;
         this.createMesh();
         this.updatePosition();
     }
     
     createMesh() {
-        // Load high-resolution textures
         const textureLoader = new THREE.TextureLoader();
         const marsTexture = textureLoader.load('/textures/mars_8k.jpg');
         const marsNormalMap = textureLoader.load('/textures/mars_normal_8k.jpg');
-        
-        // Use base class implementation for mesh creation with proper lighting
+
         super.createBaseMesh({
             map: marsTexture,
             normalMap: marsNormalMap,
@@ -43,12 +40,12 @@ export class Mars extends CelestialBody {
             specular: new THREE.Color(0x222222)
         });
         
-        // Add subtle atmospheric effect - Mars has a very thin atmosphere
+
         const atmosphereGeometry = new THREE.SphereGeometry(this.radius * 1.015, 64, 64);
         const atmosphereMaterial = new THREE.MeshPhongMaterial({
-            color: new THREE.Color(0xff9977), // Adjusted to more accurate dusty reddish-orange
+            color: new THREE.Color(0xff9977),
             transparent: true,
-            opacity: 0.05, // Much more subtle than before
+            opacity: 0.05,
             side: THREE.BackSide,
             blending: THREE.AdditiveBlending
         });

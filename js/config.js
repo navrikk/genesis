@@ -1,124 +1,122 @@
 import * as THREE from 'three';
 
-// Configuration settings for the solar system visualization
+
 const CONFIG = {
-    SCALE_FACTOR: 100000, // 1 unit = 100,000 km
+    SCALE_FACTOR: 100000,
     ANIMATION: {
-        enabled: true // Default state for animation
+        enabled: true
     },
     CAMERA: {
         FOV: 45,
-        NEAR: 0.0001, // Significantly reduced for very close zoom on tiny objects like Phobos/Deimos
+        NEAR: 0.0001,
         FAR: 10000,
-        // Initial position to show the Sun with Milky Way galaxy arms from the top-right
-        // Positioned to maintain a reduced zoom level (0.35) on the Sun
-        INITIAL_POSITION: new THREE.Vector3(45, 15, 25), // Position camera even further to the right to show Milky Way arms
+        INITIAL_POSITION: new THREE.Vector3(45, 15, 25),
         LOOK_AT: new THREE.Vector3(0, 0, 0)
     },
     SUN: {
         NAME: 'Sun',
-        DIAMETER_KM: 1392700, // Actual diameter in km
-        ROTATION_PERIOD_DAYS: 27, // Equatorial rotation period
+        DIAMETER_KM: 1392700,
+        ROTATION_PERIOD_DAYS: 27,
         COLOR: 0xffdd00,
         get RADIUS() { return (this.DIAMETER_KM / 2) / CONFIG.SCALE_FACTOR; },
-        get ROTATION_SPEED() { return (2 * Math.PI) / (this.ROTATION_PERIOD_DAYS * 24 * 60 * 0.1); } // Sped up for visualization (0.1 = 10x faster than 1 min)
+        get ROTATION_SPEED() { return (2 * Math.PI) / (this.ROTATION_PERIOD_DAYS * 24 * 60 * 0.1); }
     },
     MERCURY: {
         NAME: 'Mercury',
-        DIAMETER_KM: 4879 * 50, // Massively increased size for extreme visibility
-        DISTANCE_FROM_SUN_KM: 57909000, // Average distance
+        DIAMETER_KM: 4879 * 50,
+        DISTANCE_FROM_SUN_KM: 57909000,
         ORBITAL_PERIOD_DAYS: 88,
         ROTATION_PERIOD_DAYS: 58.6,
-        COLOR: 0xAA8866, // Brownish-gray color
+        COLOR: 0xAA8866,
         get RADIUS() { return (this.DIAMETER_KM / 2) / CONFIG.SCALE_FACTOR; },
         get ORBIT_RADIUS() { return this.DISTANCE_FROM_SUN_KM / CONFIG.SCALE_FACTOR; },
-        get ORBIT_SPEED() { return (2 * Math.PI) / (this.ORBITAL_PERIOD_DAYS * 24 * 60 * 0.1); }, // Sped up for visualization
-        get ROTATION_SPEED() { return (2 * Math.PI) / (this.ROTATION_PERIOD_DAYS * 24 * 60 * 0.1); } // Sped up for visualization
+        get ORBIT_SPEED() { return (2 * Math.PI) / (this.ORBITAL_PERIOD_DAYS * 24 * 60 * 0.1); },
+        get ROTATION_SPEED() { return (2 * Math.PI) / (this.ROTATION_PERIOD_DAYS * 24 * 60 * 0.1); }
     },
     VENUS: {
         NAME: 'Venus',
-        DIAMETER_KM: 12104 * 30, // Increased size for visibility
-        DISTANCE_FROM_SUN_KM: 108200000, // Average distance
+        DIAMETER_KM: 12104 * 30,
+        DISTANCE_FROM_SUN_KM: 108200000,
         ORBITAL_PERIOD_DAYS: 225,
-        ROTATION_PERIOD_DAYS: 243, // Retrograde rotation
-        COLOR: 0xE6E6B8, // Yellowish color
+        ROTATION_PERIOD_DAYS: 243,
+        COLOR: 0xE6E6B8,
         get RADIUS() { return (this.DIAMETER_KM / 2) / CONFIG.SCALE_FACTOR; },
         get ORBIT_RADIUS() { return this.DISTANCE_FROM_SUN_KM / CONFIG.SCALE_FACTOR; },
-        get ORBIT_SPEED() { return (2 * Math.PI) / (this.ORBITAL_PERIOD_DAYS * 24 * 60 * 0.1); }, // Sped up for visualization
-        get ROTATION_SPEED() { return -(2 * Math.PI) / (this.ROTATION_PERIOD_DAYS * 24 * 60 * 0.1); } // Negative for retrograde rotation
+        get ORBIT_SPEED() { return (2 * Math.PI) / (this.ORBITAL_PERIOD_DAYS * 24 * 60 * 0.1); },
+        get ROTATION_SPEED() { return -(2 * Math.PI) / (this.ROTATION_PERIOD_DAYS * 24 * 60 * 0.1); }
     },
     EARTH: {
         NAME: 'Earth',
-        DIAMETER_KM: 12756 * 30, // Increased size for visibility
-        DISTANCE_FROM_SUN_KM: 149600000, // Average distance
+        DIAMETER_KM: 12756 * 30,
+        DISTANCE_FROM_SUN_KM: 149600000,
         ORBITAL_PERIOD_DAYS: 365.25,
         ROTATION_PERIOD_DAYS: 1,
-        COLOR: 0x2E66FF, // Blue color
+        COLOR: 0x2E66FF,
         get RADIUS() { return (this.DIAMETER_KM / 2) / CONFIG.SCALE_FACTOR; },
         get ORBIT_RADIUS() { return this.DISTANCE_FROM_SUN_KM / CONFIG.SCALE_FACTOR; },
-        get ORBIT_SPEED() { return (2 * Math.PI) / (this.ORBITAL_PERIOD_DAYS * 24 * 60 * 0.1); }, // Sped up for visualization
-        get ROTATION_SPEED() { return (2 * Math.PI) / (this.ROTATION_PERIOD_DAYS * 24 * 60 * 0.1); } // Sped up for visualization
+        get ORBIT_SPEED() { return (2 * Math.PI) / (this.ORBITAL_PERIOD_DAYS * 24 * 60 * 0.1); },
+        get ROTATION_SPEED() { return (2 * Math.PI) / (this.ROTATION_PERIOD_DAYS * 24 * 60 * 0.1); }
     },
     MARS: {
         NAME: 'Mars',
-        DIAMETER_KM: 6779 * 30, // Increased size for visibility
-        DISTANCE_FROM_SUN_KM: 227900000, // Average distance
+        DIAMETER_KM: 6779 * 30,
+        DISTANCE_FROM_SUN_KM: 227900000,
         ORBITAL_PERIOD_DAYS: 687,
         ROTATION_PERIOD_DAYS: 1.03,
-        COLOR: 0xE27B58, // Reddish-orange color
+        COLOR: 0xE27B58,
         get RADIUS() { return (this.DIAMETER_KM / 2) / CONFIG.SCALE_FACTOR; },
         get ORBIT_RADIUS() { return this.DISTANCE_FROM_SUN_KM / CONFIG.SCALE_FACTOR; },
-        get ORBIT_SPEED() { return (2 * Math.PI) / (this.ORBITAL_PERIOD_DAYS * 24 * 60 * 0.1); }, // Sped up for visualization
-        get ROTATION_SPEED() { return (2 * Math.PI) / (this.ROTATION_PERIOD_DAYS * 24 * 60 * 0.1); } // Sped up for visualization
+        get ORBIT_SPEED() { return (2 * Math.PI) / (this.ORBITAL_PERIOD_DAYS * 24 * 60 * 0.1); },
+        get ROTATION_SPEED() { return (2 * Math.PI) / (this.ROTATION_PERIOD_DAYS * 24 * 60 * 0.1); }
     },
     MOON: {
         NAME: 'Moon',
-        DIAMETER_KM: 3475 * 5, // Reduced multiplier for more realistic scale relative to Earth
-        DISTANCE_FROM_PARENT_KM: 384400 * 2.5, // Increased distance for more realistic Moon-Earth separation
+        DIAMETER_KM: 3475 * 5,
+        DISTANCE_FROM_PARENT_KM: 384400 * 2.5,
         ORBITAL_PERIOD_DAYS: 27.3,
-        ROTATION_PERIOD_DAYS: 27.3, // Tidally locked to Earth
-        COLOR: 0xCCCCCC, // Gray color
+        ROTATION_PERIOD_DAYS: 27.3,
+        COLOR: 0xCCCCCC,
         get RADIUS() { return (this.DIAMETER_KM / 2) / CONFIG.SCALE_FACTOR; },
         get ORBIT_RADIUS() { return this.DISTANCE_FROM_PARENT_KM / CONFIG.SCALE_FACTOR; },
-        get ORBIT_SPEED() { return (2 * Math.PI) / (this.ORBITAL_PERIOD_DAYS * 24 * 60 * 0.1); }, // Sped up for visualization
-        get ROTATION_SPEED() { return (2 * Math.PI) / (this.ROTATION_PERIOD_DAYS * 24 * 60 * 0.1); } // Sped up for visualization
+        get ORBIT_SPEED() { return (2 * Math.PI) / (this.ORBITAL_PERIOD_DAYS * 24 * 60 * 0.1); },
+        get ROTATION_SPEED() { return (2 * Math.PI) / (this.ROTATION_PERIOD_DAYS * 24 * 60 * 0.1); }
     },
     PHOBOS: {
         NAME: 'Phobos',
-        DIAMETER_KM: 27 * 200, // Modest visual multiplier, focus distance to be handled separately
-        DISTANCE_FROM_PARENT_KM: 9376 * 30, // Increased multiplier to move Phobos further from Mars
-        ORBITAL_PERIOD_DAYS: 0.32, // Very fast orbit (7 hours 39 minutes)
-        ROTATION_PERIOD_DAYS: 0.32, // Tidally locked to Mars
-        COLOR: 0x635a55, // NASA-accurate reddish-gray
+        DIAMETER_KM: 27 * 200,
+        DISTANCE_FROM_PARENT_KM: 9376 * 30,
+        ORBITAL_PERIOD_DAYS: 0.32,
+        ROTATION_PERIOD_DAYS: 0.32,
+        COLOR: 0x635a55,
         get RADIUS() { return (this.DIAMETER_KM / 2) / CONFIG.SCALE_FACTOR; },
         get ORBIT_RADIUS() { return this.DISTANCE_FROM_PARENT_KM / CONFIG.SCALE_FACTOR; },
-        get ORBIT_SPEED() { return (2 * Math.PI) / (this.ORBITAL_PERIOD_DAYS * 24 * 60 * 0.1); }, // Sped up for visualization
-        get ROTATION_SPEED() { return (2 * Math.PI) / (this.ROTATION_PERIOD_DAYS * 24 * 60 * 0.1); } // Sped up for visualization
+        get ORBIT_SPEED() { return (2 * Math.PI) / (this.ORBITAL_PERIOD_DAYS * 24 * 60 * 0.1); },
+        get ROTATION_SPEED() { return (2 * Math.PI) / (this.ROTATION_PERIOD_DAYS * 24 * 60 * 0.1); }
     },
     DEIMOS: {
         NAME: 'Deimos',
-        DIAMETER_KM: 15 * 50, // Using largest actual dimension (15km) with a visibility multiplier
-        DISTANCE_FROM_PARENT_KM: 23463 * 10, // Actual distance (23463km) with a visibility multiplier
-        ORBITAL_PERIOD_DAYS: 1.26, // About 30 hours
-        ROTATION_PERIOD_DAYS: 1.26, // Tidally locked to Mars
-        COLOR: 0x847e75, // NASA-accurate grayish-brown
+        DIAMETER_KM: 15 * 50,
+        DISTANCE_FROM_PARENT_KM: 23463 * 10,
+        ORBITAL_PERIOD_DAYS: 1.26,
+        ROTATION_PERIOD_DAYS: 1.26,
+        COLOR: 0x847e75,
         get RADIUS() { return (this.DIAMETER_KM / 2) / CONFIG.SCALE_FACTOR; },
         get ORBIT_RADIUS() { return this.DISTANCE_FROM_PARENT_KM / CONFIG.SCALE_FACTOR; },
-        get ORBIT_SPEED() { return (2 * Math.PI) / (this.ORBITAL_PERIOD_DAYS * 24 * 60 * 0.1); }, // Sped up for visualization
-        get ROTATION_SPEED() { return (2 * Math.PI) / (this.ROTATION_PERIOD_DAYS * 24 * 60 * 0.1); } // Sped up for visualization
+        get ORBIT_SPEED() { return (2 * Math.PI) / (this.ORBITAL_PERIOD_DAYS * 24 * 60 * 0.1); },
+        get ROTATION_SPEED() { return (2 * Math.PI) / (this.ROTATION_PERIOD_DAYS * 24 * 60 * 0.1); }
     },
     STARFIELD: {
-        COUNT: 5000, // Accurate count of stars visible to naked eye from Earth
-        RADIUS: 100000, // Large radius for proper depth perception
-        MIN_SIZE: 0.2,  // Smaller minimum size for more variation
-        MAX_SIZE: 2.0,   // Maximum star size
-        MILKY_WAY_ENABLED: true // Enable Milky Way backdrop
+        COUNT: 5000,
+        RADIUS: 100000,
+        MIN_SIZE: 0.2,
+        MAX_SIZE: 2.0,
+        MILKY_WAY_ENABLED: true
     },
     BLOOM_EFFECT: {
         enabled: true,
-        threshold: 0.6,   // Moderate threshold for balanced glow effect
-        strength: 1.8,   // Moderate strength for visible but not overwhelming bloom
-        radius: 1.5      // Moderate radius for a balanced glow
+        threshold: 0.6,
+        strength: 1.8,
+        radius: 1.5
     }
 };
 

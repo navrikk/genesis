@@ -15,7 +15,7 @@ export class Deimos extends CelestialBody {
      * @param {CelestialBody} parentBody - The parent celestial body (Mars)
      */
     constructor(parentBody) {
-        const inclinationDegrees = 0.93; // Deimos's orbital inclination to Mars's equator
+        const inclinationDegrees = 0.93;
         const inclinationRadians = inclinationDegrees * Math.PI / 180;
         super(
             CONFIG.DEIMOS.NAME,
@@ -23,39 +23,38 @@ export class Deimos extends CelestialBody {
             CONFIG.DEIMOS.COLOR,
             CONFIG.DEIMOS.ORBIT_RADIUS,
             inclinationRadians,
-            false,                    // isEmissive
-            null,                     // customGeometry (handled in createMesh)
-            0.02                      // ambientLightIntensity
+            false,
+            null,
+            0.02
         );
         this.parentBody = parentBody;
         this.orbitSpeed = CONFIG.DEIMOS.ORBIT_SPEED;
         this.rotationSpeed = CONFIG.DEIMOS.ROTATION_SPEED;
-        this.orbitAngle = Math.random() * Math.PI * 2; // Random starting position
+        this.orbitAngle = Math.random() * Math.PI * 2;
         this.createMesh();
-        this.updatePosition(); // Ensure initial position is set
+        this.updatePosition();
     }
     
     createMesh() {
-        // Deimos actual dimensions (approximate): 15 km x 12.2 km x 11 km
-        // We will use this.radius (derived from CONFIG.DEIMOS.DIAMETER_KM) for a sphere representation.
+
         const geometry = new THREE.SphereGeometry(this.radius, 32, 32);
 
         const textureLoader = new THREE.TextureLoader();
         textureLoader.load(
             deimosTexturePath,
-            (deimosTexture) => { // Success callback
+            (deimosTexture) => {
                 const materialOptions = {
                     map: deimosTexture,
-                    baseColor: new THREE.Color(0x333333) // Slightly darker base color for Deimos
+                    baseColor: new THREE.Color(0x333333)
                 };
                 super.createBaseMesh(materialOptions, geometry);
             },
-            undefined, // onProgress callback (optional)
-            (error) => { // onError callback
+            undefined,
+            (error) => {
                 console.error(`[${this.name}] Error loading texture from ${deimosTexturePath}:`, error);
                 console.warn(`[${this.name}] Texture load error. Applying fallback material.`);
                 const fallbackMaterialOptions = {
-                    baseColor: new THREE.Color(this.primaryColor) // Use primaryColor from constructor
+                    baseColor: new THREE.Color(this.primaryColor)
                 };
                 super.createBaseMesh(fallbackMaterialOptions, geometry);
             }
@@ -80,7 +79,7 @@ export class Deimos extends CelestialBody {
             this.mesh.rotation.y += this.rotationSpeed * deltaTime;
         }
 
-        // After updating angles, update the position using the base class method
+
         this.updatePosition(); 
     }
 }

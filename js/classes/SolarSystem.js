@@ -12,7 +12,7 @@ export class SolarSystem {
         this.celestialBodies = [];
         this.animationEnabled = true;
         
-        // Add global lighting for all celestial bodies
+
         this.setupGlobalLighting();
     }
 
@@ -46,7 +46,7 @@ export class SolarSystem {
      */
     update(deltaTime) {
         this.celestialBodies.forEach(body => {
-            // Only update rotation, no orbit movement
+
             body.update(deltaTime, false);
         });
     }

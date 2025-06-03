@@ -66,7 +66,7 @@ export default class App {
     this.userPanned = false;
     this.userControlActive = false;
     this.lastUserInteractionTime = 0;
-    this.userControlTimeout = 200; // Reduced for faster re-lock
+    this.userControlTimeout = 200;
     this.userCameraPosition = null;
     this.userControlsTarget = null;
     this.currentAnimation = null;
@@ -300,65 +300,51 @@ export default class App {
   } // End of init()
 
   setupUIControls() {
-    // Setup info panel controls
     this.infoPanel = document.getElementById("infoPanel");
     document.getElementById("closeInfoPanel").addEventListener("click", () => {
       this.infoPanel.classList.add("hidden");
       this.selectedBody = null;
     });
 
-    // Focus button in side panel was removed as requested
-    // Focus functionality is still available through the dynamic focus button in controls
-
-    // Play/Pause button removed - static solar system has no animation controls
-
-
-
     // Controls Visibility Setup
     this.bottomControlsPanel = document.getElementById("controls");
     this.toggleControlsButton = document.getElementById("toggleControlsButton");
 
     if (this.toggleControlsButton) {
-      // Set initial state
       this.toggleControlsButton.innerHTML = '<i class="fas fa-eye-slash"></i>';
       this.toggleControlsButton.setAttribute("data-tooltip", "Hide Controls");
       this.areControlsVisible = true;
       
-      // Add click event listener
       this.toggleControlsButton.addEventListener("click", (e) => {
-        e.stopPropagation(); // Prevent event bubbling
+        e.stopPropagation();
         this.toggleAllControlsVisibility();
       });
     }
 
-    // Listener for Escape key to show controls if hidden
     window.addEventListener("keydown", (event) => {
       if (event.key === "Escape" && !this.areControlsVisible) {
         this.showAllControls();
       }
     });
 
-    // Setup audio controls
+    // Audio controls setup
     this.soundtrack = document.getElementById("soundtrack");
     const muteButton = document.getElementById("muteButton");
 
-    // Initialize soundtrack to play when loaded
-    this.soundtrack.volume = 0.5; // Set initial volume to 50%
+    this.soundtrack.volume = 0.5;
 
-    // Play soundtrack when the page is loaded
-    // Using a promise to handle autoplay restrictions in modern browsers
+    // Handle autoplay restrictions in modern browsers
     const playPromise = this.soundtrack.play();
 
     if (playPromise !== undefined) {
       playPromise
         .then(() => {})
         .catch((error) => {
-          // We'll set a flag to try playing again after user interaction
           this.soundtrack.setAttribute("data-autoplay-failed", "true");
         });
     }
 
-    // Setup mute button functionality
+    // Mute button functionality
     muteButton.addEventListener("click", () => {
       this.isMuted = !this.isMuted;
 
@@ -377,7 +363,7 @@ export default class App {
       }
     });
 
-    // Try to play audio after first user interaction if autoplay was prevented
+    // Play audio after first user interaction if autoplay was prevented
     document.addEventListener(
       "click",
       () => {
@@ -570,9 +556,7 @@ export default class App {
   }
 
   hideAllControls() {
-    // Completely hide the controls panel except for the toggle button
     if (this.bottomControlsPanel) {
-      // Hide all children except the toggle button
       Array.from(this.bottomControlsPanel.children).forEach(child => {
         if (child !== this.toggleControlsButton) {
           child.classList.add("hidden");
@@ -580,7 +564,6 @@ export default class App {
       });
     }
     
-    // Hide time controls panel if it exists
     if (this.timeControlsPanel) {
       this.timeControlsPanel.classList.add("hidden");
     }
@@ -594,14 +577,12 @@ export default class App {
   }
 
   showAllControls() {
-    // Show all controls by removing hidden class from all children
     if (this.bottomControlsPanel) {
       Array.from(this.bottomControlsPanel.children).forEach(child => {
         child.classList.remove("hidden");
       });
     }
     
-    // Show time controls panel if it exists and we're focused on the Sun
     if (this.timeControlsPanel && this.focusedBody && this.focusedBody.name === "Sun") {
       this.timeControlsPanel.classList.remove("hidden");
     }
