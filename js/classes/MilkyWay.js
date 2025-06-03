@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import CONFIG from '../config.js';
-import milkyWayTextureURL from '../../assets/textures/skybox/milkyway_eso_16k_processed.jpg?url';
+import milkyWayTextureURL from '../../assets/textures/milkyway_eso_16k_processed.jpg?url';
 
 /**
  * Creates and manages the Milky Way galaxy backdrop using a local panoramic texture.

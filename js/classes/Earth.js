@@ -29,7 +29,6 @@ export class Earth extends CelestialBody {
         const textureLoader = new THREE.TextureLoader();
         const earthDayPath = '/textures/earth_daymap_8k.jpg';
         const earthCloudsPath = '/textures/earth_clouds_8k.jpg';
-        const earthNormalPath = '/textures/earth_normal_8k.jpg';
 
         const earthDayTexture = textureLoader.load(earthDayPath,
             undefined,
@@ -39,15 +38,10 @@ export class Earth extends CelestialBody {
             undefined,
             (err) => { console.error(`Earth: Error loading ${earthCloudsPath}:`, err); }
         );
-        const earthNormalMap = textureLoader.load(earthNormalPath,
-            undefined,
-            (err) => { console.error(`Earth: Error loading ${earthNormalPath}:`, err); }
-        );
+
 
         super.createBaseMesh({
-            map: earthDayTexture,
-            normalMap: earthNormalMap,
-            normalScale: new THREE.Vector2(0.05, 0.05)
+            map: earthDayTexture
         });
 
         const cloudsGeometry = new THREE.SphereGeometry(this.radius * 1.01, 64, 64);

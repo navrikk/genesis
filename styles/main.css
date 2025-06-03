@@ -94,6 +94,39 @@ canvas {
     padding: 15px 20px;
 }
 
+.show-details-button {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    background-color: rgba(0, 0, 0, 0.8);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    color: white;
+    padding: 10px 15px;
+    font-family: var(--font-heading);
+    font-size: 0.9rem;
+    font-weight: var(--font-weight-medium);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    z-index: 90;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+}
+
+.show-details-button:hover {
+    background-color: rgba(251, 146, 60, 0.7);
+    border-color: rgba(251, 146, 60, 0.5);
+}
+
+.show-details-button.hidden {
+    transform: translateX(110%);
+    opacity: 0;
+    pointer-events: none;
+}
+
 .info-section {
     margin-bottom: 20px;
 }

@@ -30,7 +30,6 @@ export class Venus extends CelestialBody {
     createMesh() {
         const textureLoader = new THREE.TextureLoader();
         const venusTexture = textureLoader.load('/textures/venus_surface_8k.jpg');
-        const venusCloudsTexture = textureLoader.load('/textures/venus_atmosphere_8k.jpg');
 
         super.createBaseMesh({
             map: venusTexture,
@@ -43,7 +42,7 @@ export class Venus extends CelestialBody {
 
         const cloudsGeometry = new THREE.SphereGeometry(this.radius * 1.01, 64, 64);
         const cloudsMaterial = new THREE.MeshPhongMaterial({
-            map: venusCloudsTexture,
+            color: new THREE.Color(0xffcc99),
             transparent: true,
             opacity: 0.7,
             shininess: 5,

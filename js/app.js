@@ -301,9 +301,17 @@ export default class App {
 
   setupUIControls() {
     this.infoPanel = document.getElementById("infoPanel");
+    this.showDetailsButton = document.getElementById("showDetailsButton");
+    
+    // Close info panel button
     document.getElementById("closeInfoPanel").addEventListener("click", () => {
-      this.infoPanel.classList.add("hidden");
-      this.selectedBody = null;
+      this.hideInfoPanel();
+    });
+    
+    // Show details button
+    this.showDetailsButton.addEventListener("click", () => {
+      this.showDetailsButton.classList.add("hidden");
+      this.infoPanel.classList.remove("hidden");
     });
 
     // Controls Visibility Setup
@@ -555,6 +563,17 @@ export default class App {
     }
   }
 
+  /**
+   * Hides the info panel and shows the 'Show Details' button if a body is selected
+   */
+  hideInfoPanel() {
+    this.infoPanel.classList.add("hidden");
+    // Show the 'Show Details' button when the panel is closed and a body is selected
+    if (this.selectedBody) {
+      this.showDetailsButton.classList.remove("hidden");
+    }
+  }
+
   hideAllControls() {
     if (this.bottomControlsPanel) {
       Array.from(this.bottomControlsPanel.children).forEach(child => {
@@ -568,12 +587,19 @@ export default class App {
       this.timeControlsPanel.classList.add("hidden");
     }
     
+    // Hide info panel and show details button
+    this.infoPanel.classList.add("hidden");
+    this.showDetailsButton.classList.add("hidden");
+    
     this.areControlsVisible = false;
     
     if (this.toggleControlsButton) {
       this.toggleControlsButton.innerHTML = '<i class="fas fa-eye"></i>';
       this.toggleControlsButton.setAttribute("data-tooltip", "Show Controls");
     }
+    
+    // Show the ESC notification
+    this.showEscNotification();
   }
 
   showAllControls() {
@@ -585,6 +611,11 @@ export default class App {
     
     if (this.timeControlsPanel && this.focusedBody && this.focusedBody.name === "Sun") {
       this.timeControlsPanel.classList.remove("hidden");
+    }
+    
+    // Don't automatically show the info panel, but do show the 'Show Details' button if a body is selected
+    if (this.selectedBody) {
+      this.showDetailsButton.classList.remove("hidden");
     }
     
     this.areControlsVisible = true;
@@ -691,8 +722,9 @@ export default class App {
     document.getElementById("bodyDescription").textContent =
       bodyData.description;
 
-    // Show the panel
+    // Show the panel and hide the 'Show Details' button
     this.infoPanel.classList.remove("hidden");
+    this.showDetailsButton.classList.add("hidden");
   }
 
   focusOnBody(bodyName) {

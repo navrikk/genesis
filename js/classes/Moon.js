@@ -35,13 +35,10 @@ export class Moon extends CelestialBody {
 
         const textureLoader = new THREE.TextureLoader();
         const moonTexture = textureLoader.load('/textures/moon_8k.jpg');
-        const moonNormalMap = textureLoader.load('/textures/moon_normal_8k.jpg');
         
 
         this.createBaseMesh({
             map: moonTexture,
-            normalMap: moonNormalMap,
-            normalScale: new THREE.Vector2(0.04, 0.04),
             emissive: new THREE.Color(0x111111),
             emissiveIntensity: 0.1
         });

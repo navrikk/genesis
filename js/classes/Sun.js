@@ -15,7 +15,7 @@ export class Sun extends CelestialBody {
 
     createMesh() {
         const textureLoader = new THREE.TextureLoader();
-        const sunTexture = textureLoader.load('/textures/high_res/sun_8k_alt.jpg');
+        const sunTexture = textureLoader.load('/textures/sun_8k_alt.jpg');
         sunTexture.anisotropy = 16;
         sunTexture.colorSpace = THREE.SRGBColorSpace;
 

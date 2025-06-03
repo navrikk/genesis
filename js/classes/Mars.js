@@ -29,13 +29,9 @@ export class Mars extends CelestialBody {
     createMesh() {
         const textureLoader = new THREE.TextureLoader();
         const marsTexture = textureLoader.load('/textures/mars_8k.jpg');
-        const marsNormalMap = textureLoader.load('/textures/mars_normal_8k.jpg');
 
         super.createBaseMesh({
             map: marsTexture,
-            normalMap: marsNormalMap,
-            bumpMap: marsNormalMap,
-            bumpScale: 0.02,
             shininess: 5,
             specular: new THREE.Color(0x222222)
         });
