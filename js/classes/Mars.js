@@ -46,20 +46,6 @@ export class Mars extends CelestialBody {
             shininess: 5,
             specular: new THREE.Color(0x222222)
         });
-        
-
-        const atmosphereGeometry = new THREE.SphereGeometry(this.radius * 1.015, 64, 64);
-        const atmosphereMaterial = new THREE.MeshPhongMaterial({
-            color: new THREE.Color(0xff9977),
-            transparent: true,
-            opacity: 0.05,
-            side: THREE.BackSide,
-            blending: THREE.AdditiveBlending
-        });
-        
-        this.atmosphereMesh = new THREE.Mesh(atmosphereGeometry, atmosphereMaterial);
-        this.atmosphereMesh.name = this.name + "Atmosphere";
-        this.objectGroup.add(this.atmosphereMesh);
     }
     
     }
