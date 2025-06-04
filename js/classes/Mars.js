@@ -28,10 +28,22 @@ export class Mars extends CelestialBody {
     
     createMesh() {
         const textureLoader = new THREE.TextureLoader();
-        const marsTexture = textureLoader.load('/textures/mars_8k.jpg');
+        // Use local high-resolution Mars texture with enhanced properties
+        const marsTexturePath = '/assets/textures/mars_8k.jpg';
+        
+        const marsTexture = textureLoader.load(marsTexturePath,
+            (texture) => {
+                texture.anisotropy = 16;
+                texture.colorSpace = THREE.SRGBColorSpace;
+            },
+            undefined,
+            (err) => { console.error(`Mars: Error loading texture:`, err); }
+        );
 
         super.createBaseMesh({
             map: marsTexture,
+            bumpMap: marsTexture,
+            bumpScale: 0.01,
             shininess: 5,
             specular: new THREE.Color(0x222222)
         });

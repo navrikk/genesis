@@ -43,9 +43,17 @@ export class Deimos extends CelestialBody {
         textureLoader.load(
             deimosTexturePath,
             (deimosTexture) => {
+                // Enhanced texture properties for better visual quality
+                deimosTexture.anisotropy = 16;
+                deimosTexture.colorSpace = THREE.SRGBColorSpace;
+                
                 const materialOptions = {
                     map: deimosTexture,
-                    baseColor: new THREE.Color(0x333333)
+                    bumpMap: deimosTexture,
+                    bumpScale: 0.002,
+                    baseColor: new THREE.Color(0x444444),
+                    shininess: 2,
+                    specular: new THREE.Color(0x111111)
                 };
                 super.createBaseMesh(materialOptions, geometry);
             },

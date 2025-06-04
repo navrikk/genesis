@@ -53,11 +53,17 @@ export class Phobos extends CelestialBody {
         textureLoader.load(
             phobosTexturePath,
             (phobosTexture) => {
-
+                // Enhanced texture properties for better visual quality
+                phobosTexture.anisotropy = 16;
+                phobosTexture.colorSpace = THREE.SRGBColorSpace;
 
                 const materialOptions = {
                     map: phobosTexture,
-                    baseColor: new THREE.Color(0x333333)
+                    bumpMap: phobosTexture,
+                    bumpScale: 0.003,
+                    baseColor: new THREE.Color(0x444444),
+                    shininess: 2,
+                    specular: new THREE.Color(0x111111)
                 };
                 super.createBaseMesh(materialOptions, geometry);
 

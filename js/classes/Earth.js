@@ -27,21 +27,34 @@ export class Earth extends CelestialBody {
     
     createMesh() {
         const textureLoader = new THREE.TextureLoader();
-        const earthDayPath = '/textures/earth_daymap_8k.jpg';
-        const earthCloudsPath = '/textures/earth_clouds_8k.jpg';
+        // Use local high-resolution textures with enhanced material properties
+        const earthDayPath = '/assets/textures/earth_daymap_8k.jpg';
+        const earthCloudsPath = '/assets/textures/earth_clouds_8k.jpg';
 
         const earthDayTexture = textureLoader.load(earthDayPath,
+            (texture) => {
+                texture.anisotropy = 16;
+                texture.colorSpace = THREE.SRGBColorSpace;
+            },
             undefined,
             (err) => { console.error(`Earth: Error loading ${earthDayPath}:`, err); }
         );
+        
         const earthCloudsTexture = textureLoader.load(earthCloudsPath,
+            (texture) => {
+                texture.anisotropy = 16;
+            },
             undefined,
             (err) => { console.error(`Earth: Error loading ${earthCloudsPath}:`, err); }
         );
 
 
         super.createBaseMesh({
-            map: earthDayTexture
+            map: earthDayTexture,
+            bumpMap: earthDayTexture,
+            bumpScale: 0.001,
+            shininess: 100,
+            specular: new THREE.Color(0x1a1a1a)
         });
 
         const cloudsGeometry = new THREE.SphereGeometry(this.radius * 1.01, 64, 64);

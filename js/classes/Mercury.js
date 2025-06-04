@@ -18,7 +18,7 @@ export class Mercury extends CelestialBody {
             inclinationRadians,
             false,
             null,
-            2.2
+            0.5
         );
         this.orbitSpeed = CONFIG.MERCURY.ORBIT_SPEED;
         this.rotationSpeed = CONFIG.MERCURY.ROTATION_SPEED;
@@ -28,17 +28,24 @@ export class Mercury extends CelestialBody {
     }
 
     createMesh() {
-
         const textureLoader = new THREE.TextureLoader();
-        const mercuryTexture = textureLoader.load('/textures/mercury_8k.jpg');
-        
+        // Use local high-resolution Mercury texture with enhanced properties
+        const mercuryTexture = textureLoader.load('/assets/textures/mercury_8k.jpg',
+            (texture) => {
+                texture.anisotropy = 16;
+                texture.colorSpace = THREE.SRGBColorSpace;
+            },
+            undefined,
+            (err) => { console.error(`Mercury: Error loading texture:`, err); }
+        );
 
         super.createBaseMesh({
             map: mercuryTexture,
             bumpMap: mercuryTexture,
-            bumpScale: 0.02,
-            shininess: 5,
-            specular: new THREE.Color(0x222222)
+            bumpScale: 0.01,
+            shininess: 1,
+            specular: new THREE.Color(0x111111),
+            baseColor: new THREE.Color(0x444444)
         });
     }
 

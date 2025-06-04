@@ -17,10 +17,13 @@ const LightingUtils = {
      * @returns {THREE.Material} Material with natural lighting
      */
     createNaturalLightingMaterial(options) {
-        if (options.emissive) {
+        if (options.emissive || options.isEmissive) {
+            // Enhanced emissive material for stars/sun
             return new THREE.MeshBasicMaterial({
                 map: options.map,
                 color: options.baseColor || 0xffffff,
+                emissive: options.emissiveColor || new THREE.Color(0x222211),
+                emissiveIntensity: options.emissiveIntensity || 0.2
             });
         }
 

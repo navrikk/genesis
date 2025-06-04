@@ -17,7 +17,7 @@ export class Venus extends CelestialBody {
             inclinationRadians,
             false,
             null,
-            2.2
+            0.3
         );
         this.orbitSpeed = CONFIG.VENUS.ORBIT_SPEED;
         this.rotationSpeed = CONFIG.VENUS.ROTATION_SPEED;
@@ -28,31 +28,27 @@ export class Venus extends CelestialBody {
     
     createMesh() {
         const textureLoader = new THREE.TextureLoader();
-        const venusTexture = textureLoader.load('/textures/venus_surface_8k.jpg');
+        // Use local high-resolution Venus texture with enhanced properties
+        const venusTexture = textureLoader.load('/assets/textures/venus_surface_8k.jpg',
+            (texture) => {
+                texture.anisotropy = 16;
+                texture.colorSpace = THREE.SRGBColorSpace;
+            },
+            undefined,
+            (err) => { console.error(`Venus: Error loading texture:`, err); }
+        );
 
-        // Create Venus with a slightly emissive material to make it appear brighter
+        // Venus should be a normal planet - no glow, minimal reflectivity
         super.createBaseMesh({
             map: venusTexture,
             bumpMap: venusTexture,
-            bumpScale: 0.005,
-            shininess: 15,  // Increased shininess for better light reflection
-            specular: new THREE.Color(0x444444)  // Slightly brighter specular highlight
+            bumpScale: 0.001,
+            shininess: 2,
+            specular: new THREE.Color(0x222222),
+            baseColor: new THREE.Color(0x555555)
         });
     }
 
-    /**
-     * Override the addLighting method to add custom lighting for Venus
-     */
-    addLighting() {
-        // Add standard ambient light from parent class with increased intensity
-        super.addLighting();
-        
-        // Add a subtle point light inside Venus to enhance its brightness
-        // This simulates the bright reflective nature of Venus's atmosphere
-        const venusLight = new THREE.PointLight(0xffcc88, 0.5, this.radius * 4);
-        venusLight.position.set(0, 0, 0);
-        this.objectGroup.add(venusLight);
-    }
 
     /**
      * Update method for animations, rotations, etc.
