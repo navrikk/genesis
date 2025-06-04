@@ -6,9 +6,11 @@ import * as THREE from 'three';
 export class SolarSystem {
     /**
      * @param {THREE.Scene} scene - The three.js scene to add bodies to
+     * @param {THREE.Object3D} [parentContainer] - Optional parent container for celestial bodies (like solarSystemGroup)
      */
-    constructor(scene) {
+    constructor(scene, parentContainer = null) {
         this.scene = scene;
+        this.parentContainer = parentContainer || scene; // Use parentContainer if provided, otherwise scene
         this.celestialBodies = [];
         this.animationEnabled = true;
         this.orbitLines = [];
@@ -24,11 +26,12 @@ export class SolarSystem {
     addBody(body) {
         this.celestialBodies.push(body);
         
-        // Add moons to their parent's group, planets to scene
+        // Add moons to their parent's group, planets/asteroids/etc to parentContainer
         if (body.parentBody && body.parentBody.getObject) {
             body.parentBody.getObject().add(body.getObject());
         } else {
-            this.scene.add(body.getObject());
+            // For planets, asteroids, comets, etc - add to parentContainer
+            this.parentContainer.add(body.getObject());
         }
         
         // Create and add orbit visualization
@@ -132,8 +135,8 @@ export class SolarSystem {
             if (body.parentBody && body.parentBody.getObject) {
                 body.parentBody.getObject().add(orbitLine);
             } else {
-                // For planets, add to scene
-                this.scene.add(orbitLine);
+                // For planets, asteroids, comets, etc - add orbit to same parentContainer
+                this.parentContainer.add(orbitLine);
             }
             
             this.orbitLines.push(orbitLine);

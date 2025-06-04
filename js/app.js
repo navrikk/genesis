@@ -50,7 +50,7 @@ export default class App {
     this.renderer.shadowMap.enabled = true;
     this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     this.controls = null;
-    this.solarSystem = new SolarSystem(this.scene);
+    this.solarSystem = null; // Will be initialized after solarSystemGroup is created
     this.starfield = null;
     this.milkyWay = null;
     this.clock = new THREE.Clock();
@@ -177,6 +177,9 @@ export default class App {
     this.solarSystemGroup = new THREE.Group();
     this.scene.add(this.solarSystemGroup);
     this.solarSystemGroup.visible = false; // Hide until loading is complete
+    
+    // Initialize solar system with the group as parent container
+    this.solarSystem = new SolarSystem(this.scene, this.solarSystemGroup);
     
     // Ensure the scene is completely black during loading
     this.renderer.setClearColor(0x000000, 1.0); // Pure black background

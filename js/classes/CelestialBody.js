@@ -135,7 +135,9 @@ export class CelestialBody {
             // since the moon should be added to parent's group, not positioned in world coordinates
             this.setPosition(x, y, z);
         } else {
+            // For planets, position relative to Sun at origin
             this.setPosition(x, y, z);
+            
         }
     }
 
@@ -158,6 +160,7 @@ export class CelestialBody {
         if (this.orbitalRadius === 0) {
             return;
         }
+
 
 
         // Create orbit geometry
