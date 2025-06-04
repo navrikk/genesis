@@ -140,7 +140,7 @@ canvas {
 
 .focus-container {
     position: absolute;
-    bottom: 100%;
+    bottom: calc(100% + 2px);
     left: 0;
     background-color: rgba(0, 0, 0, 0.8);
     backdrop-filter: blur(10px);
@@ -151,7 +151,6 @@ canvas {
     border: 1px solid rgba(255, 255, 255, 0.1);
     display: none;
     z-index: 20;
-    margin-bottom: 10px;
 }
 
 #focusButton {
@@ -160,7 +159,9 @@ canvas {
 
 #focusButton:hover .focus-container,
 #focusButton:focus .focus-container,
-#focusButton.active .focus-container {
+#focusButton.active .focus-container,
+.focus-container:hover,
+.focus-container.show {
     display: block;
 }
 

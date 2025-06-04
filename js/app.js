@@ -465,30 +465,30 @@ export default class App {
         const submenu = document.createElement("div");
         submenu.className = "submenu";
         
-        // Add hover and click handlers for the parent body
-        parentOption.addEventListener("mouseenter", (e) => {
-          // Show submenu on hover
+        // Add Safari-compatible hover logic for submenus
+        let submenuHideTimeout = null;
+        
+        const showSubmenu = () => {
+          if (submenuHideTimeout) {
+            clearTimeout(submenuHideTimeout);
+            submenuHideTimeout = null;
+          }
           submenu.classList.add("show-submenu");
-        });
+        };
         
-        parentOption.addEventListener("mouseleave", (e) => {
-          // Hide submenu when mouse leaves the parent option
-          // Only if not hovering over the submenu itself
-          setTimeout(() => {
-            if (!submenu.matches(':hover')) {
-              submenu.classList.remove("show-submenu");
-            }
-          }, 100);
-        });
+        const hideSubmenu = () => {
+          submenuHideTimeout = setTimeout(() => {
+            submenu.classList.remove("show-submenu");
+          }, 200);
+        };
         
-        submenu.addEventListener("mouseleave", (e) => {
-          // Hide submenu when mouse leaves the submenu
-          setTimeout(() => {
-            if (!parentOption.matches(':hover')) {
-              submenu.classList.remove("show-submenu");
-            }
-          }, 100);
-        });
+        // Parent option hover events
+        parentOption.addEventListener("mouseenter", showSubmenu);
+        parentOption.addEventListener("mouseleave", hideSubmenu);
+        
+        // Submenu hover events
+        submenu.addEventListener("mouseenter", showSubmenu);
+        submenu.addEventListener("mouseleave", hideSubmenu);
         
         // Add click handler for the parent body
         parentOption.addEventListener("click", (e) => {
@@ -529,6 +529,52 @@ export default class App {
           focusButton.blur();
         });
         focusContainer.appendChild(bodyOption);
+      }
+    });
+
+    // Add Safari-compatible hover logic for the dropdown
+    let hideTimeout = null;
+    
+    const showDropdown = () => {
+      if (hideTimeout) {
+        clearTimeout(hideTimeout);
+        hideTimeout = null;
+      }
+      focusContainer.classList.add("show");
+      focusButton.classList.add("active");
+    };
+    
+    const hideDropdown = () => {
+      hideTimeout = setTimeout(() => {
+        focusContainer.classList.remove("show");
+        focusButton.classList.remove("active");
+      }, 150);
+    };
+    
+    // Button hover events
+    focusButton.addEventListener("mouseenter", showDropdown);
+    focusButton.addEventListener("mouseleave", hideDropdown);
+    
+    // Container hover events
+    focusContainer.addEventListener("mouseenter", showDropdown);
+    focusContainer.addEventListener("mouseleave", hideDropdown);
+    
+    // Click to toggle for touch devices
+    focusButton.addEventListener("click", (e) => {
+      e.stopPropagation();
+      if (focusContainer.classList.contains("show")) {
+        focusContainer.classList.remove("show");
+        focusButton.classList.remove("active");
+      } else {
+        showDropdown();
+      }
+    });
+    
+    // Close dropdown when clicking outside
+    document.addEventListener("click", (e) => {
+      if (!focusButton.contains(e.target)) {
+        focusContainer.classList.remove("show");
+        focusButton.classList.remove("active");
       }
     });
 
