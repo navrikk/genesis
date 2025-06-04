@@ -786,11 +786,11 @@ export default class App {
       let distance;
 
       if (bodyName === "Phobos") {
-        const K_PHOBOS = 0.01; // Attempt 100x closer zoom for Phobos
+        const K_PHOBOS = 5.0; // Reasonable zoom level for Phobos
         distance = body.radius * K_PHOBOS;
         distance = Math.max(
           distance,
-          body.radius * 0.05,
+          body.radius * 2.0,
           CONFIG.CAMERA.NEAR * 2,
         );
       } else if (bodyName === "Deimos") {

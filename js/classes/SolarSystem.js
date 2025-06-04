@@ -23,7 +23,13 @@ export class SolarSystem {
      */
     addBody(body) {
         this.celestialBodies.push(body);
-        this.scene.add(body.getObject());
+        
+        // Add moons to their parent's group, planets to scene
+        if (body.parentBody && body.parentBody.getObject) {
+            body.parentBody.getObject().add(body.getObject());
+        } else {
+            this.scene.add(body.getObject());
+        }
         
         // Create and add orbit visualization
         this.createOrbitForBody(body);

@@ -32,18 +32,22 @@ export class Phobos extends CelestialBody {
         this.orbitSpeed = CONFIG.PHOBOS.ORBIT_SPEED;
         this.rotationSpeed = CONFIG.PHOBOS.ROTATION_SPEED;
         this.orbitAngle = Math.random() * Math.PI * 2;
+        
+        // Override radius to match the visual size (largest dimension)
+        this.radius = (27 * 200 / 2) / CONFIG.SCALE_FACTOR;
         this.createMesh();
         this.updatePosition();
     }
     
     createMesh() {
-
-        const radiusX = (27 / 2) / CONFIG.SCALE_FACTOR;
-        const radiusY = (22 / 2) / CONFIG.SCALE_FACTOR;
-        const radiusZ = (18 / 2) / CONFIG.SCALE_FACTOR;
-
-        const geometry = new THREE.SphereGeometry(1, 32, 32); 
-        geometry.scale(radiusX, radiusY, radiusZ);
+        // Use this.radius (which is now set to the largest dimension) as base
+        const geometry = new THREE.SphereGeometry(this.radius, 32, 32);
+        
+        // Apply scaling for irregular shape: 27 × 22 × 18 km
+        const scaleY = 22 / 27; // Y relative to X (largest dimension)
+        const scaleZ = 18 / 27; // Z relative to X (largest dimension)
+        
+        geometry.scale(1, scaleY, scaleZ);
 
         const textureLoader = new THREE.TextureLoader();
         textureLoader.load(

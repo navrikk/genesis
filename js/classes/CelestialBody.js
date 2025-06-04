@@ -127,11 +127,13 @@ export class CelestialBody {
 
         const x = xPlane;
         const y = -zPlane * Math.sin(this.orbitalInclination);
-        const z =  zPlane * Math.cos(this.orbitalInclination);
+        const z = zPlane * Math.cos(this.orbitalInclination);
+
 
         if (this.parentBody && this.parentBody.getObject) {
-            const parentPos = this.parentBody.getObject().position;
-            this.setPosition(parentPos.x + x, parentPos.y + y, parentPos.z + z);
+            // For moons, position relative to parent - don't add parent's world position
+            // since the moon should be added to parent's group, not positioned in world coordinates
+            this.setPosition(x, y, z);
         } else {
             this.setPosition(x, y, z);
         }
@@ -157,6 +159,7 @@ export class CelestialBody {
             return;
         }
 
+
         // Create orbit geometry
         const orbitPoints = [];
         const segments = 128;
@@ -181,14 +184,9 @@ export class CelestialBody {
         this.orbitLine = new THREE.Line(orbitGeometry, orbitMaterial);
         this.orbitLine.name = `${this.name}_orbit`;
         
-        // For moons, position orbit relative to parent
-        if (this.parentBody && this.parentBody.getObject) {
-            // Don't add to objectGroup, let parent handle positioning
-            return this.orbitLine;
-        } else {
-            // For planets, add directly to scene
-            return this.orbitLine;
-        }
+        // For moons, orbit is positioned at (0,0,0) relative to parent since parent group handles positioning
+        // For planets, orbit is positioned at (0,0,0) in world space
+        return this.orbitLine;
     }
 
     /**
