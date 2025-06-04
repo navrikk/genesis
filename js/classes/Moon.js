@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import CONFIG from '../config.js';
 import { CelestialBody } from './CelestialBody.js';
+import { calculateMoonPosition } from '../utils/AstronomicalCalculations.js';
 
 
 /**
@@ -26,7 +27,7 @@ export class Moon extends CelestialBody {
         this.parentBody = parentBody;
         this.orbitSpeed = CONFIG.MOON.ORBIT_SPEED;
         this.rotationSpeed = CONFIG.MOON.ROTATION_SPEED;
-        this.orbitAngle = Math.random() * Math.PI * 2;
+        this.orbitAngle = calculateMoonPosition();
         this.createMesh();
         this.updatePosition();
     }
@@ -52,4 +53,23 @@ export class Moon extends CelestialBody {
         });
     }
     
+    /**
+     * Update method for animations, rotations, etc.
+     * @param {number} deltaTime - Time since last frame in seconds
+     * @param {boolean} animate - Whether to animate the moon
+     */
+    update(deltaTime, animate = true) {
+        if (animate && this.orbitSpeed > 0) {
+            this.orbitAngle += this.orbitSpeed * deltaTime;
+            if (this.orbitAngle > Math.PI * 2) {
+                this.orbitAngle -= Math.PI * 2;
+            }
+        }
+
+        if (animate && this.rotationSpeed > 0 && this.mesh) {
+            this.mesh.rotation.y += this.rotationSpeed * deltaTime;
+        }
+
+        this.updatePosition();
     }
+}

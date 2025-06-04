@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import CONFIG from '../config.js';
 import { CelestialBody } from './CelestialBody.js';
+import { calculateOrbitalAngle } from '../utils/AstronomicalCalculations.js';
 
 /**
  * Mars class representing the planet Mars
@@ -21,7 +22,7 @@ export class Mars extends CelestialBody {
         );
         this.orbitSpeed = CONFIG.MARS.ORBIT_SPEED;
         this.rotationSpeed = CONFIG.MARS.ROTATION_SPEED;
-        this.orbitAngle = Math.random() * Math.PI * 2;
+        this.orbitAngle = calculateOrbitalAngle('MARS');
         this.createMesh();
         this.updatePosition();
     }

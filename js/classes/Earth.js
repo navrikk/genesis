@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import CONFIG from '../config.js';
 import { CelestialBody } from './CelestialBody.js';
+import { calculateOrbitalAngle } from '../utils/AstronomicalCalculations.js';
 
 /**
  * Earth class representing the planet Earth
@@ -19,7 +20,7 @@ export class Earth extends CelestialBody {
         );
         this.orbitSpeed = CONFIG.EARTH.ORBIT_SPEED;
         this.rotationSpeed = CONFIG.EARTH.ROTATION_SPEED;
-        this.orbitAngle = Math.random() * Math.PI * 2;
+        this.orbitAngle = calculateOrbitalAngle('EARTH');
         this.cloudsMesh = null;
         this.createMesh();
         this.updatePosition();

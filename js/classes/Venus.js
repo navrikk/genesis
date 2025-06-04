@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import CONFIG from '../config.js';
 import { CelestialBody } from './CelestialBody.js';
+import { calculateOrbitalAngle } from '../utils/AstronomicalCalculations.js';
 
 /**
  * Venus class representing the planet Venus
@@ -21,7 +22,7 @@ export class Venus extends CelestialBody {
         );
         this.orbitSpeed = CONFIG.VENUS.ORBIT_SPEED;
         this.rotationSpeed = CONFIG.VENUS.ROTATION_SPEED;
-        this.orbitAngle = Math.random() * Math.PI * 2;
+        this.orbitAngle = calculateOrbitalAngle('VENUS');
         this.createMesh();
         this.updatePosition();
     }

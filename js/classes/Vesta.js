@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import CONFIG from '../config.js';
 import { CelestialBody } from './CelestialBody.js';
+import { calculateOrbitalAngle } from '../utils/AstronomicalCalculations.js';
 
 /**
  * Vesta class representing the asteroid 4 Vesta
@@ -22,7 +23,7 @@ export class Vesta extends CelestialBody {
         );
         this.orbitSpeed = CONFIG.VESTA.ORBIT_SPEED;
         this.rotationSpeed = CONFIG.VESTA.ROTATION_SPEED;
-        this.orbitAngle = 0;
+        this.orbitAngle = calculateOrbitalAngle('VESTA');
         this.createMesh();
         this.updatePosition();
     }

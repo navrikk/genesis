@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import CONFIG from '../config.js';
 import { CelestialBody } from './CelestialBody.js';
+import { calculateOrbitalAngle } from '../utils/AstronomicalCalculations.js';
 
 /**
  * Hygiea class representing the asteroid 10 Hygiea
@@ -22,7 +23,7 @@ export class Hygiea extends CelestialBody {
         );
         this.orbitSpeed = CONFIG.HYGIEA.ORBIT_SPEED;
         this.rotationSpeed = CONFIG.HYGIEA.ROTATION_SPEED;
-        this.orbitAngle = 0;
+        this.orbitAngle = calculateOrbitalAngle('HYGIEA');
         this.createMesh();
         this.updatePosition();
     }

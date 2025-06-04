@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import CONFIG from '../config.js';
 import { CelestialBody } from './CelestialBody.js';
+import { calculateOrbitalAngle } from '../utils/AstronomicalCalculations.js';
 
 /**
  * Pallas class representing the asteroid 2 Pallas
@@ -22,7 +23,7 @@ export class Pallas extends CelestialBody {
         );
         this.orbitSpeed = CONFIG.PALLAS.ORBIT_SPEED;
         this.rotationSpeed = CONFIG.PALLAS.ROTATION_SPEED;
-        this.orbitAngle = 0;
+        this.orbitAngle = calculateOrbitalAngle('PALLAS');
         this.createMesh();
         this.updatePosition();
     }

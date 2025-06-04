@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import CONFIG from '../config.js';
 import { CelestialBody } from './CelestialBody.js';
+import { calculateOrbitalAngle } from '../utils/AstronomicalCalculations.js';
 
 /**
  * Ceres class representing the dwarf planet Ceres
@@ -22,7 +23,7 @@ export class Ceres extends CelestialBody {
         );
         this.orbitSpeed = CONFIG.CERES.ORBIT_SPEED;
         this.rotationSpeed = CONFIG.CERES.ROTATION_SPEED;
-        this.orbitAngle = 0; // Start at angle 0 for testing
+        this.orbitAngle = calculateOrbitalAngle('CERES');
         this.createMesh();
         this.updatePosition();
     }

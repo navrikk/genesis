@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import CONFIG from '../config.js';
 import { CelestialBody } from './CelestialBody.js';
+import { calculateOrbitalAngle } from '../utils/AstronomicalCalculations.js';
 
 
 /**
@@ -22,7 +23,7 @@ export class Mercury extends CelestialBody {
         );
         this.orbitSpeed = CONFIG.MERCURY.ORBIT_SPEED;
         this.rotationSpeed = CONFIG.MERCURY.ROTATION_SPEED;
-        this.orbitAngle = Math.random() * Math.PI * 2;
+        this.orbitAngle = calculateOrbitalAngle('MERCURY');
         this.createMesh();
         this.updatePosition();
     }
