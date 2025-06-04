@@ -2,7 +2,6 @@ import * as THREE from 'three';
 import CONFIG from '../config.js';
 import { CelestialBody } from './CelestialBody.js';
 import LightingUtils from '../utils/LightingUtils.js';
-import deimosTexturePath from '../../assets/textures/deimos_nasa_texture.jpg';
 
 
 /**
@@ -41,7 +40,7 @@ export class Deimos extends CelestialBody {
 
         const textureLoader = new THREE.TextureLoader();
         textureLoader.load(
-            deimosTexturePath,
+            '/textures/deimos_nasa_texture.jpg',
             (deimosTexture) => {
                 // Enhanced texture properties for better visual quality
                 deimosTexture.anisotropy = 16;
@@ -59,7 +58,7 @@ export class Deimos extends CelestialBody {
             },
             undefined,
             (error) => {
-                console.error(`[${this.name}] Error loading texture from ${deimosTexturePath}:`, error);
+                console.error(`[${this.name}] Error loading texture:`, error);
                 console.warn(`[${this.name}] Texture load error. Applying fallback material.`);
                 const fallbackMaterialOptions = {
                     baseColor: new THREE.Color(this.primaryColor)

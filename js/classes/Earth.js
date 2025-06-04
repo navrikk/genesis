@@ -1,8 +1,6 @@
 import * as THREE from 'three';
 import CONFIG from '../config.js';
 import { CelestialBody } from './CelestialBody.js';
-import earthDayTexturePath from '../../assets/textures/earth_daymap_8k.jpg';
-import earthCloudsTexturePath from '../../assets/textures/earth_clouds_8k.jpg';
 
 /**
  * Earth class representing the planet Earth
@@ -30,7 +28,7 @@ export class Earth extends CelestialBody {
     createMesh() {
         const textureLoader = new THREE.TextureLoader();
         // Use local high-resolution textures with enhanced material properties
-        const earthDayTexture = textureLoader.load(earthDayTexturePath,
+        const earthDayTexture = textureLoader.load('/textures/earth_daymap_8k.jpg',
             (texture) => {
                 texture.anisotropy = 16;
                 texture.colorSpace = THREE.SRGBColorSpace;
@@ -39,7 +37,7 @@ export class Earth extends CelestialBody {
             (err) => { console.error(`Earth: Error loading texture:`, err); }
         );
         
-        const earthCloudsTexture = textureLoader.load(earthCloudsTexturePath,
+        const earthCloudsTexture = textureLoader.load('/textures/earth_clouds_8k.jpg',
             (texture) => {
                 texture.anisotropy = 16;
             },

@@ -2,7 +2,6 @@ import * as THREE from 'three';
 import CONFIG from '../config.js';
 import { CelestialBody } from './CelestialBody.js';
 import LightingUtils from '../utils/LightingUtils.js';
-import phobosTexturePath from '../../assets/textures/phobos_nasa_texture.jpg';
 
 
 
@@ -51,7 +50,7 @@ export class Phobos extends CelestialBody {
 
         const textureLoader = new THREE.TextureLoader();
         textureLoader.load(
-            phobosTexturePath,
+            '/textures/phobos_nasa_texture.jpg',
             (phobosTexture) => {
                 // Enhanced texture properties for better visual quality
                 phobosTexture.anisotropy = 16;
