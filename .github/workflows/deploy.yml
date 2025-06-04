@@ -1,8 +1,9 @@
-name: Deploy to Netlify
+name: Deploy to Netlify Production
 
 on:
-  release:
-    types: [created]
+  push:
+    tags:
+      - 'v*'  # Triggers on version tags like v1.0.0, v2.1.3, etc.
 
 jobs:
   build-and-deploy:
@@ -11,6 +12,10 @@ jobs:
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
+      
+    - name: Extract tag name
+      id: tag
+      run: echo "tag=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
       
     - name: Setup Node.js
       uses: actions/setup-node@v4
@@ -21,20 +26,22 @@ jobs:
     - name: Install dependencies
       run: npm ci
       
-    - name: Build project
+    - name: Build project for production
       run: npm run build
-      
-    - name: Deploy to Netlify
+      env:
+        NODE_ENV: production
+        
+    - name: Deploy to Netlify Production
       uses: nwtgck/actions-netlify@v3.0
       with:
-        publish-dir: './dist'  # Vite default output directory
-        production-branch: main
+        publish-dir: './dist'
+        production-deploy: true  # Force production deployment
         github-token: ${{ secrets.GITHUB_TOKEN }}
-        deploy-message: "Deploy from GitHub Actions"
+        deploy-message: "Production deployment ${{ steps.tag.outputs.tag }}"
         enable-pull-request-comment: false
-        enable-commit-comment: true
-        overwrites-pull-request-comment: true
+        enable-commit-comment: false
+        overwrites-pull-request-comment: false
       env:
         NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
         NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
-      timeout-minutes: 1
+      timeout-minutes: 5
