@@ -30,10 +30,14 @@ const LightingUtils = {
         const materialOptions = {
             map: options.map,
             color: brighterColor,
-            normalMap: options.normalMap,
             emissive: new THREE.Color(0x151515),
             reflectivity: 0.18,
         };
+
+        // Only add normalMap if it exists
+        if (options.normalMap) {
+            materialOptions.normalMap = options.normalMap;
+        }
 
         if (options.bumpMap) {
             materialOptions.bumpMap = options.bumpMap;

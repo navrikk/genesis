@@ -35,8 +35,6 @@ export class MilkyWay {
         textureLoader.load(
             milkyWayTextureURL,
             (loadedTexture) => {
-                console.log(`Local 16K Milky Way texture loaded successfully: ${milkyWayTextureURL}`);
-
                 if (this.material.map) {
                     this.material.map.dispose();
                 }
@@ -49,15 +47,12 @@ export class MilkyWay {
             },
             undefined,
             (error) => {
-                console.error(`Error loading local Milky Way texture from ${milkyWayTextureURL}:`, error);
-
                 if (this.material.map) {
                      this.material.map.dispose();
                      this.material.map = null;
                 }
                 this.material.color.set(0x000010);
                 this.material.needsUpdate = true;
-                console.error('Using fallback color for Milky Way backdrop.');
                 if (this.onLoadCallback) this.onLoadCallback();
             }
         );

@@ -24,10 +24,8 @@ import { getBodyData } from "./utils/CelestialBodyData.js";
  */
 export default class App {
   constructor() {
-    // Check if WebGL is available and log diagnostics
+    // Check if WebGL is available
     const webGLAvailable = isWebGLAvailable();
-    const diagnostics = getWebGLDiagnostics();
-    console.info("WebGL Diagnostics:", diagnostics);
     
     if (!webGLAvailable) {
       // Show WebGL compatibility error
@@ -550,10 +548,7 @@ export default class App {
       toggleOrbitsButton.classList.add('muted');
       
       toggleOrbitsButton.addEventListener('click', () => {
-        console.log('Toggle orbits clicked. Current state:', this.solarSystem.orbitsVisible);
         this.solarSystem.toggleOrbits(!this.solarSystem.orbitsVisible);
-        console.log('New orbit state:', this.solarSystem.orbitsVisible);
-        console.log('Number of orbit lines:', this.solarSystem.orbitLines.length);
         
         // Update tooltip and icon
         if (this.solarSystem.orbitsVisible) {

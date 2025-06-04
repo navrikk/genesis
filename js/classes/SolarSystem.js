@@ -34,7 +34,6 @@ export class SolarSystem {
         // Create and add orbit visualization
         this.createOrbitForBody(body);
         
-        console.log(`${body.name} added to the solar system.`);
     }
 
     /**
@@ -47,7 +46,6 @@ export class SolarSystem {
             const body = this.celestialBodies[bodyIndex];
             this.scene.remove(body.getObject());
             this.celestialBodies.splice(bodyIndex, 1);
-            console.log(`${name} removed from the solar system.`);
         }
     }
 
@@ -139,7 +137,6 @@ export class SolarSystem {
             }
             
             this.orbitLines.push(orbitLine);
-            console.log(`Created orbit for ${body.name}, visible: ${orbitLine.visible}`);
         }
     }
 

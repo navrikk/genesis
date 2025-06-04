@@ -8,7 +8,6 @@ export function isWebGLAvailable() {
         
 
         if (window.WebGL2RenderingContext && canvas.getContext('webgl2')) {
-            console.log('WebGL 2.0 is supported');
             return true;
         }
         
@@ -17,7 +16,6 @@ export function isWebGLAvailable() {
 
             const context = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
             if (context) {
-                console.log('WebGL 1.0 is supported');
                 return true;
             }
         }
