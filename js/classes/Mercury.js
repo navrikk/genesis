@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import CONFIG from '../config.js';
 import { CelestialBody } from './CelestialBody.js';
+import mercuryTexturePath from '../../assets/textures/mercury_8k.jpg';
 
 
 /**
@@ -30,7 +31,7 @@ export class Mercury extends CelestialBody {
     createMesh() {
         const textureLoader = new THREE.TextureLoader();
         // Use local high-resolution Mercury texture with enhanced properties
-        const mercuryTexture = textureLoader.load('/assets/textures/mercury_8k.jpg',
+        const mercuryTexture = textureLoader.load(mercuryTexturePath,
             (texture) => {
                 texture.anisotropy = 16;
                 texture.colorSpace = THREE.SRGBColorSpace;

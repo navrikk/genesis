@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import CONFIG from '../config.js';
 import { CelestialBody } from './CelestialBody.js';
+import moonTexturePath from '../../assets/textures/moon_8k.jpg';
 
 
 /**
@@ -34,8 +35,6 @@ export class Moon extends CelestialBody {
     createMesh() {
         const textureLoader = new THREE.TextureLoader();
         // Use local high-resolution Moon texture with enhanced properties
-        const moonTexturePath = '/assets/textures/moon_8k.jpg';
-        
         const moonTexture = textureLoader.load(moonTexturePath,
             (texture) => {
                 texture.anisotropy = 16;

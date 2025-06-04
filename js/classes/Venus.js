@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import CONFIG from '../config.js';
 import { CelestialBody } from './CelestialBody.js';
+import venusTexturePath from '../../assets/textures/venus_surface_8k.jpg';
 
 /**
  * Venus class representing the planet Venus
@@ -29,7 +30,7 @@ export class Venus extends CelestialBody {
     createMesh() {
         const textureLoader = new THREE.TextureLoader();
         // Use local high-resolution Venus texture with enhanced properties
-        const venusTexture = textureLoader.load('/assets/textures/venus_surface_8k.jpg',
+        const venusTexture = textureLoader.load(venusTexturePath,
             (texture) => {
                 texture.anisotropy = 16;
                 texture.colorSpace = THREE.SRGBColorSpace;

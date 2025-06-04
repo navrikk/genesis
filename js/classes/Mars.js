@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import CONFIG from '../config.js';
 import { CelestialBody } from './CelestialBody.js';
+import marsTexturePath from '../../assets/textures/mars_8k.jpg';
 
 /**
  * Mars class representing the planet Mars
@@ -17,7 +18,7 @@ export class Mars extends CelestialBody {
             inclinationRadians,
             false,
             null,
-            2.2
+            0.8
         );
         this.orbitSpeed = CONFIG.MARS.ORBIT_SPEED;
         this.rotationSpeed = CONFIG.MARS.ROTATION_SPEED;
@@ -29,8 +30,6 @@ export class Mars extends CelestialBody {
     createMesh() {
         const textureLoader = new THREE.TextureLoader();
         // Use local high-resolution Mars texture with enhanced properties
-        const marsTexturePath = '/assets/textures/mars_8k.jpg';
-        
         const marsTexture = textureLoader.load(marsTexturePath,
             (texture) => {
                 texture.anisotropy = 16;
