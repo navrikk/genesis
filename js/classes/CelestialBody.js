@@ -21,6 +21,7 @@ export class CelestialBody {
         this.objectGroup = new THREE.Group();
         this.orbitalRadius = orbitalRadius;
         this.orbitalInclination = orbitalInclination;
+        this.orbitLine = null;
 
     }
 
@@ -144,5 +145,67 @@ export class CelestialBody {
      */
     setPosition(x, y, z) {
         this.objectGroup.position.set(x, y, z);
+    }
+
+    /**
+     * Creates an orbit visualization line for this celestial body
+     * @param {THREE.Color} color - Color of the orbit line
+     * @param {boolean} showOrbit - Whether to show the orbit (ignored - orbit is always created)
+     */
+    createOrbitVisualization(color = 0x444444, showOrbit = true) {
+        if (this.orbitalRadius === 0) {
+            return;
+        }
+
+        // Create orbit geometry
+        const orbitPoints = [];
+        const segments = 128;
+        
+        for (let i = 0; i <= segments; i++) {
+            const angle = (i / segments) * Math.PI * 2;
+            const x = Math.cos(angle) * this.orbitalRadius;
+            const z = Math.sin(angle) * this.orbitalRadius;
+            const y = -z * Math.sin(this.orbitalInclination);
+            const correctedZ = z * Math.cos(this.orbitalInclination);
+            
+            orbitPoints.push(new THREE.Vector3(x, y, correctedZ));
+        }
+
+        const orbitGeometry = new THREE.BufferGeometry().setFromPoints(orbitPoints);
+        const orbitMaterial = new THREE.LineBasicMaterial({ 
+            color: color,
+            transparent: true,
+            opacity: 0.6
+        });
+
+        this.orbitLine = new THREE.Line(orbitGeometry, orbitMaterial);
+        this.orbitLine.name = `${this.name}_orbit`;
+        
+        // For moons, position orbit relative to parent
+        if (this.parentBody && this.parentBody.getObject) {
+            // Don't add to objectGroup, let parent handle positioning
+            return this.orbitLine;
+        } else {
+            // For planets, add directly to scene
+            return this.orbitLine;
+        }
+    }
+
+    /**
+     * Get the orbit line object
+     * @returns {THREE.Line|null} The orbit line or null if not created
+     */
+    getOrbitLine() {
+        return this.orbitLine;
+    }
+
+    /**
+     * Show or hide the orbit visualization
+     * @param {boolean} visible - Whether the orbit should be visible
+     */
+    setOrbitVisibility(visible) {
+        if (this.orbitLine) {
+            this.orbitLine.visible = visible;
+        }
     }
 }

@@ -87,7 +87,7 @@ export default class App {
     this.goToTodayButton = null;
 
     // Controls visibility state
-    this.areControlsVisible = true;
+    this.areControlsVisible = false;
     this.bottomControlsPanel = null;
     this.toggleControlsButton = null;
 
@@ -314,9 +314,8 @@ export default class App {
     this.toggleControlsButton = document.getElementById("toggleControlsButton");
 
     if (this.toggleControlsButton) {
-      this.toggleControlsButton.innerHTML = '<i class="fas fa-eye-slash"></i>';
-      this.toggleControlsButton.setAttribute("data-tooltip", "Hide Controls");
-      this.areControlsVisible = true;
+      this.toggleControlsButton.innerHTML = '<i class="fas fa-eye"></i>';
+      this.toggleControlsButton.setAttribute("data-tooltip", "Show Controls");
       
       this.toggleControlsButton.addEventListener("click", (e) => {
         e.stopPropagation();
@@ -541,6 +540,36 @@ export default class App {
     if (resetCameraButton) {
       resetCameraButton.addEventListener('click', this.resetCamera.bind(this));
     }
+
+    // Setup Toggle Orbits button
+    const toggleOrbitsButton = document.getElementById('toggleOrbitsButton');
+    if (toggleOrbitsButton) {
+      // Set initial state to match orbitsVisible = false
+      toggleOrbitsButton.innerHTML = '<i class="fas fa-circle-notch"></i>';
+      toggleOrbitsButton.setAttribute('data-tooltip', 'Show Orbits');
+      toggleOrbitsButton.classList.add('muted');
+      
+      toggleOrbitsButton.addEventListener('click', () => {
+        console.log('Toggle orbits clicked. Current state:', this.solarSystem.orbitsVisible);
+        this.solarSystem.toggleOrbits(!this.solarSystem.orbitsVisible);
+        console.log('New orbit state:', this.solarSystem.orbitsVisible);
+        console.log('Number of orbit lines:', this.solarSystem.orbitLines.length);
+        
+        // Update tooltip and icon
+        if (this.solarSystem.orbitsVisible) {
+          toggleOrbitsButton.innerHTML = '<i class="fas fa-ban"></i>';
+          toggleOrbitsButton.setAttribute('data-tooltip', 'Hide Orbits');
+          toggleOrbitsButton.classList.remove('muted');
+        } else {
+          toggleOrbitsButton.innerHTML = '<i class="fas fa-circle-notch"></i>';
+          toggleOrbitsButton.setAttribute('data-tooltip', 'Show Orbits');
+          toggleOrbitsButton.classList.add('muted');
+        }
+      });
+    }
+    
+    // Hide all controls initially using existing implementation
+    this.hideAllControls();
   } // End of setupUIControls
 
   hideInfoPanel() {
@@ -590,7 +619,6 @@ export default class App {
     }
     
     // Show the ESC notification
-    this.showEscNotification();
   }
 
   showAllControls() {

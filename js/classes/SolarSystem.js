@@ -11,7 +11,8 @@ export class SolarSystem {
         this.scene = scene;
         this.celestialBodies = [];
         this.animationEnabled = true;
-        
+        this.orbitLines = [];
+        this.orbitsVisible = false;
 
         this.setupGlobalLighting();
     }
@@ -23,6 +24,10 @@ export class SolarSystem {
     addBody(body) {
         this.celestialBodies.push(body);
         this.scene.add(body.getObject());
+        
+        // Create and add orbit visualization
+        this.createOrbitForBody(body);
+        
         console.log(`${body.name} added to the solar system.`);
     }
 
@@ -101,6 +106,70 @@ export class SolarSystem {
      */
     getSun() {
         return this.getBody('Sun');
+    }
+
+    /**
+     * Create orbit visualization for a celestial body
+     * @param {CelestialBody} body - The body to create an orbit for
+     */
+    createOrbitForBody(body) {
+        if (body.orbitalRadius === 0) return;
+
+        // Define colors for different body types
+        const orbitColors = {
+            'Mercury': 0x888888,
+            'Venus': 0xffc649,
+            'Earth': 0x6b93d6,
+            'Mars': 0xcd5c5c,
+            'Moon': 0xcccccc,
+            'Phobos': 0xaaaaaa,
+            'Deimos': 0x999999
+        };
+
+        const color = orbitColors[body.name] || 0x444444;
+        // Always create the orbit line, but set visibility based on orbitsVisible
+        const orbitLine = body.createOrbitVisualization(color, true);
+        
+        if (orbitLine) {
+            // Set initial visibility
+            orbitLine.visible = this.orbitsVisible;
+            
+            // For moons, add orbit to parent's group
+            if (body.parentBody && body.parentBody.getObject) {
+                body.parentBody.getObject().add(orbitLine);
+            } else {
+                // For planets, add to scene
+                this.scene.add(orbitLine);
+            }
+            
+            this.orbitLines.push(orbitLine);
+            console.log(`Created orbit for ${body.name}, visible: ${orbitLine.visible}`);
+        }
+    }
+
+    /**
+     * Toggle visibility of all orbit lines
+     * @param {boolean} visible - Whether orbits should be visible
+     */
+    toggleOrbits(visible) {
+        this.orbitsVisible = visible;
+        this.orbitLines.forEach(orbitLine => {
+            orbitLine.visible = visible;
+        });
+        
+        // Also update individual body orbit visibility
+        this.celestialBodies.forEach(body => {
+            body.setOrbitVisibility(visible);
+        });
+    }
+
+    /**
+     * Create orbits for all existing bodies (useful for initialization)
+     */
+    createAllOrbits() {
+        this.celestialBodies.forEach(body => {
+            this.createOrbitForBody(body);
+        });
     }
 
 
