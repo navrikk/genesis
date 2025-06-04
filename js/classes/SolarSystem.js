@@ -115,18 +115,8 @@ export class SolarSystem {
     createOrbitForBody(body) {
         if (body.orbitalRadius === 0) return;
 
-        // Define colors for different body types
-        const orbitColors = {
-            'Mercury': 0x888888,
-            'Venus': 0xffc649,
-            'Earth': 0x6b93d6,
-            'Mars': 0xcd5c5c,
-            'Moon': 0xcccccc,
-            'Phobos': 0xaaaaaa,
-            'Deimos': 0x999999
-        };
-
-        const color = orbitColors[body.name] || 0x444444;
+        // Use a consistent light grey color for all orbits
+        const color = 0x666666; // Subtle light grey for all orbits
         // Always create the orbit line, but set visibility based on orbitsVisible
         const orbitLine = body.createOrbitVisualization(color, true);
         

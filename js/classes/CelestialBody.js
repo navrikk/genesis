@@ -175,7 +175,7 @@ export class CelestialBody {
         const orbitMaterial = new THREE.LineBasicMaterial({ 
             color: color,
             transparent: true,
-            opacity: 0.6
+            opacity: 0.8
         });
 
         this.orbitLine = new THREE.Line(orbitGeometry, orbitMaterial);
