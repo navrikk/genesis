@@ -409,6 +409,13 @@ border: 1px solid rgba(255, 255, 255, 0.02);
     visibility: visible;
 }
 
+/* Hide tooltip when focus button is active or has dropdown open */
+#focusButton.active::after,
+#focusButton.hide-tooltip::after {
+    opacity: 0 !important;
+    visibility: hidden !important;
+}
+
 #loadingScreen {
     position: absolute;
     top: 0;

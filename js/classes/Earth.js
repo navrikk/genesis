@@ -80,4 +80,28 @@ export class Earth extends CelestialBody {
         }
     }
 
+    /**
+     * Update method for animations, rotations, etc.
+     * @param {number} deltaTime - Time since last frame in seconds
+     * @param {boolean} animate - Whether to animate the planet
+     */
+    update(deltaTime, animate = true) {
+        if (animate && this.orbitSpeed > 0) {
+            this.orbitAngle += this.orbitSpeed * deltaTime;
+            if (this.orbitAngle > Math.PI * 2) {
+                this.orbitAngle -= Math.PI * 2;
+            }
+        }
+
+        if (animate && this.rotationSpeed > 0 && this.mesh) {
+            this.mesh.rotation.y += this.rotationSpeed * deltaTime;
+        }
+
+        // Also rotate clouds layer
+        if (animate && this.cloudsMesh) {
+            this.cloudsMesh.rotation.y += this.rotationSpeed * deltaTime * 1.1; // Slightly faster clouds
+        }
+
+        this.updatePosition();
+    }
 }

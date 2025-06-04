@@ -58,8 +58,7 @@ export class SolarSystem {
      */
     update(deltaTime) {
         this.celestialBodies.forEach(body => {
-
-            body.update(deltaTime, false);
+            body.update(deltaTime, this.animationEnabled);
         });
     }
 
@@ -121,6 +120,12 @@ export class SolarSystem {
      */
     createOrbitForBody(body) {
         if (body.orbitalRadius === 0) return;
+
+        // Check if this body already has an orbit line in our tracking array
+        const existingOrbit = this.orbitLines.find(line => line.name === `${body.name}_orbit`);
+        if (existingOrbit) {
+            return; // Orbit already exists, don't create another
+        }
 
         // Use a consistent light grey color for all orbits
         const color = 0x666666; // Subtle light grey for all orbits

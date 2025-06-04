@@ -105,6 +105,54 @@ const CONFIG = {
         get ORBIT_SPEED() { return (2 * Math.PI) / (this.ORBITAL_PERIOD_DAYS * 24 * 60 * 0.1); },
         get ROTATION_SPEED() { return (2 * Math.PI) / (this.ROTATION_PERIOD_DAYS * 24 * 60 * 0.1); }
     },
+    CERES: {
+        NAME: 'Ceres',
+        DIAMETER_KM: 940 * 8,
+        DISTANCE_FROM_SUN_KM: 414000000,
+        ORBITAL_PERIOD_DAYS: 1682,
+        ROTATION_PERIOD_DAYS: 0.38,
+        COLOR: 0x7a6f5f,
+        get RADIUS() { return (this.DIAMETER_KM / 2) / CONFIG.SCALE_FACTOR; },
+        get ORBIT_RADIUS() { return this.DISTANCE_FROM_SUN_KM / CONFIG.SCALE_FACTOR; },
+        get ORBIT_SPEED() { return (2 * Math.PI) / (this.ORBITAL_PERIOD_DAYS * 24 * 60 * 0.1); },
+        get ROTATION_SPEED() { return (2 * Math.PI) / (this.ROTATION_PERIOD_DAYS * 24 * 60 * 0.1); }
+    },
+    VESTA: {
+        NAME: 'Vesta',
+        DIAMETER_KM: 525 * 8,
+        DISTANCE_FROM_SUN_KM: 353000000,
+        ORBITAL_PERIOD_DAYS: 1325,
+        ROTATION_PERIOD_DAYS: 0.22,
+        COLOR: 0x8a7f72,
+        get RADIUS() { return (this.DIAMETER_KM / 2) / CONFIG.SCALE_FACTOR; },
+        get ORBIT_RADIUS() { return this.DISTANCE_FROM_SUN_KM / CONFIG.SCALE_FACTOR; },
+        get ORBIT_SPEED() { return (2 * Math.PI) / (this.ORBITAL_PERIOD_DAYS * 24 * 60 * 0.1); },
+        get ROTATION_SPEED() { return (2 * Math.PI) / (this.ROTATION_PERIOD_DAYS * 24 * 60 * 0.1); }
+    },
+    PALLAS: {
+        NAME: 'Pallas',
+        DIAMETER_KM: 512 * 8,
+        DISTANCE_FROM_SUN_KM: 390000000,
+        ORBITAL_PERIOD_DAYS: 1686,
+        ROTATION_PERIOD_DAYS: 0.33,
+        COLOR: 0x6e6458,
+        get RADIUS() { return (this.DIAMETER_KM / 2) / CONFIG.SCALE_FACTOR; },
+        get ORBIT_RADIUS() { return this.DISTANCE_FROM_SUN_KM / CONFIG.SCALE_FACTOR; },
+        get ORBIT_SPEED() { return (2 * Math.PI) / (this.ORBITAL_PERIOD_DAYS * 24 * 60 * 0.1); },
+        get ROTATION_SPEED() { return (2 * Math.PI) / (this.ROTATION_PERIOD_DAYS * 24 * 60 * 0.1); }
+    },
+    HYGIEA: {
+        NAME: 'Hygiea',
+        DIAMETER_KM: 434 * 8,
+        DISTANCE_FROM_SUN_KM: 470000000,
+        ORBITAL_PERIOD_DAYS: 2029,
+        ROTATION_PERIOD_DAYS: 0.58,
+        COLOR: 0x5c5148,
+        get RADIUS() { return (this.DIAMETER_KM / 2) / CONFIG.SCALE_FACTOR; },
+        get ORBIT_RADIUS() { return this.DISTANCE_FROM_SUN_KM / CONFIG.SCALE_FACTOR; },
+        get ORBIT_SPEED() { return (2 * Math.PI) / (this.ORBITAL_PERIOD_DAYS * 24 * 60 * 0.1); },
+        get ROTATION_SPEED() { return (2 * Math.PI) / (this.ROTATION_PERIOD_DAYS * 24 * 60 * 0.1); }
+    },
     STARFIELD: {
         COUNT: 5000,
         RADIUS: 100000,

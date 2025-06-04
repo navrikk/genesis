@@ -15,6 +15,10 @@ import { Moon } from "./classes/Moon.js";
 import { Mars } from "./classes/Mars.js";
 import { Phobos } from "./classes/Phobos.js";
 import { Deimos } from "./classes/Deimos.js";
+import { Ceres } from "./classes/Ceres.js";
+import { Vesta } from "./classes/Vesta.js";
+import { Pallas } from "./classes/Pallas.js";
+import { Hygiea } from "./classes/Hygiea.js";
 import { Starfield } from "./classes/Starfield.js";
 import { MilkyWay } from "./classes/MilkyWay.js";
 import { getBodyData } from "./utils/CelestialBodyData.js";
@@ -258,6 +262,38 @@ export default class App {
         this.geometriesToDispose.push(deimos.mesh.geometry);
     }
 
+    // Create Ceres (dwarf planet in asteroid belt)
+    const ceres = new Ceres(this.solarSystemGroup);
+    this.solarSystem.addBody(ceres);
+    if (ceres.mesh) {
+      if (ceres.mesh.material) this.materialsToDispose.push(ceres.mesh.material);
+      if (ceres.mesh.geometry) this.geometriesToDispose.push(ceres.mesh.geometry);
+    }
+
+    // Create Vesta (asteroid)
+    const vesta = new Vesta(this.solarSystemGroup);
+    this.solarSystem.addBody(vesta);
+    if (vesta.mesh) {
+      if (vesta.mesh.material) this.materialsToDispose.push(vesta.mesh.material);
+      if (vesta.mesh.geometry) this.geometriesToDispose.push(vesta.mesh.geometry);
+    }
+
+    // Create Pallas (asteroid)
+    const pallas = new Pallas(this.solarSystemGroup);
+    this.solarSystem.addBody(pallas);
+    if (pallas.mesh) {
+      if (pallas.mesh.material) this.materialsToDispose.push(pallas.mesh.material);
+      if (pallas.mesh.geometry) this.geometriesToDispose.push(pallas.mesh.geometry);
+    }
+
+    // Create Hygiea (asteroid)
+    const hygiea = new Hygiea(this.solarSystemGroup);
+    this.solarSystem.addBody(hygiea);
+    if (hygiea.mesh) {
+      if (hygiea.mesh.material) this.materialsToDispose.push(hygiea.mesh.material);
+      if (hygiea.mesh.geometry) this.geometriesToDispose.push(hygiea.mesh.geometry);
+    }
+
     // Create Starfield
     this.starfield = new Starfield(
       this.scene,
@@ -451,11 +487,23 @@ export default class App {
           { name: "Deimos", icon: "fa-circle" }
         ]
       },
+      { 
+        name: "Asteroid Belt", 
+        icon: "fa-asterisk",
+        asteroids: [
+          { name: "Ceres", icon: "fa-certificate" },
+          { name: "Vesta", icon: "fa-circle" },
+          { name: "Pallas", icon: "fa-circle" },
+          { name: "Hygiea", icon: "fa-circle" }
+        ]
+      },
     ];
 
     // Create hierarchical dropdown menu
     celestialBodiesHierarchy.forEach((body) => {
-      if (body.moons && body.moons.length > 0) {
+      const hasSubmenu = (body.moons && body.moons.length > 0) || (body.asteroids && body.asteroids.length > 0);
+      
+      if (hasSubmenu) {
         // Create parent body option with submenu
         const parentOption = document.createElement("div");
         parentOption.className = "focus-option parent-option";
@@ -473,6 +521,22 @@ export default class App {
             clearTimeout(submenuHideTimeout);
             submenuHideTimeout = null;
           }
+          
+          // Check if submenu would go below screen edge and adjust positioning
+          const parentRect = parentOption.getBoundingClientRect();
+          const submenuHeight = 200; // Approximate submenu height
+          const windowHeight = window.innerHeight;
+          
+          if (parentRect.bottom + submenuHeight > windowHeight) {
+            // Position submenu upward
+            submenu.style.top = 'auto';
+            submenu.style.bottom = '0px';
+          } else {
+            // Default positioning
+            submenu.style.top = '-5px';
+            submenu.style.bottom = 'auto';
+          }
+          
           submenu.classList.add("show-submenu");
         };
         
@@ -490,36 +554,39 @@ export default class App {
         submenu.addEventListener("mouseenter", showSubmenu);
         submenu.addEventListener("mouseleave", hideSubmenu);
         
-        // Add click handler for the parent body
-        parentOption.addEventListener("click", (e) => {
-          // Only focus on body if clicked directly (not on submenu icon)
-          if (!e.target.classList.contains("submenu-icon") && 
-              !e.target.parentElement.classList.contains("submenu-icon")) {
-            // Only call focusOnBody - showBodyInfo will be called after animation completes
-            this.focusOnBody(body.name);
-            focusButton.blur();
-          }
-          e.stopPropagation();
-        });
+        // Add click handler for the parent body (only if it's not "Asteroid Belt")
+        if (body.name !== "Asteroid Belt") {
+          parentOption.addEventListener("click", (e) => {
+            // Only focus on body if clicked directly (not on submenu icon)
+            if (!e.target.classList.contains("submenu-icon") && 
+                !e.target.parentElement.classList.contains("submenu-icon")) {
+              // Only call focusOnBody - showBodyInfo will be called after animation completes
+              this.focusOnBody(body.name);
+              focusButton.blur();
+            }
+            e.stopPropagation();
+          });
+        }
         
-        // Add moon options to submenu
-        body.moons.forEach(moon => {
-          const moonOption = document.createElement("div");
-          moonOption.className = "focus-option moon-option";
-          moonOption.innerHTML = `<i class="fas ${moon.icon}"></i> ${moon.name}`;
-          moonOption.addEventListener("click", (e) => {
+        // Add moon/asteroid options to submenu
+        const submenuItems = body.moons || body.asteroids || [];
+        submenuItems.forEach(item => {
+          const itemOption = document.createElement("div");
+          itemOption.className = "focus-option moon-option";
+          itemOption.innerHTML = `<i class="fas ${item.icon}"></i> ${item.name}`;
+          itemOption.addEventListener("click", (e) => {
             e.stopPropagation();
             // Only call focusOnBody - showBodyInfo will be called after animation completes
-            this.focusOnBody(moon.name);
+            this.focusOnBody(item.name);
             focusButton.blur();
           });
-          submenu.appendChild(moonOption);
+          submenu.appendChild(itemOption);
         });
         
         parentOption.appendChild(submenu);
         focusContainer.appendChild(parentOption);
       } else {
-        // Create regular option for bodies without moons
+        // Create regular option for bodies without submenu
         const bodyOption = document.createElement("div");
         bodyOption.className = "focus-option";
         bodyOption.innerHTML = `<i class="fas ${body.icon}"></i> ${body.name}`;
@@ -542,12 +609,14 @@ export default class App {
       }
       focusContainer.classList.add("show");
       focusButton.classList.add("active");
+      focusButton.classList.add("hide-tooltip");
     };
     
     const hideDropdown = () => {
       hideTimeout = setTimeout(() => {
         focusContainer.classList.remove("show");
         focusButton.classList.remove("active");
+        focusButton.classList.remove("hide-tooltip");
       }, 150);
     };
     

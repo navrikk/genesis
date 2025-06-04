@@ -161,7 +161,10 @@ export class CelestialBody {
             return;
         }
 
-
+        // If an orbit line already exists, don't create another one
+        if (this.orbitLine) {
+            return this.orbitLine;
+        }
 
         // Create orbit geometry
         const orbitPoints = [];
@@ -169,12 +172,14 @@ export class CelestialBody {
         
         for (let i = 0; i <= segments; i++) {
             const angle = (i / segments) * Math.PI * 2;
-            const x = Math.cos(angle) * this.orbitalRadius;
-            const z = Math.sin(angle) * this.orbitalRadius;
-            const y = -z * Math.sin(this.orbitalInclination);
-            const correctedZ = z * Math.cos(this.orbitalInclination);
+            const xPlane = Math.cos(angle) * this.orbitalRadius;
+            const zPlane = Math.sin(angle) * this.orbitalRadius;
             
-            orbitPoints.push(new THREE.Vector3(x, y, correctedZ));
+            const x = xPlane;
+            const y = -zPlane * Math.sin(this.orbitalInclination);
+            const z = zPlane * Math.cos(this.orbitalInclination);
+            
+            orbitPoints.push(new THREE.Vector3(x, y, z));
         }
 
         const orbitGeometry = new THREE.BufferGeometry().setFromPoints(orbitPoints);

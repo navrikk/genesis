@@ -56,6 +56,17 @@ export class Venus extends CelestialBody {
      * @param {boolean} animate - Whether to animate the planet
      */
     update(deltaTime, animate = true) {
-        super.update(deltaTime, animate);
+        if (animate && this.orbitSpeed > 0) {
+            this.orbitAngle += this.orbitSpeed * deltaTime;
+            if (this.orbitAngle > Math.PI * 2) {
+                this.orbitAngle -= Math.PI * 2;
+            }
+        }
+
+        if (animate && this.rotationSpeed > 0 && this.mesh) {
+            this.mesh.rotation.y += this.rotationSpeed * deltaTime;
+        }
+
+        this.updatePosition();
     }
 }

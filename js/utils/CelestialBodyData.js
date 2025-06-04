@@ -73,6 +73,42 @@ export const CELESTIAL_BODY_DATA = {
         orbitPeriod: '30.3 hours',
         rotationPeriod: '30.3 hours (tidally locked)',
         description: 'Deimos is the smaller and outermost of the two natural satellites of Mars. It is named after Deimos, a figure representing dread in Greek mythology. Deimos has a mean radius of 6.2 km and takes 30.3 hours to orbit Mars.'
+    },
+    Ceres: {
+        mass: '9.39 × 10^20 kg',
+        gravity: '0.27 m/s²',
+        temperature: '-106°C (average)',
+        orbitRadius: '414 million km',
+        orbitPeriod: '4.6 years',
+        rotationPeriod: '9.1 hours',
+        description: 'Ceres is the largest object in the asteroid belt between Mars and Jupiter. It is the only dwarf planet in the inner solar system and was the first asteroid to be discovered. Ceres is composed of rock and ice and may have a subsurface ocean.'
+    },
+    Vesta: {
+        mass: '2.59 × 10^20 kg',
+        gravity: '0.25 m/s²',
+        temperature: '-188°C (average)',
+        orbitRadius: '353 million km',
+        orbitPeriod: '3.6 years',
+        rotationPeriod: '5.3 hours',
+        description: 'Vesta is the second-most massive asteroid in the asteroid belt. It has a differentiated interior and shows evidence of ancient volcanic activity. Vesta is notable for having a large impact crater at its south pole that is nearly as large as the asteroid itself.'
+    },
+    Pallas: {
+        mass: '2.04 × 10^20 kg',
+        gravity: '0.2 m/s²',
+        temperature: '-164°C (average)',
+        orbitRadius: '414 million km',
+        orbitPeriod: '4.6 years',
+        rotationPeriod: '7.8 hours',
+        description: 'Pallas is the third-largest asteroid in the asteroid belt. It has an unusually high orbital inclination and is likely a remnant protoplanet. Pallas has a low density, suggesting it may be a rubble pile held together by gravity.'
+    },
+    Hygiea: {
+        mass: '8.32 × 10^19 kg',
+        gravity: '0.14 m/s²',
+        temperature: '-180°C (average)',
+        orbitRadius: '470 million km',
+        orbitPeriod: '5.6 years',
+        rotationPeriod: '13.8 hours',
+        description: 'Hygiea is the fourth-largest asteroid in the asteroid belt and the largest C-type asteroid. Recent observations suggest it may be nearly spherical enough to qualify as a dwarf planet. It is composed primarily of carbonaceous material and has a very dark surface.'
     }
 };
 
@@ -94,7 +130,11 @@ export function getBodyData(bodyName) {
                bodyName === 'Moon' ? '1,737.4 km' :
                bodyName === 'Mars' ? '3,389.5 km' :
                bodyName === 'Phobos' ? '11.1 km (mean)' :
-               bodyName === 'Deimos' ? '6.2 km (mean)' : 'Unknown',
+               bodyName === 'Deimos' ? '6.2 km (mean)' :
+               bodyName === 'Ceres' ? '470 km (mean)' :
+               bodyName === 'Vesta' ? '262.7 km (mean)' :
+               bodyName === 'Pallas' ? '256 km (mean)' :
+               bodyName === 'Hygiea' ? '217 km (mean)' : 'Unknown',
         mass: data.mass || 'Unknown',
         gravity: data.gravity || 'Unknown',
         temperature: data.temperature || 'Unknown',
