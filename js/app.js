@@ -601,18 +601,32 @@ export default class App {
 
     // Add Safari-compatible hover logic for the dropdown
     let hideTimeout = null;
+    let tooltipTimeout = null;
     
     const showDropdown = () => {
       if (hideTimeout) {
         clearTimeout(hideTimeout);
         hideTimeout = null;
       }
-      focusContainer.classList.add("show");
-      focusButton.classList.add("active");
-      focusButton.classList.add("hide-tooltip");
+      
+      // Show tooltip briefly on initial hover, then hide when dropdown opens
+      if (tooltipTimeout) {
+        clearTimeout(tooltipTimeout);
+      }
+      
+      tooltipTimeout = setTimeout(() => {
+        focusButton.classList.add("hide-tooltip");
+        focusContainer.classList.add("show");
+        focusButton.classList.add("active");
+      }, 800); // Allow tooltip to show for 800ms before opening dropdown
     };
     
     const hideDropdown = () => {
+      if (tooltipTimeout) {
+        clearTimeout(tooltipTimeout);
+        tooltipTimeout = null;
+      }
+      
       hideTimeout = setTimeout(() => {
         focusContainer.classList.remove("show");
         focusButton.classList.remove("active");
