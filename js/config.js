@@ -141,6 +141,18 @@ const CONFIG = {
         get ORBIT_SPEED() { return (2 * Math.PI) / (this.ORBITAL_PERIOD_DAYS * 24 * 60 * 0.1); },
         get ROTATION_SPEED() { return (2 * Math.PI) / (this.ROTATION_PERIOD_DAYS * 24 * 60 * 0.1); }
     },
+    JUPITER: {
+        NAME: 'Jupiter',
+        DIAMETER_KM: 142984 * 8, // Accurate diameter with scaling for visibility
+        DISTANCE_FROM_SUN_KM: 778500000,
+        ORBITAL_PERIOD_DAYS: 4333, // 11.86 years
+        ROTATION_PERIOD_DAYS: 0.41, // ~9.9 hours
+        COLOR: 0xD8CA9D,
+        get RADIUS() { return (this.DIAMETER_KM / 2) / CONFIG.SCALE_FACTOR; },
+        get ORBIT_RADIUS() { return this.DISTANCE_FROM_SUN_KM / CONFIG.SCALE_FACTOR; },
+        get ORBIT_SPEED() { return (2 * Math.PI) / (this.ORBITAL_PERIOD_DAYS * 24 * 60 * 0.1); },
+        get ROTATION_SPEED() { return (2 * Math.PI) / (this.ROTATION_PERIOD_DAYS * 24 * 60 * 0.1); }
+    },
     HYGIEA: {
         NAME: 'Hygiea',
         DIAMETER_KM: 434 * 8,

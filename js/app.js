@@ -15,6 +15,7 @@ import { Moon } from "./classes/Moon.js";
 import { Mars } from "./classes/Mars.js";
 import { Phobos } from "./classes/Phobos.js";
 import { Deimos } from "./classes/Deimos.js";
+import { Jupiter } from "./classes/Jupiter.js";
 import { Ceres } from "./classes/Ceres.js";
 import { Vesta } from "./classes/Vesta.js";
 import { Pallas } from "./classes/Pallas.js";
@@ -262,6 +263,14 @@ export default class App {
         this.geometriesToDispose.push(deimos.mesh.geometry);
     }
 
+    // Create Jupiter
+    const jupiter = new Jupiter(this.solarSystemGroup);
+    this.solarSystem.addBody(jupiter);
+    if (jupiter.mesh) {
+      if (jupiter.mesh.material) this.materialsToDispose.push(jupiter.mesh.material);
+      if (jupiter.mesh.geometry) this.geometriesToDispose.push(jupiter.mesh.geometry);
+    }
+
     // Create Ceres (dwarf planet in asteroid belt)
     const ceres = new Ceres(this.solarSystemGroup);
     this.solarSystem.addBody(ceres);
@@ -497,6 +506,7 @@ export default class App {
           { name: "Hygiea", icon: "fa-circle" }
         ]
       },
+      { name: "Jupiter", icon: "fa-circle" },
     ];
 
     // Create hierarchical dropdown menu

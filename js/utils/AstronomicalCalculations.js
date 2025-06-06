@@ -75,6 +75,14 @@ const ORBITAL_ELEMENTS = {
         omega0: 336.04084445, domega: 0.15771958,
         Omega0: 49.71320984, dOmega: -0.26852431
     },
+    JUPITER: {
+        L0: 34.33479152, dL: 3034.90371757,
+        a0: 5.20248019, da: -0.00002864,
+        e0: 0.04853590, de: 0.00018026,
+        I0: 1.29861416, dI: -0.00322699,
+        omega0: 14.27495244, domega: 0.18199196,
+        Omega0: 100.29282654, dOmega: 0.13024619
+    },
     CERES: {
         L0: 95.9891, dL: 13.0640, // Approximate values
         a0: 2.7691, da: 0.0,
@@ -216,7 +224,7 @@ export function calculateOrbitalAngle(bodyName) {
  * Get all planetary positions for January 1, 2031
  */
 export function getAllPlanetaryPositions() {
-    const bodies = ['MERCURY', 'VENUS', 'EARTH', 'MARS', 'CERES', 'VESTA', 'PALLAS', 'HYGIEA'];
+    const bodies = ['MERCURY', 'VENUS', 'EARTH', 'MARS', 'JUPITER', 'CERES', 'VESTA', 'PALLAS', 'HYGIEA'];
     const positions = {};
     
     bodies.forEach(body => {

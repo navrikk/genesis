@@ -101,6 +101,15 @@ export const CELESTIAL_BODY_DATA = {
         rotationPeriod: '7.8 hours',
         description: 'Pallas is the third-largest asteroid in the asteroid belt. It has an unusually high orbital inclination and is likely a remnant protoplanet. Pallas has a low density, suggesting it may be a rubble pile held together by gravity.'
     },
+    Jupiter: {
+        mass: '1.898 × 10^27 kg',
+        gravity: '24.79 m/s²',
+        temperature: '-108°C (cloud tops)',
+        orbitRadius: '778.5 million km',
+        orbitPeriod: '11.86 years',
+        rotationPeriod: '9.9 hours',
+        description: 'Jupiter is the largest planet in the Solar System and the fifth planet from the Sun. It is a gas giant with a mass more than twice that of all other planets combined. Jupiter is composed primarily of hydrogen and helium and is known for its Great Red Spot, a giant anticyclonic storm.'
+    },
     Hygiea: {
         mass: '8.32 × 10^19 kg',
         gravity: '0.14 m/s²',
@@ -129,6 +138,7 @@ export function getBodyData(bodyName) {
                bodyName === 'Earth' ? '6,371 km' :
                bodyName === 'Moon' ? '1,737.4 km' :
                bodyName === 'Mars' ? '3,389.5 km' :
+               bodyName === 'Jupiter' ? '69,911 km' :
                bodyName === 'Phobos' ? '11.1 km (mean)' :
                bodyName === 'Deimos' ? '6.2 km (mean)' :
                bodyName === 'Ceres' ? '470 km (mean)' :
