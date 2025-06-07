@@ -776,39 +776,28 @@ export default class App {
       });
     }
 
-    if (this.timeScaleSlider) {
-      this.timeScaleSlider.addEventListener('input', (e) => {
-        const value = parseInt(e.target.value);
-        CONFIG.ANIMATION.timeScale = value;
-        
-        
-        // Format display value with full numbers and commas for readability
-        if (value === 0) {
-          this.timeScaleValue.textContent = '0x';
-        } else {
-          // Add commas for thousands separator for better readability
-          const formattedValue = Math.abs(value).toLocaleString();
-          const sign = value < 0 ? '-' : '';
-          this.timeScaleValue.textContent = `${sign}${formattedValue}x`;
-        }
-        
-        // If user changes speed, exit live mode
-        if (this.isLiveTime && value !== 1) {
-          this.isLiveTime = false;
-          this.updateLiveButtonState();
-          this.updateDateTimeDisplay();
-        }
-      });
-    }
+    // Setup custom slider
+    this.setupCustomSlider();
 
     if (this.liveButton) {
       this.liveButton.addEventListener('click', () => {
         this.isLiveTime = !this.isLiveTime;
         if (this.isLiveTime) {
           this.simulationTime = new Date();
-          this.timeScaleSlider.value = 1;
+          this.timeScaleSlider.value = 0; // Index 0 in the map corresponds to 1x speed
           CONFIG.ANIMATION.timeScale = 1;
           this.timeScaleValue.textContent = '1x';
+          
+          // Update custom slider position
+          const customSlider = document.getElementById('customTimeSlider');
+          const sliderThumb = document.getElementById('sliderThumb');
+          if (customSlider && sliderThumb) {
+            sliderThumb.style.left = '50%'; // Center position for 1x
+            const segments = customSlider.querySelectorAll('.slider-segment');
+            segments.forEach((segment, index) => {
+              segment.classList.toggle('active', index === 6); // Center segment
+            });
+          }
           
           // Reset all celestial bodies to their current astronomical positions
           this.resetCelestialBodiesPosition();
@@ -926,10 +915,10 @@ export default class App {
 
     if (this.isLiveTime) {
       this.liveButton.classList.add('active');
-      this.liveButton.innerHTML = '<i class="fas fa-broadcast-tower"></i> LIVE';
+      this.liveButton.innerHTML = '<span class="live-dot"></span> LIVE';
     } else {
       this.liveButton.classList.remove('active');
-      this.liveButton.innerHTML = '<i class="fas fa-broadcast-tower"></i> LIVE';
+      this.liveButton.innerHTML = '<span class="live-dot"></span> LIVE';
     }
   }
 
@@ -1037,6 +1026,92 @@ export default class App {
       this.updateDateTimeDisplay();
       this.lastUpdateTime = now;
     }
+  }
+
+  /**
+   * Setup custom time scale slider
+   */
+  setupCustomSlider() {
+    // Define fixed multiplier positions for better UX
+    const timeScaleMap = [
+      -1000000, -100000, -10000, -1000, -100, -10,       // Negative values (reverse time)
+      1,                                                  // Center at 1x (real time)
+      10, 100, 1000, 10000, 100000, 1000000             // Positive values (forward time)
+    ];
+    
+    const customSlider = document.getElementById('customTimeSlider');
+    const sliderThumb = document.getElementById('sliderThumb');
+    const hiddenInput = this.timeScaleSlider;
+    
+    if (!customSlider || !sliderThumb || !hiddenInput) return;
+    
+    let currentValue = 0; // Start at center (1x)
+    
+    const updateSlider = (value) => {
+      currentValue = value;
+      const percentage = ((value + 6) / 12) * 100; // Convert -6 to 6 range to 0-100%
+      sliderThumb.style.left = `${percentage}%`;
+      
+      // Update segments active state
+      const segments = customSlider.querySelectorAll('.slider-segment');
+      segments.forEach((segment, index) => {
+        segment.classList.toggle('active', index === value + 6);
+      });
+      
+      // Update hidden input
+      hiddenInput.value = value;
+      
+      // Update time scale
+      const actualTimeScale = timeScaleMap[value + 6];
+      CONFIG.ANIMATION.timeScale = actualTimeScale;
+      
+      // Format display value
+      const formattedValue = Math.abs(actualTimeScale).toLocaleString();
+      const sign = actualTimeScale < 0 ? '-' : '';
+      this.timeScaleValue.textContent = `${sign}${formattedValue}x`;
+      
+      // Exit live mode if changed from 1x
+      if (this.isLiveTime && actualTimeScale !== 1) {
+        this.isLiveTime = false;
+        this.updateLiveButtonState();
+        this.updateDateTimeDisplay();
+      }
+    };
+    
+    // Click handler for slider track
+    customSlider.addEventListener('click', (e) => {
+      const rect = customSlider.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const percentage = x / rect.width;
+      const newValue = Math.round(percentage * 12) - 6; // Convert to -6 to 6 range
+      const clampedValue = Math.max(-6, Math.min(6, newValue));
+      updateSlider(clampedValue);
+    });
+    
+    // Drag functionality for thumb
+    let isDragging = false;
+    
+    sliderThumb.addEventListener('mousedown', (e) => {
+      isDragging = true;
+      e.preventDefault();
+    });
+    
+    document.addEventListener('mousemove', (e) => {
+      if (!isDragging) return;
+      
+      const rect = customSlider.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const percentage = Math.max(0, Math.min(1, x / rect.width));
+      const newValue = Math.round(percentage * 12) - 6;
+      updateSlider(newValue);
+    });
+    
+    document.addEventListener('mouseup', () => {
+      isDragging = false;
+    });
+    
+    // Initialize slider position
+    updateSlider(0);
   }
 
   /**
