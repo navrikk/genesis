@@ -107,6 +107,50 @@ export default class App {
     };
     this.loadingScreenElement = document.getElementById("loadingScreen");
 
+    // Quirky loading messages
+    this.loadingMessages = {
+      titles: [
+        "Preparing Solar System",
+        "Assembling the Cosmos",
+        "Brewing Some Starlight",
+        "Gathering Cosmic Dust",
+        "Tuning Planetary Frequencies",
+        "Calibrating Gravity Wells",
+        "Polishing Asteroid Belts",
+        "Warming Up the Sun",
+        "Teaching Planets to Orbit",
+        "Installing Rocket Boosters",
+        "Charging Solar Panels",
+        "Awakening Ancient Stars"
+      ],
+      subtitles: [
+        "Loading celestial bodies and textures...",
+        "Please don't adjust your reality...",
+        "Convincing photons to behave...",
+        "Herding space cats into formation...",
+        "Downloading more RAM for Jupiter...",
+        "Asking Mars nicely to be red...",
+        "Teaching Saturn to hula hoop...",
+        "Bribing Einstein for better physics...",
+        "Negotiating with black holes...",
+        "Untangling Saturn's rings...",
+        "Debugging the laws of physics...",
+        "Calibrating the space-time continuum...",
+        "Installing cosmic WiFi...",
+        "Buffering the Big Bang...",
+        "Compressing 13.8 billion years...",
+        "Rendering the impossible...",
+        "Consulting with aliens...",
+        "Feeding the space hamsters...",
+        "Turning it off and on again...",
+        "Googling 'how to universe'...",
+        "Applying space-grade duct tape...",
+        "Reticulating splines in zero-G..."
+      ]
+    };
+
+    // Random loading messages are now set directly in HTML
+
     this.init();
   }
 
@@ -1583,7 +1627,6 @@ export default class App {
     // Update progress bar and percentage text
     const progressBar = document.querySelector('.progress-bar');
     const percentageText = document.querySelector('.loading-percentage');
-    const loadingSubtitle = document.querySelector('.loading-subtitle');
     
     if (progressBar) {
       progressBar.style.width = `${percentComplete}%`;
@@ -1593,24 +1636,16 @@ export default class App {
       percentageText.textContent = `${percentComplete}%`;
     }
     
-    // Update loading message based on progress
-    if (loadingSubtitle) {
-      if (percentComplete < 30) {
-        loadingSubtitle.textContent = 'Loading celestial bodies and textures...';
-      } else if (percentComplete < 60) {
-        loadingSubtitle.textContent = 'Positioning planets and moons...';
-      } else if (percentComplete < 90) {
-        loadingSubtitle.textContent = 'Preparing star field and galaxy backdrop...';
-      } else {
-        loadingSubtitle.textContent = 'Almost ready...';
-      }
-    }
+    // Don't override the quirky loading messages - let them continue rotating
+    // The startLoadingTextRotation() handles all text updates now
     
     // Progress logging removed
   }
 
+
   hideLoadingScreen() {
     if (this.loadingScreenElement && this.loadingScreenElement.style.display !== 'none') {
+        
         // Skip showing 100% progress and go straight to fade out
         
         // Immediately fade out the loading screen

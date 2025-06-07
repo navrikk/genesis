@@ -14,10 +14,42 @@
 <body>
 <div id="loadingScreen">
     <div class="loader"></div>
-    <h2 class="loading-title">Preparing Solar System</h2>
-    <p class="loading-subtitle">Loading celestial bodies and textures...</p>
+    <h2 class="loading-title" id="loadingTitle">Assembling the Cosmos</h2>
+    <p class="loading-subtitle" id="loadingSubtitle">Herding space cats into formation...</p>
     <!-- Progress bar removed as requested -->
 </div>
+
+<script>
+// Set random quirky loading messages immediately before anything else loads
+(function() {
+    const titles = [
+        "Preparing Solar System", "Assembling the Cosmos", "Brewing Some Starlight",
+        "Gathering Cosmic Dust", "Tuning Planetary Frequencies", "Calibrating Gravity Wells",
+        "Polishing Asteroid Belts", "Warming Up the Sun", "Teaching Planets to Orbit",
+        "Installing Rocket Boosters", "Charging Solar Panels", "Awakening Ancient Stars"
+    ];
+    const subtitles = [
+        "Loading celestial bodies and textures...", "Please don't adjust your reality...",
+        "Convincing photons to behave...", "Herding space cats into formation...",
+        "Downloading more RAM for Jupiter...", "Asking Mars nicely to be red...",
+        "Teaching Saturn to hula hoop...", "Bribing Einstein for better physics...",
+        "Negotiating with black holes...", "Untangling Saturn's rings...",
+        "Debugging the laws of physics...", "Calibrating the space-time continuum...",
+        "Installing cosmic WiFi...", "Buffering the Big Bang...",
+        "Compressing 13.8 billion years...", "Rendering the impossible...",
+        "Consulting with aliens...", "Feeding the space hamsters...",
+        "Turning it off and on again...", "Googling 'how to universe'...",
+        "Applying space-grade duct tape...", "Reticulating splines in zero-G..."
+    ];
+    
+    // Set random messages immediately
+    const randomTitle = titles[Math.floor(Math.random() * titles.length)];
+    const randomSubtitle = subtitles[Math.floor(Math.random() * subtitles.length)];
+    
+    document.getElementById('loadingTitle').textContent = randomTitle;
+    document.getElementById('loadingSubtitle').textContent = randomSubtitle;
+})();
+</script>
 
 <div id="webgl-compatibility" style="display: none;"
      class="fixed inset-0 bg-red-800 text-white flex flex-col justify-center items-center text-center p-8">
