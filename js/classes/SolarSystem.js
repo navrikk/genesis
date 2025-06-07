@@ -127,25 +127,18 @@ export class SolarSystem {
             return; // Orbit already exists, don't create another
         }
 
-        // Generate random light colors for orbits
-        const lightColors = [
-            0xE8D5C4, // Light beige
-            0xD4E6F1, // Light blue
-            0xE8F8E8, // Light green
-            0xF8E8F8, // Light pink
-            0xFFF8DC, // Light yellow
-            0xE6E6FA, // Lavender
-            0xF0F8FF, // Alice blue
-            0xF5F5DC, // Beige
-            0xFFE4E1, // Misty rose
-            0xE0FFFF, // Light cyan
-            0xF0FFFF, // Azure
-            0xFAF0E6  // Linen
+        // Generate random vibrant colors for orbits
+        const randomOrbitColors = [
+            0x8C7853, 0xFFC649, 0x6B93D6, 0xCD5C5C, 0xD2691E, 0x9B870C, 
+            0xB8860B, 0xDAA520, 0xFFD700, 0xC0C0C0, 0xF4A460, 0xDEB887,
+            0x4169E1, 0x8B4513, 0x2F4F4F, 0xFF6B6B, 0x4ECDC4, 0x45B7D1,
+            0x96CEB4, 0xFECEA8, 0xD63031, 0x74B9FF, 0xA29BFE, 0xFD79A8,
+            0xE17055, 0x81ECEC, 0x00B894, 0xE84393, 0x0984E3, 0x6C5CE7
         ];
-        const randomColor = lightColors[Math.floor(Math.random() * lightColors.length)];
+        const orbitColor = randomOrbitColors[Math.floor(Math.random() * randomOrbitColors.length)];
         
         // Always create the orbit line, but set visibility based on orbitsVisible
-        const orbitLine = body.createOrbitVisualization(randomColor, true);
+        const orbitLine = body.createOrbitVisualization(orbitColor, true);
         
         if (orbitLine) {
             // Set initial visibility

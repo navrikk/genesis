@@ -98,11 +98,11 @@ export class Earth extends CelestialBody {
             this.mesh.rotation.y += this.rotationSpeed * deltaTime;
         }
 
-        // Also rotate clouds layer
-        if (animate && this.cloudsMesh) {
-            this.cloudsMesh.rotation.y += this.rotationSpeed * deltaTime * 1.1; // Slightly faster clouds
-        }
-
         this.updatePosition();
+
+        // Update clouds layer rotation if it exists
+        if (this.cloudsMesh && animate) {
+            this.cloudsMesh.rotation.y += this.rotationSpeed * deltaTime * 1.2;
+        }
     }
 }

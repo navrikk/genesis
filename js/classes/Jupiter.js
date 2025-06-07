@@ -20,6 +20,7 @@ export class Jupiter extends CelestialBody {
             null,
             0.8
         );
+        this.config = CONFIG.JUPITER;
         this.orbitSpeed = CONFIG.JUPITER.ORBIT_SPEED;
         this.rotationSpeed = CONFIG.JUPITER.ROTATION_SPEED;
         this.orbitAngle = calculateOrbitalAngle('JUPITER');

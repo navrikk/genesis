@@ -110,6 +110,42 @@ export const CELESTIAL_BODY_DATA = {
         rotationPeriod: '9.9 hours',
         description: 'Jupiter is the largest planet in the Solar System and the fifth planet from the Sun. It is a gas giant with a mass more than twice that of all other planets combined. Jupiter is composed primarily of hydrogen and helium and is known for its Great Red Spot, a giant anticyclonic storm.'
     },
+    Io: {
+        mass: '8.9319 × 10^22 kg',
+        gravity: '1.796 m/s²',
+        temperature: '-143°C (average)',
+        orbitRadius: '421,700 km (from Jupiter)',
+        orbitPeriod: '1.77 days',
+        rotationPeriod: '1.77 days (tidally locked)',
+        description: 'Io is the innermost of the four Galilean moons of Jupiter and the most volcanically active body in the Solar System. It has over 400 active volcanoes and a sulfur-rich surface that gives it its distinctive yellow and orange coloration.'
+    },
+    Europa: {
+        mass: '4.7998 × 10^22 kg',
+        gravity: '1.314 m/s²',
+        temperature: '-160°C (surface)',
+        orbitRadius: '671,034 km (from Jupiter)',
+        orbitPeriod: '3.55 days',
+        rotationPeriod: '3.55 days (tidally locked)',
+        description: 'Europa is the smallest of the four Galilean moons and has a smooth, icy surface with relatively few craters. It likely harbors a subsurface ocean beneath its ice shell, making it one of the most promising places to search for extraterrestrial life.'
+    },
+    Ganymede: {
+        mass: '1.4819 × 10^23 kg',
+        gravity: '1.428 m/s²',
+        temperature: '-181°C (average)',
+        orbitRadius: '1,070,412 km (from Jupiter)',
+        orbitPeriod: '7.15 days',
+        rotationPeriod: '7.15 days (tidally locked)',
+        description: 'Ganymede is the largest moon in the Solar System and the only moon known to have its own magnetic field. It has a differentiated interior and shows evidence of past geological activity with both dark and bright terrain.'
+    },
+    Callisto: {
+        mass: '1.0759 × 10^23 kg',
+        gravity: '1.235 m/s²',
+        temperature: '-139°C (average)',
+        orbitRadius: '1,882,709 km (from Jupiter)',
+        orbitPeriod: '16.69 days',
+        rotationPeriod: '16.69 days (tidally locked)',
+        description: 'Callisto is the outermost of the four Galilean moons and the most heavily cratered object in the Solar System. It has a very ancient surface that has remained largely unchanged for billions of years.'
+    },
     Hygiea: {
         mass: '8.32 × 10^19 kg',
         gravity: '0.14 m/s²',
@@ -139,6 +175,10 @@ export function getBodyData(bodyName) {
                bodyName === 'Moon' ? '1,737.4 km' :
                bodyName === 'Mars' ? '3,389.5 km' :
                bodyName === 'Jupiter' ? '69,911 km' :
+               bodyName === 'Io' ? '1,821.6 km' :
+               bodyName === 'Europa' ? '1,560.8 km' :
+               bodyName === 'Ganymede' ? '2,634.1 km' :
+               bodyName === 'Callisto' ? '2,410.3 km' :
                bodyName === 'Phobos' ? '11.1 km (mean)' :
                bodyName === 'Deimos' ? '6.2 km (mean)' :
                bodyName === 'Ceres' ? '470 km (mean)' :

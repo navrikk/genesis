@@ -16,6 +16,10 @@ import { Mars } from "./classes/Mars.js";
 import { Phobos } from "./classes/Phobos.js";
 import { Deimos } from "./classes/Deimos.js";
 import { Jupiter } from "./classes/Jupiter.js";
+import { Io } from "./classes/Io.js";
+import { Europa } from "./classes/Europa.js";
+import { Ganymede } from "./classes/Ganymede.js";
+import { Callisto } from "./classes/Callisto.js";
 import { Ceres } from "./classes/Ceres.js";
 import { Vesta } from "./classes/Vesta.js";
 import { Pallas } from "./classes/Pallas.js";
@@ -66,12 +70,6 @@ export default class App {
     this.geometriesToDispose = [];
 
     this.focusedBody = null;
-    this.userPanned = false;
-    this.userControlActive = false;
-    this.lastUserInteractionTime = 0;
-    this.userControlTimeout = 200;
-    this.userCameraPosition = null;
-    this.userControlsTarget = null;
     this.currentAnimation = null;
     this.isSimulationPaused = false; // Flag to control simulation updates
 
@@ -86,8 +84,15 @@ export default class App {
     // Time controls
     this.timeControlsPanel = null;
     this.playPauseButton = null;
-    this.timeSeeker = null;
-    this.goToTodayButton = null;
+    this.timeScaleSlider = null;
+    this.timeScaleValue = null;
+    this.liveButton = null;
+    
+    // DateTime system
+    this.simulationTime = new Date();
+    this.isLiveTime = true;
+    this.lastUpdateTime = Date.now();
+    
 
     // Controls visibility state
     this.areControlsVisible = false;
@@ -166,17 +171,7 @@ export default class App {
     this.controls.minDistance = 0.00001; // Significantly reduced for extreme close-ups on tiny objects
     this.controls.maxDistance = CONFIG.STARFIELD.RADIUS / 10;
 
-    // Add event listeners for user interaction
-    this.controls.addEventListener("start", () => {
-      this.userControlActive = true;
-      this.lastUserInteractionTime = Date.now();
-      this.userCameraPosition = this.camera.position.clone();
-      this.userControlsTarget = this.controls.target.clone();
-    });
-
-    this.controls.addEventListener("change", () => {
-      this.lastUserInteractionTime = Date.now();
-    });
+    // No special user interaction tracking needed anymore
 
     // Create a group for the solar system that will be initially invisible
     this.solarSystemGroup = new THREE.Group();
@@ -264,11 +259,40 @@ export default class App {
     }
 
     // Create Jupiter
-    const jupiter = new Jupiter(this.solarSystemGroup);
-    this.solarSystem.addBody(jupiter);
-    if (jupiter.mesh) {
-      if (jupiter.mesh.material) this.materialsToDispose.push(jupiter.mesh.material);
-      if (jupiter.mesh.geometry) this.geometriesToDispose.push(jupiter.mesh.geometry);
+    this.jupiter = new Jupiter(this.solarSystemGroup);
+    this.solarSystem.addBody(this.jupiter);
+    if (this.jupiter.mesh) {
+      if (this.jupiter.mesh.material) this.materialsToDispose.push(this.jupiter.mesh.material);
+      if (this.jupiter.mesh.geometry) this.geometriesToDispose.push(this.jupiter.mesh.geometry);
+    }
+
+    // Create Jupiter's moons
+    this.io = new Io(this.jupiter);
+    this.solarSystem.addBody(this.io);
+    if (this.io.mesh) {
+      if (this.io.mesh.material) this.materialsToDispose.push(this.io.mesh.material);
+      if (this.io.mesh.geometry) this.geometriesToDispose.push(this.io.mesh.geometry);
+    }
+
+    this.europa = new Europa(this.jupiter);
+    this.solarSystem.addBody(this.europa);
+    if (this.europa.mesh) {
+      if (this.europa.mesh.material) this.materialsToDispose.push(this.europa.mesh.material);
+      if (this.europa.mesh.geometry) this.geometriesToDispose.push(this.europa.mesh.geometry);
+    }
+
+    this.ganymede = new Ganymede(this.jupiter);
+    this.solarSystem.addBody(this.ganymede);
+    if (this.ganymede.mesh) {
+      if (this.ganymede.mesh.material) this.materialsToDispose.push(this.ganymede.mesh.material);
+      if (this.ganymede.mesh.geometry) this.geometriesToDispose.push(this.ganymede.mesh.geometry);
+    }
+
+    this.callisto = new Callisto(this.jupiter);
+    this.solarSystem.addBody(this.callisto);
+    if (this.callisto.mesh) {
+      if (this.callisto.mesh.material) this.materialsToDispose.push(this.callisto.mesh.material);
+      if (this.callisto.mesh.geometry) this.geometriesToDispose.push(this.callisto.mesh.geometry);
     }
 
     // Create Ceres (dwarf planet in asteroid belt)
@@ -333,10 +357,16 @@ export default class App {
     // Setup UI controls
     this.setupUIControls();
 
+
     // Post-processing for Bloom Effect (Sun Glow)
     if (CONFIG.BLOOM_EFFECT.enabled) {
       this.setupPostProcessing();
     }
+
+    // Initialize datetime display and button states
+    this.updateDateTimeDisplay();
+    this.updatePlayPauseButtonState();
+    this.updateLiveButtonState();
 
     // Start animation loop
     this.animate();
@@ -344,6 +374,7 @@ export default class App {
     // Check if loading is already complete
     this.checkLoadingComplete();
   } // End of init()
+
 
   setupUIControls() {
     this.infoPanel = document.getElementById("infoPanel");
@@ -506,7 +537,16 @@ export default class App {
           { name: "Hygiea", icon: "fa-circle" }
         ]
       },
-      { name: "Jupiter", icon: "fa-circle" },
+      { 
+        name: "Jupiter", 
+        icon: "fa-circle",
+        moons: [
+          { name: "Io", icon: "fa-circle" },
+          { name: "Europa", icon: "fa-circle" },
+          { name: "Ganymede", icon: "fa-circle" },
+          { name: "Callisto", icon: "fa-circle" }
+        ]
+      },
     ];
 
     // Create hierarchical dropdown menu
@@ -527,10 +567,18 @@ export default class App {
         let submenuHideTimeout = null;
         
         const showSubmenu = () => {
+          // Clear any existing hide timeout
           if (submenuHideTimeout) {
             clearTimeout(submenuHideTimeout);
             submenuHideTimeout = null;
           }
+          
+          // Hide all other submenus immediately to prevent overlap
+          document.querySelectorAll('.submenu.show-submenu').forEach(otherSubmenu => {
+            if (otherSubmenu !== submenu) {
+              otherSubmenu.classList.remove('show-submenu');
+            }
+          });
           
           // Check if submenu would go below screen edge and adjust positioning
           const parentRect = parentOption.getBoundingClientRect();
@@ -553,7 +601,7 @@ export default class App {
         const hideSubmenu = () => {
           submenuHideTimeout = setTimeout(() => {
             submenu.classList.remove("show-submenu");
-          }, 200);
+          }, 100); // Reduced timeout for faster hiding
         };
         
         // Parent option hover events
@@ -641,6 +689,11 @@ export default class App {
         focusContainer.classList.remove("show");
         focusButton.classList.remove("active");
         focusButton.classList.remove("hide-tooltip");
+        
+        // Hide all submenus when main dropdown closes
+        document.querySelectorAll('.submenu.show-submenu').forEach(submenu => {
+          submenu.classList.remove('show-submenu');
+        });
       }, 150);
     };
     
@@ -673,7 +726,9 @@ export default class App {
 
     // Append the dropdown to the focus button
     focusButton.appendChild(focusContainer);
-    document.getElementById("controls").appendChild(focusButton);
+    // Insert the focus button at the beginning of the controls
+    const controlsPanel = document.getElementById("controls");
+    controlsPanel.insertBefore(focusButton, controlsPanel.firstChild);
 
     // Setup Reset Camera button
     const resetCameraButton = document.getElementById('resetCameraButton');
@@ -703,6 +758,76 @@ export default class App {
           toggleOrbitsButton.classList.add('muted');
         }
       });
+    }
+
+    // Setup Time Controls (now split into center and right panels)
+    this.timeControlsPanel = document.getElementById('timeControls');
+    this.speedControlsPanel = document.getElementById('speedControls');
+    this.playPauseButton = document.getElementById('playPauseButton');
+    this.timeScaleSlider = document.getElementById('timeScale');
+    this.timeScaleValue = document.getElementById('timeScaleValue');
+    this.liveButton = document.getElementById('liveButton');
+
+    if (this.playPauseButton) {
+      this.playPauseButton.addEventListener('click', () => {
+        this.isSimulationPaused = !this.isSimulationPaused;
+        this.updatePlayPauseButtonState();
+        this.updateDateTimeDisplay();
+      });
+    }
+
+    if (this.timeScaleSlider) {
+      this.timeScaleSlider.addEventListener('input', (e) => {
+        const value = parseInt(e.target.value);
+        CONFIG.ANIMATION.timeScale = value;
+        
+        
+        // Format display value with full numbers and commas for readability
+        if (value === 0) {
+          this.timeScaleValue.textContent = '0x';
+        } else {
+          // Add commas for thousands separator for better readability
+          const formattedValue = Math.abs(value).toLocaleString();
+          const sign = value < 0 ? '-' : '';
+          this.timeScaleValue.textContent = `${sign}${formattedValue}x`;
+        }
+        
+        // If user changes speed, exit live mode
+        if (this.isLiveTime && value !== 1) {
+          this.isLiveTime = false;
+          this.updateLiveButtonState();
+          this.updateDateTimeDisplay();
+        }
+      });
+    }
+
+    if (this.liveButton) {
+      this.liveButton.addEventListener('click', () => {
+        this.isLiveTime = !this.isLiveTime;
+        if (this.isLiveTime) {
+          this.simulationTime = new Date();
+          this.timeScaleSlider.value = 1;
+          CONFIG.ANIMATION.timeScale = 1;
+          this.timeScaleValue.textContent = '1x';
+          
+          // Reset all celestial bodies to their current astronomical positions
+          this.resetCelestialBodiesPosition();
+        }
+        this.updateLiveButtonState();
+        this.updateDateTimeDisplay();
+      });
+    }
+
+    // Setup Toggle Trails button (disabled for now - functionality not implemented)
+    const toggleTrailsButton = document.getElementById('toggleTrailsButton');
+    if (toggleTrailsButton) {
+      toggleTrailsButton.style.display = 'none'; // Hide the button since trails are not implemented
+    }
+
+    // Setup Toggle Icons button (disabled for now)
+    const toggleIconsButton = document.getElementById('toggleIconsButton');
+    if (toggleIconsButton) {
+      toggleIconsButton.style.display = 'none'; // Hide the button for now
     }
     
     // Hide all controls initially using existing implementation
@@ -745,6 +870,10 @@ export default class App {
       this.timeControlsPanel.classList.add("hidden");
     }
     
+    if (this.speedControlsPanel) {
+      this.speedControlsPanel.classList.add("hidden");
+    }
+    
     // Hide info panel
     this.infoPanel.classList.add("hidden");
     
@@ -765,10 +894,13 @@ export default class App {
       });
     }
     
-    if (this.timeControlsPanel && this.focusedBody && this.focusedBody.name === "Sun") {
+    if (this.timeControlsPanel) {
       this.timeControlsPanel.classList.remove("hidden");
     }
     
+    if (this.speedControlsPanel) {
+      this.speedControlsPanel.classList.remove("hidden");
+    }
 
     
     this.areControlsVisible = true;
@@ -783,9 +915,127 @@ export default class App {
     if (!this.playPauseButton) return;
 
     if (this.isSimulationPaused) {
-      this.playPauseButton.innerHTML = '<i class="fas fa-play"></i> Play';
+      this.playPauseButton.innerHTML = '<i class="fas fa-play"></i>';
     } else {
-      this.playPauseButton.innerHTML = '<i class="fas fa-pause"></i> Pause';
+      this.playPauseButton.innerHTML = '<i class="fas fa-pause"></i>';
+    }
+  }
+
+  updateLiveButtonState() {
+    if (!this.liveButton) return;
+
+    if (this.isLiveTime) {
+      this.liveButton.classList.add('active');
+      this.liveButton.innerHTML = '<i class="fas fa-broadcast-tower"></i> LIVE';
+    } else {
+      this.liveButton.classList.remove('active');
+      this.liveButton.innerHTML = '<i class="fas fa-broadcast-tower"></i> LIVE';
+    }
+  }
+
+  updateDateTimeDisplay() {
+    const datetimeText = document.getElementById('datetimeText');
+    const datetimeStatus = document.getElementById('datetimeStatus');
+    const panelTimeText = document.getElementById('panelTimeText');
+    
+    const options = {
+      year: 'numeric',
+      month: 'short',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      timeZoneName: 'short'
+    };
+    const timeString = this.simulationTime.toLocaleDateString('en-US', options);
+    
+    if (datetimeText) {
+      datetimeText.textContent = timeString;
+    }
+    
+    // Update panel time display with just the time portion
+    if (panelTimeText) {
+      const timeOptions = {
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric'
+      };
+      panelTimeText.textContent = this.simulationTime.toLocaleDateString('en-US', timeOptions);
+    }
+    
+    if (datetimeStatus) {
+      datetimeStatus.className = 'datetime-status';
+      if (this.isLiveTime) {
+        datetimeStatus.textContent = 'LIVE';
+        datetimeStatus.classList.add('live');
+      } else if (this.isSimulationPaused) {
+        datetimeStatus.textContent = 'PAUSED';
+        datetimeStatus.classList.add('paused');
+      } else {
+        datetimeStatus.textContent = `${CONFIG.ANIMATION.timeScale}x SPEED`;
+      }
+    }
+  }
+
+  async resetCelestialBodiesPosition() {
+    try {
+      const { calculateOrbitalAngle, calculateMoonPosition } = await import('./utils/AstronomicalCalculations.js');
+      
+      // Reset each celestial body to its current astronomical position
+      const celestialBodies = this.solarSystem.getBodies();
+      celestialBodies.forEach(body => {
+        if (body.name === 'Moon') {
+          // Special handling for Moon
+          body.orbitAngle = calculateMoonPosition();
+        } else if (body.name !== 'Sun' && !body.parentBody) {
+          // For planets and asteroids (not moons)
+          try {
+            body.orbitAngle = calculateOrbitalAngle(body.name.toUpperCase());
+          } catch (error) {
+            console.warn(`Could not reset position for ${body.name}:`, error);
+          }
+        }
+        // Update position immediately
+        body.updatePosition();
+      });
+    } catch (error) {
+      console.error('Error resetting celestial body positions:', error);
+    }
+  }
+
+  updateSimulationTime(deltaTime) {
+    if (!this.isSimulationPaused) {
+      if (this.isLiveTime) {
+        // In live mode, follow real time
+        this.simulationTime = new Date();
+      } else {
+        // In simulation mode, advance time based on speed
+        // Scale factor: 1x = real time, 10x = 10 times faster, -1x = backward real time
+        const timeMultiplier = CONFIG.ANIMATION.timeScale; // Direct multiplier
+        const timeAdvancement = deltaTime * 1000 * timeMultiplier; // milliseconds
+        
+        this.simulationTime.setTime(this.simulationTime.getTime() + timeAdvancement);
+        
+        // Clamp to valid date range
+        const minDate = new Date(CONFIG.TIME.minYear, 0, 1);
+        const maxDate = new Date(CONFIG.TIME.maxYear, 11, 31);
+        
+        if (this.simulationTime < minDate) {
+          this.simulationTime = minDate;
+        } else if (this.simulationTime > maxDate) {
+          this.simulationTime = maxDate;
+        }
+      }
+    }
+    
+    // Update display more frequently for smooth updates
+    const now = Date.now();
+    if (now - this.lastUpdateTime > 100) { // Update every 100ms
+      this.updateDateTimeDisplay();
+      this.lastUpdateTime = now;
     }
   }
 
@@ -894,7 +1144,6 @@ export default class App {
       }
 
       this.focusedBody = body;
-      this.userControlActive = false; // Reset user control flag
 
       // Get the world position of the body's visual object group
       const bodyObject = body.getObject();
@@ -952,17 +1201,14 @@ export default class App {
         .copy(bodyPosition)
         .addScaledVector(cameraOffsetDirection, distance);
 
-      // Simulation pause logic and time panel visibility
-      if (bodyName === "Sun") {
-        this.isSimulationPaused = false; // Default to playing when Sun is focused
-        if (this.timeControlsPanel)
-          this.timeControlsPanel.classList.remove("hidden");
-        this.updatePlayPauseButtonState(); // Set initial button state for Sun focus
-      } else {
-        this.isSimulationPaused = true;
-        if (this.timeControlsPanel)
-          this.timeControlsPanel.classList.add("hidden");
+      // Time controls are always visible when controls are shown
+      if (this.areControlsVisible && this.timeControlsPanel) {
+        this.timeControlsPanel.classList.remove("hidden");
       }
+      if (this.areControlsVisible && this.speedControlsPanel) {
+        this.speedControlsPanel.classList.remove("hidden");
+      }
+      this.updatePlayPauseButtonState();
 
       // Hide info panel when focusing on any body
       if (this.infoPanel && this.infoPanel.classList) {
@@ -998,11 +1244,14 @@ export default class App {
       this.selectedBody = null;
       
       this.focusedBody = sun;
-      this.isSimulationPaused = false; // Ensure simulation runs when focused on Sun
+      this.isSimulationPaused = false; // Ensure simulation runs when reset
       
-      // Show time controls when focused on Sun
-      if (this.timeControlsPanel) {
+      // Show time controls if controls are visible
+      if (this.areControlsVisible && this.timeControlsPanel) {
         this.timeControlsPanel.classList.remove("hidden");
+      }
+      if (this.areControlsVisible && this.speedControlsPanel) {
+        this.speedControlsPanel.classList.remove("hidden");
       }
       
       // Reset dropdown selection
@@ -1080,7 +1329,7 @@ export default class App {
 
   animate() {
     requestAnimationFrame(this.animate.bind(this));
-    const deltaTime = this.clock.getDelta();
+    const deltaTime = Math.min(this.clock.getDelta(), 1/15); // Cap delta time for stability (max 15 FPS)
 
     // Get the Sun for lighting updates (assuming getSun() and getObject() are correctly implemented)
     const sun = this.solarSystem.getSun(); // Make sure solarSystem has getSun()
@@ -1090,11 +1339,18 @@ export default class App {
       sunPosition = sun.getObject().position.clone();
     }
 
-    // Update all celestial bodies - only rotation, no orbit movement
+    // Update simulation time
+    this.updateSimulationTime(deltaTime);
+
+    // Update all celestial bodies with time scaling
+    const scaledDeltaTime = deltaTime * CONFIG.ANIMATION.timeScale;
+    const shouldAnimate = !this.isSimulationPaused && CONFIG.ANIMATION.enabled;
+    
+    
     const celestialBodies = this.solarSystem.getBodies();
     celestialBodies.forEach((body) => {
-      // Update only rotation
-      body.update(deltaTime, false);
+      // Update with proper animation flag and scaled time
+      body.update(scaledDeltaTime, shouldAnimate);
         
       // If using custom shaders that need sun position:
       if (
@@ -1106,6 +1362,7 @@ export default class App {
         body.mesh.material.uniforms.sunPosition.value.copy(sunPosition);
       }
     });
+
 
     // Update starfield
     if (this.starfield) {
@@ -1122,10 +1379,8 @@ export default class App {
       this.controls.update();
     }
 
-    // Check for camera focus updates if user is not controlling
-    if (!this.userControlActive) {
-      this.updateCameraFocus();
-    }
+    // Always update camera focus to follow the focused body
+    this.updateCameraFocus();
 
     // Render the scene
     if (CONFIG.BLOOM_EFFECT.enabled && this.composer) {
@@ -1136,9 +1391,32 @@ export default class App {
   }
 
   updateCameraFocus() {
-    // Placeholder for camera focusing logic
-    if (this.focusedBody && !this.userControlActive) {
-      // Camera focus logic would go here if implemented
+    if (this.focusedBody) {
+      // Get the current world position of the focused body
+      const bodyObject = this.focusedBody.getObject();
+      if (!bodyObject) return;
+      
+      const bodyPosition = bodyObject.getWorldPosition(new THREE.Vector3());
+      
+      // Check for valid position
+      if (isNaN(bodyPosition.x) || isNaN(bodyPosition.y) || isNaN(bodyPosition.z)) {
+        return;
+      }
+      
+      // Calculate how much the body has moved since last frame
+      const currentTarget = this.controls.target.clone();
+      const movement = bodyPosition.clone().sub(currentTarget);
+      
+      // Only update if there's significant movement to avoid jitter
+      if (movement.length() > 0.001) {
+        // Move both the camera and the target by the same amount
+        // This keeps the user's view relative to the body unchanged
+        this.camera.position.add(movement);
+        this.controls.target.copy(bodyPosition);
+        
+        // Update the controls without disrupting user interaction
+        this.controls.update();
+      }
     }
   }
 
@@ -1279,3 +1557,80 @@ export default class App {
   }
 
 }
+
+// Global debug function for Jupiter system
+window.debugJupiterSystem = function() {
+    console.log('=== JUPITER SYSTEM DEBUG INFO ===');
+    
+    // Find Jupiter and its moons in the scene
+    const app = window.app;
+    if (!app) {
+        console.error('App not found on window');
+        return;
+    }
+    
+    const jupiter = app.jupiter;
+    const io = app.io;
+    const europa = app.europa;
+    const ganymede = app.ganymede;
+    const callisto = app.callisto;
+    
+    if (jupiter) {
+        console.log('Jupiter:');
+        console.log('  Radius (3D units):', jupiter.mesh.geometry.parameters.radius);
+        console.log('  Position:', jupiter.mesh.position);
+        console.log('  Config diameter:', jupiter.config?.DIAMETER_KM || CONFIG.JUPITER.DIAMETER_KM);
+        console.log('  Calculated radius:', jupiter.config?.RADIUS || CONFIG.JUPITER.RADIUS);
+    }
+    
+    const moons = [
+        { name: 'Io', obj: io },
+        { name: 'Europa', obj: europa },
+        { name: 'Ganymede', obj: ganymede },
+        { name: 'Callisto', obj: callisto }
+    ];
+    
+    moons.forEach(moon => {
+        if (moon.obj) {
+            console.log(`${moon.name}:`);
+            console.log('  Radius (3D units):', moon.obj.mesh.geometry.parameters.radius);
+            console.log('  Local position:', moon.obj.mesh.position);
+            
+            // Get world position by adding Jupiter's position
+            const worldPos = new THREE.Vector3();
+            moon.obj.mesh.getWorldPosition(worldPos);
+            console.log('  World position:', worldPos);
+            
+            // Distance from Jupiter center (world coordinates)
+            const jupiterWorldPos = new THREE.Vector3();
+            if (jupiter && jupiter.mesh) {
+                jupiter.mesh.getWorldPosition(jupiterWorldPos);
+            }
+            const distanceFromJupiter = worldPos.distanceTo(jupiterWorldPos);
+            console.log('  Distance from Jupiter center:', distanceFromJupiter);
+            
+            console.log('  Config diameter:', moon.obj.config?.DIAMETER_KM);
+            console.log('  Config orbit radius:', moon.obj.config?.ORBIT_RADIUS);
+            console.log('  Calculated radius:', moon.obj.config?.RADIUS);
+            
+            // Check if moon is inside Jupiter
+            const jupiterRadius = jupiter ? (jupiter.config?.RADIUS || CONFIG.JUPITER.RADIUS) : 0;
+            if (distanceFromJupiter < jupiterRadius) {
+                console.log(`  ⚠️  ${moon.name} is INSIDE Jupiter! (${distanceFromJupiter} < ${jupiterRadius})`);
+            } else {
+                console.log(`  ✅  ${moon.name} is outside Jupiter (${distanceFromJupiter} > ${jupiterRadius})`);
+            }
+        }
+    });
+    
+    // Scale factor analysis
+    console.log('\n=== SCALE FACTOR ANALYSIS ===');
+    console.log('CONFIG.SCALE_FACTOR:', CONFIG.SCALE_FACTOR);
+    
+    // Real vs scaled ratios
+    console.log('\n=== REAL vs SCALED RATIOS ===');
+    console.log('Real Jupiter diameter: 142,984 km');
+    console.log('Real Io diameter: 3,643 km');
+    console.log('Real Io/Jupiter ratio: ', (3643 / 142984).toFixed(4));
+    console.log('Scaled Io/Jupiter ratio: ', ((3643 * 10) / (142984 * 10)).toFixed(4));
+};

@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import LightingUtils from '../utils/LightingUtils.js';
+import { AnimationUtils } from '../utils/AnimationUtils.js';
 
 /**
  * Base class for all celestial bodies in the solar system
@@ -22,6 +23,11 @@ export class CelestialBody {
         this.orbitalRadius = orbitalRadius;
         this.orbitalInclination = orbitalInclination;
         this.orbitLine = null;
+        
+        // Animation properties
+        this.previousAngle = 0;
+        this.targetAngle = 0;
+        this.animationSmoothing = 0.1;
 
     }
 
@@ -58,7 +64,7 @@ export class CelestialBody {
             }
             material = LightingUtils.createNaturalLightingMaterial(materialParams);
         } else {
-            geometry = new THREE.SphereGeometry(this.radius, 32, 32);
+            geometry = new THREE.SphereGeometry(this.radius, 64, 64);
             const isEmissive = options.isEmissive || false;
             const materialParams = {
                 map: options.map,
@@ -97,10 +103,25 @@ export class CelestialBody {
     }
 
     /**
-     * Update method for animations, rotations, etc.
+     * Base update method for animations, rotations, etc.
+     * This should be overridden by child classes for specific behavior
      * @param {number} deltaTime - Time since last frame in seconds
+     * @param {boolean} animate - Whether to animate orbital motion
      */
-    update(deltaTime) {
+    update(deltaTime, animate = true) {
+        // Default implementation - child classes should override this
+        if (animate && this.orbitalSpeed > 0) {
+            this.orbitAngle += this.orbitalSpeed * deltaTime;
+            if (this.orbitAngle > Math.PI * 2) {
+                this.orbitAngle -= Math.PI * 2;
+            }
+        }
+
+        if (animate && this.rotationSpeed > 0 && this.mesh) {
+            this.mesh.rotation.y += this.rotationSpeed * deltaTime;
+        }
+
+        this.updatePosition();
     }
 
     /**
@@ -166,9 +187,9 @@ export class CelestialBody {
             return this.orbitLine;
         }
 
-        // Create orbit geometry
+        // Create orbit geometry with higher resolution and proper closure
         const orbitPoints = [];
-        const segments = 128;
+        const segments = 256; // Increased for smoother orbits
         
         for (let i = 0; i <= segments; i++) {
             const angle = (i / segments) * Math.PI * 2;
@@ -182,14 +203,18 @@ export class CelestialBody {
             orbitPoints.push(new THREE.Vector3(x, y, z));
         }
 
+        // Remove the last point to avoid duplication in LineLoop
+        orbitPoints.pop();
+        
         const orbitGeometry = new THREE.BufferGeometry().setFromPoints(orbitPoints);
         const orbitMaterial = new THREE.LineBasicMaterial({ 
             color: color,
             transparent: true,
-            opacity: 0.8
+            opacity: 0.6,
+            linewidth: 2
         });
 
-        this.orbitLine = new THREE.Line(orbitGeometry, orbitMaterial);
+        this.orbitLine = new THREE.LineLoop(orbitGeometry, orbitMaterial);
         this.orbitLine.name = `${this.name}_orbit`;
         
         // For moons, orbit is positioned at (0,0,0) relative to parent since parent group handles positioning

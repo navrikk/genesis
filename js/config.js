@@ -4,7 +4,16 @@ import * as THREE from 'three';
 const CONFIG = {
     SCALE_FACTOR: 100000,
     ANIMATION: {
-        enabled: true
+        enabled: true,
+        timeScale: 1.0, // Speed multiplier for time passage (-10,000,000x to 10,000,000x)
+        smoothness: 60 // Target FPS for smooth animation
+    },
+    TIME: {
+        currentDate: new Date(), // Current simulation time
+        isLive: true, // Whether time follows real time
+        minYear: 1800,
+        maxYear: 2200,
+        speedRange: { min: -10000000, max: 10000000 } // Speed multiplier range
     },
     CAMERA: {
         FOV: 45,
@@ -19,7 +28,7 @@ const CONFIG = {
         ROTATION_PERIOD_DAYS: 27,
         COLOR: 0xffdd00,
         get RADIUS() { return (this.DIAMETER_KM / 2) / CONFIG.SCALE_FACTOR; },
-        get ROTATION_SPEED() { return (2 * Math.PI) / (this.ROTATION_PERIOD_DAYS * 24 * 60 * 0.1); }
+        get ROTATION_SPEED() { return (2 * Math.PI) / (this.ROTATION_PERIOD_DAYS * 24 * 3600); } // seconds
     },
     MERCURY: {
         NAME: 'Mercury',
@@ -30,8 +39,8 @@ const CONFIG = {
         COLOR: 0xAA8866,
         get RADIUS() { return (this.DIAMETER_KM / 2) / CONFIG.SCALE_FACTOR; },
         get ORBIT_RADIUS() { return this.DISTANCE_FROM_SUN_KM / CONFIG.SCALE_FACTOR; },
-        get ORBIT_SPEED() { return (2 * Math.PI) / (this.ORBITAL_PERIOD_DAYS * 24 * 60 * 0.1); },
-        get ROTATION_SPEED() { return (2 * Math.PI) / (this.ROTATION_PERIOD_DAYS * 24 * 60 * 0.1); }
+        get ORBIT_SPEED() { return (2 * Math.PI) / (this.ORBITAL_PERIOD_DAYS * 24 * 3600); }, // seconds
+        get ROTATION_SPEED() { return (2 * Math.PI) / (this.ROTATION_PERIOD_DAYS * 24 * 3600); } // seconds
     },
     VENUS: {
         NAME: 'Venus',
@@ -54,8 +63,8 @@ const CONFIG = {
         COLOR: 0x2E66FF,
         get RADIUS() { return (this.DIAMETER_KM / 2) / CONFIG.SCALE_FACTOR; },
         get ORBIT_RADIUS() { return this.DISTANCE_FROM_SUN_KM / CONFIG.SCALE_FACTOR; },
-        get ORBIT_SPEED() { return (2 * Math.PI) / (this.ORBITAL_PERIOD_DAYS * 24 * 60 * 0.1); },
-        get ROTATION_SPEED() { return (2 * Math.PI) / (this.ROTATION_PERIOD_DAYS * 24 * 60 * 0.1); }
+        get ORBIT_SPEED() { return (2 * Math.PI) / (this.ORBITAL_PERIOD_DAYS * 24 * 3600); }, // seconds
+        get ROTATION_SPEED() { return (2 * Math.PI) / (this.ROTATION_PERIOD_DAYS * 24 * 3600); } // seconds
     },
     MARS: {
         NAME: 'Mars',
@@ -66,8 +75,8 @@ const CONFIG = {
         COLOR: 0xE27B58,
         get RADIUS() { return (this.DIAMETER_KM / 2) / CONFIG.SCALE_FACTOR; },
         get ORBIT_RADIUS() { return this.DISTANCE_FROM_SUN_KM / CONFIG.SCALE_FACTOR; },
-        get ORBIT_SPEED() { return (2 * Math.PI) / (this.ORBITAL_PERIOD_DAYS * 24 * 60 * 0.1); },
-        get ROTATION_SPEED() { return (2 * Math.PI) / (this.ROTATION_PERIOD_DAYS * 24 * 60 * 0.1); }
+        get ORBIT_SPEED() { return (2 * Math.PI) / (this.ORBITAL_PERIOD_DAYS * 24 * 3600); }, // seconds
+        get ROTATION_SPEED() { return (2 * Math.PI) / (this.ROTATION_PERIOD_DAYS * 24 * 3600); } // seconds
     },
     MOON: {
         NAME: 'Moon',
@@ -78,8 +87,8 @@ const CONFIG = {
         COLOR: 0xCCCCCC,
         get RADIUS() { return (this.DIAMETER_KM / 2) / CONFIG.SCALE_FACTOR; },
         get ORBIT_RADIUS() { return this.DISTANCE_FROM_PARENT_KM / CONFIG.SCALE_FACTOR; },
-        get ORBIT_SPEED() { return (2 * Math.PI) / (this.ORBITAL_PERIOD_DAYS * 24 * 60 * 0.1); },
-        get ROTATION_SPEED() { return (2 * Math.PI) / (this.ROTATION_PERIOD_DAYS * 24 * 60 * 0.1); }
+        get ORBIT_SPEED() { return (2 * Math.PI) / (this.ORBITAL_PERIOD_DAYS * 24 * 3600); }, // seconds
+        get ROTATION_SPEED() { return (2 * Math.PI) / (this.ROTATION_PERIOD_DAYS * 24 * 3600); } // seconds
     },
     PHOBOS: {
         NAME: 'Phobos',
@@ -90,8 +99,8 @@ const CONFIG = {
         COLOR: 0x635a55,
         get RADIUS() { return (this.DIAMETER_KM / 2) / CONFIG.SCALE_FACTOR; },
         get ORBIT_RADIUS() { return this.DISTANCE_FROM_PARENT_KM / CONFIG.SCALE_FACTOR; },
-        get ORBIT_SPEED() { return (2 * Math.PI) / (this.ORBITAL_PERIOD_DAYS * 24 * 60 * 0.1); },
-        get ROTATION_SPEED() { return (2 * Math.PI) / (this.ROTATION_PERIOD_DAYS * 24 * 60 * 0.1); }
+        get ORBIT_SPEED() { return (2 * Math.PI) / (this.ORBITAL_PERIOD_DAYS * 24 * 3600); }, // seconds
+        get ROTATION_SPEED() { return (2 * Math.PI) / (this.ROTATION_PERIOD_DAYS * 24 * 3600); } // seconds
     },
     DEIMOS: {
         NAME: 'Deimos',
@@ -102,8 +111,8 @@ const CONFIG = {
         COLOR: 0x847e75,
         get RADIUS() { return (this.DIAMETER_KM / 2) / CONFIG.SCALE_FACTOR; },
         get ORBIT_RADIUS() { return this.DISTANCE_FROM_PARENT_KM / CONFIG.SCALE_FACTOR; },
-        get ORBIT_SPEED() { return (2 * Math.PI) / (this.ORBITAL_PERIOD_DAYS * 24 * 60 * 0.1); },
-        get ROTATION_SPEED() { return (2 * Math.PI) / (this.ROTATION_PERIOD_DAYS * 24 * 60 * 0.1); }
+        get ORBIT_SPEED() { return (2 * Math.PI) / (this.ORBITAL_PERIOD_DAYS * 24 * 3600); }, // seconds
+        get ROTATION_SPEED() { return (2 * Math.PI) / (this.ROTATION_PERIOD_DAYS * 24 * 3600); } // seconds
     },
     CERES: {
         NAME: 'Ceres',
@@ -114,8 +123,8 @@ const CONFIG = {
         COLOR: 0x7a6f5f,
         get RADIUS() { return (this.DIAMETER_KM / 2) / CONFIG.SCALE_FACTOR; },
         get ORBIT_RADIUS() { return this.DISTANCE_FROM_SUN_KM / CONFIG.SCALE_FACTOR; },
-        get ORBIT_SPEED() { return (2 * Math.PI) / (this.ORBITAL_PERIOD_DAYS * 24 * 60 * 0.1); },
-        get ROTATION_SPEED() { return (2 * Math.PI) / (this.ROTATION_PERIOD_DAYS * 24 * 60 * 0.1); }
+        get ORBIT_SPEED() { return (2 * Math.PI) / (this.ORBITAL_PERIOD_DAYS * 24 * 3600); }, // seconds
+        get ROTATION_SPEED() { return (2 * Math.PI) / (this.ROTATION_PERIOD_DAYS * 24 * 3600); } // seconds
     },
     VESTA: {
         NAME: 'Vesta',
@@ -126,8 +135,8 @@ const CONFIG = {
         COLOR: 0x8a7f72,
         get RADIUS() { return (this.DIAMETER_KM / 2) / CONFIG.SCALE_FACTOR; },
         get ORBIT_RADIUS() { return this.DISTANCE_FROM_SUN_KM / CONFIG.SCALE_FACTOR; },
-        get ORBIT_SPEED() { return (2 * Math.PI) / (this.ORBITAL_PERIOD_DAYS * 24 * 60 * 0.1); },
-        get ROTATION_SPEED() { return (2 * Math.PI) / (this.ROTATION_PERIOD_DAYS * 24 * 60 * 0.1); }
+        get ORBIT_SPEED() { return (2 * Math.PI) / (this.ORBITAL_PERIOD_DAYS * 24 * 3600); }, // seconds
+        get ROTATION_SPEED() { return (2 * Math.PI) / (this.ROTATION_PERIOD_DAYS * 24 * 3600); } // seconds
     },
     PALLAS: {
         NAME: 'Pallas',
@@ -138,20 +147,68 @@ const CONFIG = {
         COLOR: 0x6e6458,
         get RADIUS() { return (this.DIAMETER_KM / 2) / CONFIG.SCALE_FACTOR; },
         get ORBIT_RADIUS() { return this.DISTANCE_FROM_SUN_KM / CONFIG.SCALE_FACTOR; },
-        get ORBIT_SPEED() { return (2 * Math.PI) / (this.ORBITAL_PERIOD_DAYS * 24 * 60 * 0.1); },
-        get ROTATION_SPEED() { return (2 * Math.PI) / (this.ROTATION_PERIOD_DAYS * 24 * 60 * 0.1); }
+        get ORBIT_SPEED() { return (2 * Math.PI) / (this.ORBITAL_PERIOD_DAYS * 24 * 3600); }, // seconds
+        get ROTATION_SPEED() { return (2 * Math.PI) / (this.ROTATION_PERIOD_DAYS * 24 * 3600); } // seconds
     },
     JUPITER: {
         NAME: 'Jupiter',
-        DIAMETER_KM: 142984 * 8, // Accurate diameter with scaling for visibility
+        DIAMETER_KM: 142984 * 10, // Increased scaling for better visibility
         DISTANCE_FROM_SUN_KM: 778500000,
         ORBITAL_PERIOD_DAYS: 4333, // 11.86 years
         ROTATION_PERIOD_DAYS: 0.41, // ~9.9 hours
         COLOR: 0xD8CA9D,
         get RADIUS() { return (this.DIAMETER_KM / 2) / CONFIG.SCALE_FACTOR; },
         get ORBIT_RADIUS() { return this.DISTANCE_FROM_SUN_KM / CONFIG.SCALE_FACTOR; },
-        get ORBIT_SPEED() { return (2 * Math.PI) / (this.ORBITAL_PERIOD_DAYS * 24 * 60 * 0.1); },
-        get ROTATION_SPEED() { return (2 * Math.PI) / (this.ROTATION_PERIOD_DAYS * 24 * 60 * 0.1); }
+        get ORBIT_SPEED() { return (2 * Math.PI) / (this.ORBITAL_PERIOD_DAYS * 24 * 3600); }, // seconds
+        get ROTATION_SPEED() { return (2 * Math.PI) / (this.ROTATION_PERIOD_DAYS * 24 * 3600); } // seconds
+    },
+    IO: {
+        NAME: 'Io',
+        DIAMETER_KM: 3643 * 10, // Reduced scaling to maintain proper ratio
+        DISTANCE_FROM_PARENT_KM: 421700 * 2.5, // Safe distance from Jupiter surface
+        ORBITAL_PERIOD_DAYS: 1.77,
+        ROTATION_PERIOD_DAYS: 1.77, // Tidally locked
+        COLOR: 0xFFDB58,
+        get RADIUS() { return (this.DIAMETER_KM / 2) / CONFIG.SCALE_FACTOR; },
+        get ORBIT_RADIUS() { return this.DISTANCE_FROM_PARENT_KM / CONFIG.SCALE_FACTOR; },
+        get ORBIT_SPEED() { return (2 * Math.PI) / (this.ORBITAL_PERIOD_DAYS * 24 * 3600); }, // seconds
+        get ROTATION_SPEED() { return (2 * Math.PI) / (this.ROTATION_PERIOD_DAYS * 24 * 3600); } // seconds
+    },
+    EUROPA: {
+        NAME: 'Europa',
+        DIAMETER_KM: 3122 * 10, // Reduced scaling to maintain proper ratio
+        DISTANCE_FROM_PARENT_KM: 671034 * 2.0, // Proportional distance
+        ORBITAL_PERIOD_DAYS: 3.55,
+        ROTATION_PERIOD_DAYS: 3.55,
+        COLOR: 0xB8D4E3,
+        get RADIUS() { return (this.DIAMETER_KM / 2) / CONFIG.SCALE_FACTOR; },
+        get ORBIT_RADIUS() { return this.DISTANCE_FROM_PARENT_KM / CONFIG.SCALE_FACTOR; },
+        get ORBIT_SPEED() { return (2 * Math.PI) / (this.ORBITAL_PERIOD_DAYS * 24 * 3600); }, // seconds
+        get ROTATION_SPEED() { return (2 * Math.PI) / (this.ROTATION_PERIOD_DAYS * 24 * 3600); } // seconds
+    },
+    GANYMEDE: {
+        NAME: 'Ganymede',
+        DIAMETER_KM: 5268 * 10, // Reduced scaling to maintain proper ratio
+        DISTANCE_FROM_PARENT_KM: 1070412 * 1.5, // Proportional distance
+        ORBITAL_PERIOD_DAYS: 7.15,
+        ROTATION_PERIOD_DAYS: 7.15,
+        COLOR: 0x8C7853,
+        get RADIUS() { return (this.DIAMETER_KM / 2) / CONFIG.SCALE_FACTOR; },
+        get ORBIT_RADIUS() { return this.DISTANCE_FROM_PARENT_KM / CONFIG.SCALE_FACTOR; },
+        get ORBIT_SPEED() { return (2 * Math.PI) / (this.ORBITAL_PERIOD_DAYS * 24 * 3600); }, // seconds
+        get ROTATION_SPEED() { return (2 * Math.PI) / (this.ROTATION_PERIOD_DAYS * 24 * 3600); } // seconds
+    },
+    CALLISTO: {
+        NAME: 'Callisto',
+        DIAMETER_KM: 4821 * 10, // Reduced scaling to maintain proper ratio
+        DISTANCE_FROM_PARENT_KM: 1882709 * 1.0, // Keep realistic distance
+        ORBITAL_PERIOD_DAYS: 16.69,
+        ROTATION_PERIOD_DAYS: 16.69,
+        COLOR: 0x4A4A4A,
+        get RADIUS() { return (this.DIAMETER_KM / 2) / CONFIG.SCALE_FACTOR; },
+        get ORBIT_RADIUS() { return this.DISTANCE_FROM_PARENT_KM / CONFIG.SCALE_FACTOR; },
+        get ORBIT_SPEED() { return (2 * Math.PI) / (this.ORBITAL_PERIOD_DAYS * 24 * 3600); }, // seconds
+        get ROTATION_SPEED() { return (2 * Math.PI) / (this.ROTATION_PERIOD_DAYS * 24 * 3600); } // seconds
     },
     HYGIEA: {
         NAME: 'Hygiea',
@@ -162,8 +219,8 @@ const CONFIG = {
         COLOR: 0x5c5148,
         get RADIUS() { return (this.DIAMETER_KM / 2) / CONFIG.SCALE_FACTOR; },
         get ORBIT_RADIUS() { return this.DISTANCE_FROM_SUN_KM / CONFIG.SCALE_FACTOR; },
-        get ORBIT_SPEED() { return (2 * Math.PI) / (this.ORBITAL_PERIOD_DAYS * 24 * 60 * 0.1); },
-        get ROTATION_SPEED() { return (2 * Math.PI) / (this.ROTATION_PERIOD_DAYS * 24 * 60 * 0.1); }
+        get ORBIT_SPEED() { return (2 * Math.PI) / (this.ORBITAL_PERIOD_DAYS * 24 * 3600); }, // seconds
+        get ROTATION_SPEED() { return (2 * Math.PI) / (this.ROTATION_PERIOD_DAYS * 24 * 3600); } // seconds
     },
     STARFIELD: {
         COUNT: 5000,
