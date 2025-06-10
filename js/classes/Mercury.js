@@ -30,8 +30,7 @@ export class Mercury extends CelestialBody {
 
     createMesh() {
         const textureLoader = new THREE.TextureLoader();
-        // Use local high-resolution Mercury texture with enhanced properties
-        const mercuryTexture = textureLoader.load('/textures/mercury_8k.jpg',
+        const mercuryTexture = textureLoader.load('/textures/mercury/mercury_8k.jpg',
             (texture) => {
                 texture.anisotropy = 16;
                 texture.colorSpace = THREE.SRGBColorSpace;
@@ -46,7 +45,7 @@ export class Mercury extends CelestialBody {
             bumpScale: 0.01,
             shininess: 1,
             specular: new THREE.Color(0x111111),
-            baseColor: new THREE.Color(0x444444)
+            baseColor: new THREE.Color(0xffffff)
         });
     }
 

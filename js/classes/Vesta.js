@@ -31,7 +31,7 @@ export class Vesta extends CelestialBody {
     createMesh() {
         const textureLoader = new THREE.TextureLoader();
         // Use Vesta texture with enhanced properties
-        const vestaTexture = textureLoader.load('/textures/vesta_texture.jpg',
+        const vestaTexture = textureLoader.load('/textures/asteroids/vesta_texture.jpg',
             (texture) => {
                 texture.anisotropy = 16;
                 texture.colorSpace = THREE.SRGBColorSpace;
@@ -50,8 +50,8 @@ export class Vesta extends CelestialBody {
             bumpMap: vestaTexture,
             bumpScale: 0.008,
             shininess: 2,
-            specular: new THREE.Color(0x222222),
-            baseColor: new THREE.Color(0x8a7f72)
+            specular: new THREE.Color(0x444444),
+            baseColor: new THREE.Color(0xffffff)
         }, geometry);
     }
 

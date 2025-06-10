@@ -28,8 +28,7 @@ export class Earth extends CelestialBody {
     
     createMesh() {
         const textureLoader = new THREE.TextureLoader();
-        // Use local high-resolution textures with enhanced material properties
-        const earthDayTexture = textureLoader.load('/textures/earth_daymap_8k.jpg',
+        const earthDayTexture = textureLoader.load('/textures/earth/earth_daymap_8k.jpg',
             (texture) => {
                 texture.anisotropy = 16;
                 texture.colorSpace = THREE.SRGBColorSpace;
@@ -38,7 +37,7 @@ export class Earth extends CelestialBody {
             (err) => { console.error(`Earth: Error loading texture:`, err); }
         );
         
-        const earthCloudsTexture = textureLoader.load('/textures/earth_clouds_8k.jpg',
+        const earthCloudsTexture = textureLoader.load('/textures/earth/earth_clouds_8k.jpg',
             (texture) => {
                 texture.anisotropy = 16;
             },
@@ -51,8 +50,9 @@ export class Earth extends CelestialBody {
             map: earthDayTexture,
             bumpMap: earthDayTexture,
             bumpScale: 0.001,
-            shininess: 100,
-            specular: new THREE.Color(0x1a1a1a)
+            shininess: 0.3,
+            specular: new THREE.Color(0x111111),
+            baseColor: new THREE.Color(0xffffff)
         });
 
         const cloudsGeometry = new THREE.SphereGeometry(this.radius * 1.01, 64, 64);
@@ -100,7 +100,6 @@ export class Earth extends CelestialBody {
 
         this.updatePosition();
 
-        // Update clouds layer rotation if it exists
         if (this.cloudsMesh && animate) {
             this.cloudsMesh.rotation.y += this.rotationSpeed * deltaTime * 1.2;
         }

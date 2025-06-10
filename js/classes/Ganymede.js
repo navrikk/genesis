@@ -30,8 +30,7 @@ export class Ganymede extends CelestialBody {
     
     createMesh() {
         const textureLoader = new THREE.TextureLoader();
-        // Use local high-resolution Ganymede texture
-        const ganymedeTexture = textureLoader.load('/textures/ganymede_8k.jpg?v=' + Date.now(),
+        const ganymedeTexture = textureLoader.load('/textures/jupiter/ganymede/ganymede_8k.jpg?v=' + Date.now(),
             (texture) => {
                 texture.anisotropy = 16;
                 texture.colorSpace = THREE.SRGBColorSpace;
@@ -50,8 +49,9 @@ export class Ganymede extends CelestialBody {
             map: ganymedeTexture,
             bumpMap: ganymedeTexture,
             bumpScale: 0.015, // Mixed terrain features
-            shininess: 5,
-            specular: new THREE.Color(0x333333)
+            shininess: 0.3,
+            specular: new THREE.Color(0x111111),
+            baseColor: new THREE.Color(0xffffff)
         });
     }
 

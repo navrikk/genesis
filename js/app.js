@@ -5,7 +5,7 @@ import { RenderPass } from "three/addons/postprocessing/RenderPass.js";
 import { UnrealBloomPass } from "three/addons/postprocessing/UnrealBloomPass.js";
 
 import CONFIG from "./config.js";
-import { isWebGLAvailable, getWebGLDiagnostics } from "./utils/webgl-check.js";
+import { isWebGLAvailable } from "./utils/webgl-check.js";
 import { SolarSystem } from "./classes/SolarSystem.js";
 import { Sun } from "./classes/Sun.js";
 import { Mercury } from "./classes/Mercury.js";
@@ -16,6 +16,7 @@ import { Mars } from "./classes/Mars.js";
 import { Phobos } from "./classes/Phobos.js";
 import { Deimos } from "./classes/Deimos.js";
 import { Jupiter } from "./classes/Jupiter.js";
+import { Saturn } from "./classes/Saturn.js";
 import { Io } from "./classes/Io.js";
 import { Europa } from "./classes/Europa.js";
 import { Ganymede } from "./classes/Ganymede.js";
@@ -33,17 +34,14 @@ import { getBodyData } from "./utils/CelestialBodyData.js";
  */
 export default class App {
   constructor() {
-    // Check if WebGL is available
     const webGLAvailable = isWebGLAvailable();
     
     if (!webGLAvailable) {
-      // Show WebGL compatibility error
       document.getElementById("webgl-compatibility").style.display = "flex";
       document.getElementById("loadingScreen").style.display = "none";
       console.error("WebGL is not supported or available.");
       return;
     } else {
-      // Hide WebGL compatibility error
       document.getElementById("webgl-compatibility").style.display = "none";
     }
 
@@ -59,7 +57,7 @@ export default class App {
     this.renderer.shadowMap.enabled = true;
     this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     this.controls = null;
-    this.solarSystem = null; // Will be initialized after solarSystemGroup is created
+    this.solarSystem = null;
     this.starfield = null;
     this.milkyWay = null;
     this.clock = new THREE.Clock();
@@ -71,7 +69,7 @@ export default class App {
 
     this.focusedBody = null;
     this.currentAnimation = null;
-    this.isSimulationPaused = false; // Flag to control simulation updates
+    this.isSimulationPaused = false;
 
     // Info panel state
     this.selectedBody = null;
@@ -180,19 +178,17 @@ export default class App {
   }
 
   init() {
-    // Renderer setup
     this.renderer.setSize(window.innerWidth, window.innerHeight);
     this.renderer.setPixelRatio(window.devicePixelRatio);
         this.renderer.outputColorSpace = THREE.SRGBColorSpace;
     this.container.appendChild(this.renderer.domElement);
 
-    // Camera setup
     this.camera.position.copy(CONFIG.CAMERA.INITIAL_POSITION);
     this.camera.lookAt(CONFIG.CAMERA.LOOK_AT);
     this.scene.add(this.camera);
 
     // Very minimal ambient light to prevent complete darkness
-    const ambientLight = new THREE.AmbientLight(0x404040, 0.05);
+    const ambientLight = new THREE.AmbientLight(0x404040, 0.3);
     this.scene.add(ambientLight);
 
     // Main sunlight (strong directional light from the Sun's position)
@@ -206,16 +202,13 @@ export default class App {
     sunLight.shadow.bias = -0.001; // Reduce shadow artifacts
     this.scene.add(sunLight);
 
-    // OrbitControls setup
     this.controls = new OrbitControls(this.camera, this.renderer.domElement);
-    this.controls.update(); // Update OrbitControls
+    this.controls.update();
     this.controls.enableDamping = true;
     this.controls.dampingFactor = 0.05;
     this.controls.screenSpacePanning = false;
     this.controls.minDistance = 0.00001; // Significantly reduced for extreme close-ups on tiny objects
     this.controls.maxDistance = CONFIG.STARFIELD.RADIUS / 10;
-
-    // No special user interaction tracking needed anymore
 
     // Create a group for the solar system that will be initially invisible
     this.solarSystemGroup = new THREE.Group();
@@ -236,7 +229,6 @@ export default class App {
       if (sun.mesh.geometry) this.geometriesToDispose.push(sun.mesh.geometry);
     }
 
-    // Mercury will orbit the origin by default (Sun's assumed position)
     const mercury = new Mercury(this.solarSystemGroup);
     this.solarSystem.addBody(mercury);
     if (mercury.mesh) {
@@ -339,6 +331,19 @@ export default class App {
       if (this.callisto.mesh.geometry) this.geometriesToDispose.push(this.callisto.mesh.geometry);
     }
 
+    // Create Saturn
+    this.saturn = new Saturn(this.solarSystemGroup);
+    this.solarSystem.addBody(this.saturn);
+    if (this.saturn.mesh) {
+      if (this.saturn.mesh.material) this.materialsToDispose.push(this.saturn.mesh.material);
+      if (this.saturn.mesh.geometry) this.geometriesToDispose.push(this.saturn.mesh.geometry);
+    }
+    // Dispose Saturn rings materials
+    if (this.saturn.rings) {
+      if (this.saturn.rings.material) this.materialsToDispose.push(this.saturn.rings.material);
+      if (this.saturn.rings.geometry) this.geometriesToDispose.push(this.saturn.rings.geometry);
+    }
+
     // Create Ceres (dwarf planet in asteroid belt)
     const ceres = new Ceres(this.solarSystemGroup);
     this.solarSystem.addBody(ceres);
@@ -417,7 +422,7 @@ export default class App {
 
     // Check if loading is already complete
     this.checkLoadingComplete();
-  } // End of init()
+  }
 
 
   setupUIControls() {
@@ -590,6 +595,10 @@ export default class App {
           { name: "Ganymede", icon: "fa-circle" },
           { name: "Callisto", icon: "fa-circle" }
         ]
+      },
+      { 
+        name: "Saturn", 
+        icon: "fa-ring"
       },
     ];
 
@@ -815,7 +824,14 @@ export default class App {
     if (this.playPauseButton) {
       this.playPauseButton.addEventListener('click', () => {
         this.isSimulationPaused = !this.isSimulationPaused;
+        
+        // When paused, deactivate live mode
+        if (this.isSimulationPaused) {
+          this.isLiveTime = false;
+        }
+        
         this.updatePlayPauseButtonState();
+        this.updateLiveButtonState();
         this.updateDateTimeDisplay();
       });
     }
@@ -827,10 +843,13 @@ export default class App {
       this.liveButton.addEventListener('click', () => {
         this.isLiveTime = !this.isLiveTime;
         if (this.isLiveTime) {
+          // Resume simulation when activating live mode
+          this.isSimulationPaused = false;
+          
           this.simulationTime = new Date();
-          this.timeScaleSlider.value = 0; // Index 0 in the map corresponds to 1x speed
+          this.timeScaleSlider.value = 0; // Index 0 in the map corresponds to 1x (real-time)
           CONFIG.ANIMATION.timeScale = 1;
-          this.timeScaleValue.textContent = '1x';
+          this.timeScaleValue.textContent = this.formatTimeUnit(1, true);
           
           // Update custom slider position
           const customSlider = document.getElementById('customTimeSlider');
@@ -847,6 +866,7 @@ export default class App {
           this.resetCelestialBodiesPosition();
         }
         this.updateLiveButtonState();
+        this.updatePlayPauseButtonState();
         this.updateDateTimeDisplay();
       });
     }
@@ -865,7 +885,7 @@ export default class App {
     
     // Hide all controls initially using existing implementation
     this.hideAllControls();
-  } // End of setupUIControls
+  }
 
   hideInfoPanel() {
     if (this.infoPanel) {
@@ -882,13 +902,6 @@ export default class App {
     }
   }
 
-  /**
-   * Hides the info panel and shows the 'Show Details' button if a body is selected
-   */
-  hideInfoPanel() {
-    this.infoPanel.classList.add("hidden");
-
-  }
 
   hideAllControls() {
     if (this.bottomControlsPanel) {
@@ -964,6 +977,11 @@ export default class App {
       this.liveButton.classList.remove('active');
       this.liveButton.innerHTML = '<span class="live-dot"></span> LIVE';
     }
+    
+    // Update time scale display to hide/show based on live mode
+    if (this.timeScaleValue) {
+      this.timeScaleValue.textContent = this.formatTimeUnit(CONFIG.ANIMATION.timeScale, this.isLiveTime);
+    }
   }
 
   updateDateTimeDisplay() {
@@ -1008,7 +1026,8 @@ export default class App {
         datetimeStatus.textContent = 'PAUSED';
         datetimeStatus.classList.add('paused');
       } else {
-        datetimeStatus.textContent = `${CONFIG.ANIMATION.timeScale}x SPEED`;
+        const statusText = this.formatTimeUnit(CONFIG.ANIMATION.timeScale, this.isLiveTime);
+        datetimeStatus.textContent = statusText ? statusText.toUpperCase() : "";
       }
     }
   }
@@ -1030,6 +1049,9 @@ export default class App {
           } catch (error) {
             console.warn(`Could not reset position for ${body.name}:`, error);
           }
+        } else if (body.parentBody) {
+          // For moons, reset to initial orbital position to prevent jumping
+          body.orbitAngle = body.orbitAngle || 0;
         }
         // Update position immediately
         body.updatePosition();
@@ -1045,10 +1067,10 @@ export default class App {
         // In live mode, follow real time
         this.simulationTime = new Date();
       } else {
-        // In simulation mode, advance time based on speed
-        // Scale factor: 1x = real time, 10x = 10 times faster, -1x = backward real time
-        const timeMultiplier = CONFIG.ANIMATION.timeScale; // Direct multiplier
-        const timeAdvancement = deltaTime * 1000 * timeMultiplier; // milliseconds
+        // In simulation mode, advance time based on time unit
+        // Time unit: 1x = 1 second per second (real-time), 10x = 10 seconds per second, -1x = -1 second per second (reverse)
+        const timeUnit = CONFIG.ANIMATION.timeScale; // seconds per second
+        const timeAdvancement = deltaTime * 1000 * timeUnit; // milliseconds
         
         this.simulationTime.setTime(this.simulationTime.getTime() + timeAdvancement);
         
@@ -1073,13 +1095,47 @@ export default class App {
   }
 
   /**
+   * Convert time unit to intuitive display text
+   * @param {number} timeUnit - Time unit (seconds per second)
+   * @param {boolean} isLiveMode - Whether live mode is active
+   * @returns {string} Intuitive display text
+   */
+  formatTimeUnit(timeUnit, isLiveMode = false) {
+    const absValue = Math.abs(timeUnit);
+    const isReverse = timeUnit < 0;
+    const reversePrefix = isReverse ? "← " : "";
+    
+    if (absValue === 1) {
+      // Always show speed display to prevent layout jumping
+      return isReverse ? "← 1 sec/s" : "1 sec/s";
+    } else if (absValue < 60) {
+      return `${reversePrefix}${absValue} sec/sec`;
+    } else if (absValue < 3600) {
+      const minutes = Math.round(absValue / 60);
+      return `${reversePrefix}${minutes} min/sec`;
+    } else if (absValue < 86400) {
+      const hours = Math.round(absValue / 3600);
+      return `${reversePrefix}${hours} hr/sec`;
+    } else if (absValue < 604800) {
+      const days = Math.round(absValue / 86400);
+      return `${reversePrefix}${days} day/sec`;
+    } else if (absValue < 31536000) {
+      const weeks = Math.round(absValue / 604800);
+      return `${reversePrefix}${weeks} wk/sec`;
+    } else {
+      const years = Math.round(absValue / 31536000);
+      return `${reversePrefix}${years} yr/sec`;
+    }
+  }
+
+  /**
    * Setup custom time scale slider
    */
   setupCustomSlider() {
-    // Define fixed multiplier positions for better UX
+    // Define fixed time unit positions for better UX
     const timeScaleMap = [
       -1000000, -100000, -10000, -1000, -100, -10,       // Negative values (reverse time)
-      1,                                                  // Center at 1x (real time)
+      1,                                                  // Center at 1x (1 second per second - real time)
       10, 100, 1000, 10000, 100000, 1000000             // Positive values (forward time)
     ];
     
@@ -1105,17 +1161,15 @@ export default class App {
       // Update hidden input
       hiddenInput.value = value;
       
-      // Update time scale
-      const actualTimeScale = timeScaleMap[value + 6];
-      CONFIG.ANIMATION.timeScale = actualTimeScale;
+      // Update time unit
+      const actualTimeUnit = timeScaleMap[value + 6];
+      CONFIG.ANIMATION.timeScale = actualTimeUnit;
       
-      // Format display value
-      const formattedValue = Math.abs(actualTimeScale).toLocaleString();
-      const sign = actualTimeScale < 0 ? '-' : '';
-      this.timeScaleValue.textContent = `${sign}${formattedValue}x`;
+      // Format display value with intuitive units
+      this.timeScaleValue.textContent = this.formatTimeUnit(actualTimeUnit, this.isLiveTime);
       
-      // Exit live mode if changed from 1x
-      if (this.isLiveTime && actualTimeScale !== 1) {
+      // Exit live mode if changed from 1x (real-time)
+      if (this.isLiveTime && actualTimeUnit !== 1) {
         this.isLiveTime = false;
         this.updateLiveButtonState();
         this.updateDateTimeDisplay();
@@ -1303,7 +1357,7 @@ export default class App {
         distance = body.radius * K_DEIMOS;
         distance = Math.max(
           distance,
-          body.radius * 0.05,
+          body.radius * 2,
           CONFIG.CAMERA.NEAR * 2,
         );
       } else {
@@ -1461,7 +1515,7 @@ export default class App {
     // Update simulation time
     this.updateSimulationTime(deltaTime);
 
-    // Update all celestial bodies with time scaling
+    // Update all celestial bodies with time unit scaling
     const scaledDeltaTime = deltaTime * CONFIG.ANIMATION.timeScale;
     const shouldAnimate = !this.isSimulationPaused && CONFIG.ANIMATION.enabled;
     
@@ -1527,7 +1581,9 @@ export default class App {
       const movement = bodyPosition.clone().sub(currentTarget);
       
       // Only update if there's significant movement to avoid jitter
-      if (movement.length() > 0.001) {
+      // Use smaller threshold for small bodies like Deimos to prevent accumulation jumping
+      const threshold = this.focusedBody.radius < 0.1 ? 0.0001 : 0.001;
+      if (movement.length() > threshold) {
         // Move both the camera and the target by the same amount
         // This keeps the user's view relative to the body unchanged
         this.camera.position.add(movement);

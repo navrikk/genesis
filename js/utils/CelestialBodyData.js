@@ -110,6 +110,15 @@ export const CELESTIAL_BODY_DATA = {
         rotationPeriod: '9.9 hours',
         description: 'Jupiter is the largest planet in the Solar System and the fifth planet from the Sun. It is a gas giant with a mass more than twice that of all other planets combined. Jupiter is composed primarily of hydrogen and helium and is known for its Great Red Spot, a giant anticyclonic storm.'
     },
+    Saturn: {
+        mass: '5.683 × 10^26 kg',
+        gravity: '10.44 m/s²',
+        temperature: '-178°C (average)',
+        orbitRadius: '1.432 billion km',
+        orbitPeriod: '29.46 years',
+        rotationPeriod: '10.7 hours',
+        description: 'Saturn is the sixth planet from the Sun and the second-largest in the Solar System. Known for its spectacular ring system made of ice and rock particles, Saturn is a gas giant composed mostly of hydrogen and helium. It has a very low density and would float in water. Saturn has 146 known moons, including Titan with its thick atmosphere and methane lakes, and Enceladus with its subsurface ocean. The planet features a unique hexagonal storm at its north pole.'
+    },
     Io: {
         mass: '8.9319 × 10^22 kg',
         gravity: '1.796 m/s²',

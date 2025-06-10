@@ -32,7 +32,7 @@ export class MilkyWay {
         const textureLoader = new THREE.TextureLoader();
 
         textureLoader.load(
-            '/textures/milkyway_eso_16k_processed.jpg',
+            '/textures/milkyway/milkyway_eso_16k_processed.jpg',
             (loadedTexture) => {
                 if (this.material.map) {
                     this.material.map.dispose();

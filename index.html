@@ -4,10 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Genesis</title>
-    <!-- Space-themed Favicon -->
     <link rel="icon" href="/favicon.svg?v=9" type="image/svg+xml">
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Lato:wght@400;700&family=Edu+SA+Beginner:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Lato:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="styles/main.css">
 </head>
@@ -16,7 +15,6 @@
     <div class="loader"></div>
     <h2 class="loading-title" id="loadingTitle">Assembling the Cosmos</h2>
     <p class="loading-subtitle" id="loadingSubtitle">Herding space cats into formation...</p>
-    <!-- Progress bar removed as requested -->
 </div>
 
 <script>
@@ -114,7 +112,6 @@
 
 
 <div id="controls">
-    <!-- Focus on Body button will be added via JavaScript at the top -->
     <button id="resetCameraButton" class="control-button control-tooltip" data-tooltip="Reset Camera">
         <i class="fas fa-home"></i>
     </button>
@@ -139,7 +136,6 @@
 </div>
 
 
-<!-- Bottom Center - Combined Time and Speed Controls -->
 <div id="timeControls" class="time-controls-center hidden">
     <button id="playPauseButton" class="time-button">
         <i class="fas fa-pause"></i>
@@ -153,7 +149,7 @@
     <div class="speed-control-section">
         <div class="slider-container">
             <div class="current-speed-display">
-                <span id="timeScaleValue">1x</span>
+                <span id="timeScaleValue"></span>
             </div>
             <div class="custom-slider" id="customTimeSlider">
                 <div class="slider-track-background"></div>
@@ -179,7 +175,6 @@
     </div>
 </div>
 
-<!-- Audio element for background soundtrack -->
 <audio id="soundtrack" loop>
     <source src="/audio/stay_in_orbit.mp3" type="audio/mp3">
     Your browser does not support the audio element.
@@ -200,7 +195,6 @@
     }
 </script>
 
-<!-- Load the main module script -->
 <script type="module" src="js/main.js"></script>
 
 </body>

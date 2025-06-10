@@ -30,8 +30,7 @@ export class Callisto extends CelestialBody {
     
     createMesh() {
         const textureLoader = new THREE.TextureLoader();
-        // Use local high-resolution Callisto texture
-        const callistoTexture = textureLoader.load('/textures/callisto_8k.jpg?v=' + Date.now(),
+        const callistoTexture = textureLoader.load('/textures/jupiter/callisto/callisto_8k.jpg?v=' + Date.now(),
             (texture) => {
                 texture.anisotropy = 16;
                 texture.colorSpace = THREE.SRGBColorSpace;
@@ -50,8 +49,9 @@ export class Callisto extends CelestialBody {
             map: callistoTexture,
             bumpMap: callistoTexture,
             bumpScale: 0.02, // Heavily cratered surface
-            shininess: 2, // Very dark surface
-            specular: new THREE.Color(0x111111)
+            shininess: 0.3,
+            specular: new THREE.Color(0x111111),
+            baseColor: new THREE.Color(0xffffff)
         });
     }
 

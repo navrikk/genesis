@@ -30,8 +30,7 @@ export class Jupiter extends CelestialBody {
     
     createMesh() {
         const textureLoader = new THREE.TextureLoader();
-        // Use local high-resolution Jupiter texture with enhanced properties
-        const jupiterTexture = textureLoader.load('/textures/jupiter_8k.jpg',
+        const jupiterTexture = textureLoader.load('/textures/jupiter/jupiter_8k.jpg',
             (texture) => {
                 texture.anisotropy = 16;
                 texture.colorSpace = THREE.SRGBColorSpace;
@@ -44,8 +43,9 @@ export class Jupiter extends CelestialBody {
             map: jupiterTexture,
             bumpMap: jupiterTexture,
             bumpScale: 0.005, // Subtle bump for gas giant appearance
-            shininess: 8,
-            specular: new THREE.Color(0x444444)
+            shininess: 0.3,
+            specular: new THREE.Color(0x111111),
+            baseColor: new THREE.Color(0xffffff)
         });
     }
 

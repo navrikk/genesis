@@ -39,18 +39,6 @@ export class SolarSystem {
         
     }
 
-    /**
-     * Remove a celestial body from the solar system by name
-     * @param {string} name - Name of the body to remove
-     */
-    removeBody(name) {
-        const bodyIndex = this.celestialBodies.findIndex(b => b.name === name);
-        if (bodyIndex !== -1) {
-            const body = this.celestialBodies[bodyIndex];
-            this.scene.remove(body.getObject());
-            this.celestialBodies.splice(bodyIndex, 1);
-        }
-    }
 
     /**
      * Update all celestial bodies
@@ -79,13 +67,6 @@ export class SolarSystem {
         return this.celestialBodies;
     }
     
-    /**
-     * Toggle animation state for all celestial bodies
-     * @param {boolean} enabled - Whether animation should be enabled
-     */
-    toggleAnimation(enabled) {
-        this.animationEnabled = enabled;
-    }
     
     /**
      * Setup global lighting for the entire scene
@@ -172,14 +153,6 @@ export class SolarSystem {
         });
     }
 
-    /**
-     * Create orbits for all existing bodies (useful for initialization)
-     */
-    createAllOrbits() {
-        this.celestialBodies.forEach(body => {
-            this.createOrbitForBody(body);
-        });
-    }
 
 
 }

@@ -34,8 +34,7 @@ export class Moon extends CelestialBody {
     
     createMesh() {
         const textureLoader = new THREE.TextureLoader();
-        // Use local high-resolution Moon texture with enhanced properties
-        const moonTexture = textureLoader.load('/textures/moon_8k.jpg',
+        const moonTexture = textureLoader.load('/textures/earth/moon_8k.jpg',
             (texture) => {
                 texture.anisotropy = 16;
                 texture.colorSpace = THREE.SRGBColorSpace;
@@ -48,8 +47,9 @@ export class Moon extends CelestialBody {
             map: moonTexture,
             bumpMap: moonTexture,
             bumpScale: 0.002,
-            emissive: new THREE.Color(0x111111),
-            emissiveIntensity: 0.1
+            shininess: 0.3,
+            specular: new THREE.Color(0x111111),
+            baseColor: new THREE.Color(0xffffff)
         });
     }
     

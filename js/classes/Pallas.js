@@ -31,7 +31,7 @@ export class Pallas extends CelestialBody {
     createMesh() {
         const textureLoader = new THREE.TextureLoader();
         // Use Pallas texture with enhanced properties
-        const pallasTexture = textureLoader.load('/textures/pallas_texture.jpg',
+        const pallasTexture = textureLoader.load('/textures/asteroids/pallas_texture.jpg',
             (texture) => {
                 texture.anisotropy = 16;
                 texture.colorSpace = THREE.SRGBColorSpace;
@@ -49,9 +49,9 @@ export class Pallas extends CelestialBody {
             map: pallasTexture,
             bumpMap: pallasTexture,
             bumpScale: 0.008,
-            shininess: 0.8,
-            specular: new THREE.Color(0x151515),
-            baseColor: new THREE.Color(0x7e6858)
+            shininess: 2,
+            specular: new THREE.Color(0x444444),
+            baseColor: new THREE.Color(0xffffff)
         }, geometry);
     }
 

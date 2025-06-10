@@ -31,7 +31,7 @@ export class Ceres extends CelestialBody {
     createMesh() {
         const textureLoader = new THREE.TextureLoader();
         // Use Ceres texture with enhanced properties
-        const ceresTexture = textureLoader.load('/textures/ceres_texture.jpg',
+        const ceresTexture = textureLoader.load('/textures/asteroids/ceres_texture.jpg',
             (texture) => {
                 texture.anisotropy = 16;
                 texture.colorSpace = THREE.SRGBColorSpace;
@@ -44,9 +44,9 @@ export class Ceres extends CelestialBody {
             map: ceresTexture,
             bumpMap: ceresTexture,
             bumpScale: 0.003,
-            shininess: 0.3,
-            specular: new THREE.Color(0x0f0f0f),
-            baseColor: new THREE.Color(0x5a553f),
+            shininess: 2,
+            specular: new THREE.Color(0x444444),
+            baseColor: new THREE.Color(0xffffff),
             isEmissive: false
         });
     }

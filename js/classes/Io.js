@@ -30,8 +30,7 @@ export class Io extends CelestialBody {
     
     createMesh() {
         const textureLoader = new THREE.TextureLoader();
-        // Use local high-resolution Io texture
-        const ioTexture = textureLoader.load('/textures/io_8k.jpg?v=' + Date.now(),
+        const ioTexture = textureLoader.load('/textures/jupiter/io/io_8k.jpg?v=' + Date.now(),
             (texture) => {
                 texture.anisotropy = 16;
                 texture.colorSpace = THREE.SRGBColorSpace;
@@ -50,8 +49,9 @@ export class Io extends CelestialBody {
             map: ioTexture,
             bumpMap: ioTexture,
             bumpScale: 0.02, // Pronounced volcanic features
-            shininess: 3,
-            specular: new THREE.Color(0x111111)
+            shininess: 0.3,
+            specular: new THREE.Color(0x111111),
+            baseColor: new THREE.Color(0xffffff)
         });
     }
 

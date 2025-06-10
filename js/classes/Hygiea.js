@@ -31,7 +31,7 @@ export class Hygiea extends CelestialBody {
     createMesh() {
         const textureLoader = new THREE.TextureLoader();
         // Use Hygiea texture with enhanced properties
-        const hygieaTexture = textureLoader.load('/textures/hygiea_texture.jpg',
+        const hygieaTexture = textureLoader.load('/textures/asteroids/hygiea_texture.jpg',
             (texture) => {
                 texture.anisotropy = 16;
                 texture.colorSpace = THREE.SRGBColorSpace;
@@ -49,9 +49,9 @@ export class Hygiea extends CelestialBody {
             map: hygieaTexture,
             bumpMap: hygieaTexture,
             bumpScale: 0.006,
-            shininess: 1,
-            specular: new THREE.Color(0x0f0f0f),
-            baseColor: new THREE.Color(0x5c5148)
+            shininess: 2,
+            specular: new THREE.Color(0x444444),
+            baseColor: new THREE.Color(0xffffff)
         }, geometry);
     }
 

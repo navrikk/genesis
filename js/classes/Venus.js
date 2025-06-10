@@ -29,8 +29,7 @@ export class Venus extends CelestialBody {
     
     createMesh() {
         const textureLoader = new THREE.TextureLoader();
-        // Use local high-resolution Venus texture with enhanced properties
-        const venusTexture = textureLoader.load('/textures/venus_surface_8k.jpg',
+        const venusTexture = textureLoader.load('/textures/venus/venus_surface_8k.jpg',
             (texture) => {
                 texture.anisotropy = 16;
                 texture.colorSpace = THREE.SRGBColorSpace;
@@ -45,8 +44,8 @@ export class Venus extends CelestialBody {
             bumpMap: venusTexture,
             bumpScale: 0.001,
             shininess: 2,
-            specular: new THREE.Color(0x222222),
-            baseColor: new THREE.Color(0x555555)
+            specular: new THREE.Color(0x444444),
+            baseColor: new THREE.Color(0xffffff)
         });
     }
 

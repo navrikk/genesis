@@ -5,7 +5,7 @@ const CONFIG = {
     SCALE_FACTOR: 100000,
     ANIMATION: {
         enabled: true,
-        timeScale: 1.0, // Speed multiplier for time passage (-10,000,000x to 10,000,000x)
+        timeScale: 1.0, // Time unit: 1.0 = 1 second per second (real-time)
         smoothness: 60 // Target FPS for smooth animation
     },
     TIME: {
@@ -13,7 +13,7 @@ const CONFIG = {
         isLive: true, // Whether time follows real time
         minYear: 1800,
         maxYear: 2200,
-        speedRange: { min: -10000000, max: 10000000 } // Speed multiplier range
+        speedRange: { min: -10000000, max: 10000000 } // Time unit range (seconds per second)
     },
     CAMERA: {
         FOV: 45,
@@ -162,10 +162,23 @@ const CONFIG = {
         get ORBIT_SPEED() { return (2 * Math.PI) / (this.ORBITAL_PERIOD_DAYS * 24 * 3600); }, // seconds
         get ROTATION_SPEED() { return (2 * Math.PI) / (this.ROTATION_PERIOD_DAYS * 24 * 3600); } // seconds
     },
+    SATURN: {
+        NAME: 'Saturn',
+        DIAMETER_KM: 120536 * 10, // Accurate diameter with scaling for visibility
+        DISTANCE_FROM_SUN_KM: 1432000000, // 1.432 billion km
+        ORBITAL_PERIOD_DAYS: 10756, // 29.46 years
+        ROTATION_PERIOD_DAYS: 0.444, // 10.7 hours
+        COLOR: 0xFAD5A5, // Pale gold color
+        ORBITAL_INCLINATION: 0.043, // 2.48 degrees in radians
+        get RADIUS() { return (this.DIAMETER_KM / 2) / CONFIG.SCALE_FACTOR; },
+        get ORBIT_RADIUS() { return this.DISTANCE_FROM_SUN_KM / CONFIG.SCALE_FACTOR; },
+        get ORBIT_SPEED() { return (2 * Math.PI) / (this.ORBITAL_PERIOD_DAYS * 24 * 3600); }, // seconds
+        get ROTATION_SPEED() { return (2 * Math.PI) / (this.ROTATION_PERIOD_DAYS * 24 * 3600); } // seconds
+    },
     IO: {
         NAME: 'Io',
         DIAMETER_KM: 3643 * 10, // Reduced scaling to maintain proper ratio
-        DISTANCE_FROM_PARENT_KM: 421700 * 2.5, // Safe distance from Jupiter surface
+        DISTANCE_FROM_PARENT_KM: 421700 * 10, // Proper ratio to Jupiter
         ORBITAL_PERIOD_DAYS: 1.77,
         ROTATION_PERIOD_DAYS: 1.77, // Tidally locked
         COLOR: 0xFFDB58,
@@ -177,7 +190,7 @@ const CONFIG = {
     EUROPA: {
         NAME: 'Europa',
         DIAMETER_KM: 3122 * 10, // Reduced scaling to maintain proper ratio
-        DISTANCE_FROM_PARENT_KM: 671034 * 2.0, // Proportional distance
+        DISTANCE_FROM_PARENT_KM: 671034 * 10, // Proper ratio to Jupiter
         ORBITAL_PERIOD_DAYS: 3.55,
         ROTATION_PERIOD_DAYS: 3.55,
         COLOR: 0xB8D4E3,
@@ -189,7 +202,7 @@ const CONFIG = {
     GANYMEDE: {
         NAME: 'Ganymede',
         DIAMETER_KM: 5268 * 10, // Reduced scaling to maintain proper ratio
-        DISTANCE_FROM_PARENT_KM: 1070412 * 1.5, // Proportional distance
+        DISTANCE_FROM_PARENT_KM: 1070412 * 10, // Proper ratio to Jupiter
         ORBITAL_PERIOD_DAYS: 7.15,
         ROTATION_PERIOD_DAYS: 7.15,
         COLOR: 0x8C7853,
@@ -201,7 +214,7 @@ const CONFIG = {
     CALLISTO: {
         NAME: 'Callisto',
         DIAMETER_KM: 4821 * 10, // Reduced scaling to maintain proper ratio
-        DISTANCE_FROM_PARENT_KM: 1882709 * 1.0, // Keep realistic distance
+        DISTANCE_FROM_PARENT_KM: 1882709 * 10, // Proper ratio to Jupiter
         ORBITAL_PERIOD_DAYS: 16.69,
         ROTATION_PERIOD_DAYS: 16.69,
         COLOR: 0x4A4A4A,

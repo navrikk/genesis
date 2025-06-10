@@ -83,6 +83,14 @@ const ORBITAL_ELEMENTS = {
         omega0: 14.27495244, domega: 0.18199196,
         Omega0: 100.29282654, dOmega: 0.13024619
     },
+    SATURN: {
+        L0: 50.07571329, dL: 1222.11494724,
+        a0: 9.54149883, da: -0.00003065,
+        e0: 0.05550825, de: -0.00032044,
+        I0: 2.49424102, dI: 0.00451969,
+        omega0: 92.86136063, domega: 0.54179478,
+        Omega0: 113.64855865, dOmega: -0.25015002
+    },
     CERES: {
         L0: 95.9891, dL: 13.0640, // Approximate values
         a0: 2.7691, da: 0.0,
@@ -220,19 +228,6 @@ export function calculateOrbitalAngle(bodyName) {
     }
 }
 
-/**
- * Get all planetary positions for January 1, 2031
- */
-export function getAllPlanetaryPositions() {
-    const bodies = ['MERCURY', 'VENUS', 'EARTH', 'MARS', 'JUPITER', 'CERES', 'VESTA', 'PALLAS', 'HYGIEA'];
-    const positions = {};
-    
-    bodies.forEach(body => {
-        positions[body] = calculateOrbitalAngle(body);
-    });
-    
-    return positions;
-}
 
 /**
  * Moon position relative to Earth (simplified)

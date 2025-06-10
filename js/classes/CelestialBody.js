@@ -1,6 +1,4 @@
 import * as THREE from 'three';
-import LightingUtils from '../utils/LightingUtils.js';
-import { AnimationUtils } from '../utils/AnimationUtils.js';
 
 /**
  * Base class for all celestial bodies in the solar system
@@ -24,10 +22,6 @@ export class CelestialBody {
         this.orbitalInclination = orbitalInclination;
         this.orbitLine = null;
         
-        // Animation properties
-        this.previousAngle = 0;
-        this.targetAngle = 0;
-        this.animationSmoothing = 0.1;
 
     }
 
@@ -52,31 +46,69 @@ export class CelestialBody {
         } else if (customGeometry) {
             geometry = customGeometry;
             const isEmissive = options.isEmissive || false;
-            const materialParams = {
-                map: options.map,
-                bumpMap: options.bumpMap,
-                bumpScale: options.bumpScale || 0.01,
-                baseColor: options.baseColor || new THREE.Color(0x333333),
-                emissive: isEmissive
-            };
-            if (options.normalMap) {
-                materialParams.normalMap = options.normalMap;
+            
+            if (isEmissive) {
+                // Use emissive material for stars/sun
+                material = new THREE.MeshBasicMaterial({
+                    map: options.map,
+                    color: options.baseColor || 0xffffff,
+                    emissive: options.emissiveColor || new THREE.Color(0x222211),
+                    emissiveIntensity: options.emissiveIntensity || 0.2
+                });
+            } else {
+                // Create proper Phong material with custom shininess and specular values
+                const materialParams = {
+                    map: options.map,
+                    color: options.baseColor || new THREE.Color(0xffffff),
+                    shininess: options.shininess !== undefined ? options.shininess : 0,
+                    specular: options.specular || new THREE.Color(0x333333),
+                    reflectivity: 0.1
+                };
+                
+                if (options.bumpMap) {
+                    materialParams.bumpMap = options.bumpMap;
+                    materialParams.bumpScale = options.bumpScale || 0.01;
+                }
+                
+                if (options.normalMap) {
+                    materialParams.normalMap = options.normalMap;
+                }
+                
+                material = new THREE.MeshPhongMaterial(materialParams);
             }
-            material = LightingUtils.createNaturalLightingMaterial(materialParams);
         } else {
             geometry = new THREE.SphereGeometry(this.radius, 64, 64);
             const isEmissive = options.isEmissive || false;
-            const materialParams = {
-                map: options.map,
-                bumpMap: options.bumpMap,
-                bumpScale: options.bumpScale || 0.01,
-                baseColor: options.baseColor || new THREE.Color(0x333333),
-                emissive: isEmissive
-            };
-            if (options.normalMap) {
-                materialParams.normalMap = options.normalMap;
+            
+            if (isEmissive) {
+                // Use emissive material for stars/sun
+                material = new THREE.MeshBasicMaterial({
+                    map: options.map,
+                    color: options.baseColor || 0xffffff,
+                    emissive: options.emissiveColor || new THREE.Color(0x222211),
+                    emissiveIntensity: options.emissiveIntensity || 0.2
+                });
+            } else {
+                // Create proper Phong material with custom shininess and specular values
+                const materialParams = {
+                    map: options.map,
+                    color: options.baseColor || new THREE.Color(0xffffff),
+                    shininess: options.shininess !== undefined ? options.shininess : 0,
+                    specular: options.specular || new THREE.Color(0x333333),
+                    reflectivity: 0.1
+                };
+                
+                if (options.bumpMap) {
+                    materialParams.bumpMap = options.bumpMap;
+                    materialParams.bumpScale = options.bumpScale || 0.01;
+                }
+                
+                if (options.normalMap) {
+                    materialParams.normalMap = options.normalMap;
+                }
+                
+                material = new THREE.MeshPhongMaterial(materialParams);
             }
-            material = LightingUtils.createNaturalLightingMaterial(materialParams);
         }
 
         if (!geometry) {
@@ -93,14 +125,8 @@ export class CelestialBody {
         this.mesh.receiveShadow = true;
         this.mesh.name = this.name;
         this.objectGroup.add(this.mesh);
-        this.addLighting();
     }
 
-    addLighting() {
-        if (!this.isEmissive) {
-            LightingUtils.addAmbientLight(this.objectGroup, this.ambientLightIntensity * 3.9);
-        }
-    }
 
     /**
      * Base update method for animations, rotations, etc.
@@ -109,9 +135,16 @@ export class CelestialBody {
      * @param {boolean} animate - Whether to animate orbital motion
      */
     update(deltaTime, animate = true) {
-        // Default implementation - child classes should override this
         if (animate && this.orbitalSpeed > 0) {
-            this.orbitAngle += this.orbitalSpeed * deltaTime;
+            // Apply motion smoothing for small, fast-moving bodies like Deimos
+            const maxAngleChangePerFrame = Math.PI / 6; // 30 degrees max per frame
+            let angleChange = this.orbitalSpeed * deltaTime;
+            
+            if (Math.abs(angleChange) > maxAngleChangePerFrame) {
+                angleChange = Math.sign(angleChange) * maxAngleChangePerFrame;
+            }
+            
+            this.orbitAngle += angleChange;
             if (this.orbitAngle > Math.PI * 2) {
                 this.orbitAngle -= Math.PI * 2;
             }
@@ -222,13 +255,6 @@ export class CelestialBody {
         return this.orbitLine;
     }
 
-    /**
-     * Get the orbit line object
-     * @returns {THREE.Line|null} The orbit line or null if not created
-     */
-    getOrbitLine() {
-        return this.orbitLine;
-    }
 
     /**
      * Show or hide the orbit visualization

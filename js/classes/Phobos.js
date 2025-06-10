@@ -1,7 +1,6 @@
 import * as THREE from 'three';
 import CONFIG from '../config.js';
 import { CelestialBody } from './CelestialBody.js';
-import LightingUtils from '../utils/LightingUtils.js';
 
 
 
@@ -50,7 +49,7 @@ export class Phobos extends CelestialBody {
 
         const textureLoader = new THREE.TextureLoader();
         textureLoader.load(
-            '/textures/phobos_nasa_texture.jpg',
+            '/textures/mars/phobos/phobos_nasa_texture.jpg',
             (phobosTexture) => {
                 // Enhanced texture properties for better visual quality
                 phobosTexture.anisotropy = 16;
@@ -60,22 +59,11 @@ export class Phobos extends CelestialBody {
                     map: phobosTexture,
                     bumpMap: phobosTexture,
                     bumpScale: 0.003,
-                    baseColor: new THREE.Color(0x444444),
+                    baseColor: new THREE.Color(0xffffff),
                     shininess: 2,
-                    specular: new THREE.Color(0x111111)
+                    specular: new THREE.Color(0x444444)
                 };
                 super.createBaseMesh(materialOptions, geometry);
-
-            },
-            undefined,
-            (error) => {
-                console.error(`[${this.name}] Error loading texture:`, error);
-
-                console.error(`[${this.name}] Texture load error. Falling back to basic material.`);
-                const fallbackMaterialOptions = {
-                    baseColor: new THREE.Color(this.primaryColor)
-                };
-                super.createBaseMesh(fallbackMaterialOptions, geometry);
             }
         );
     }

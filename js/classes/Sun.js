@@ -1,6 +1,5 @@
 import * as THREE from 'three';
 import { CelestialBody } from './CelestialBody.js';
-import LightingUtils from '../utils/LightingUtils.js';
 import CONFIG from '../config.js';
 
 /**
@@ -15,8 +14,7 @@ export class Sun extends CelestialBody {
 
     createMesh() {
         const textureLoader = new THREE.TextureLoader();
-        // Use local high-resolution Sun texture
-        const sunTexture = textureLoader.load('/textures/sun_8k_alt.jpg');
+        const sunTexture = textureLoader.load('/textures/sun/sun_8k_alt.jpg');
         sunTexture.anisotropy = 16;
         sunTexture.colorSpace = THREE.SRGBColorSpace;
 

@@ -30,8 +30,7 @@ export class Europa extends CelestialBody {
     
     createMesh() {
         const textureLoader = new THREE.TextureLoader();
-        // Use local high-resolution Europa texture
-        const europaTexture = textureLoader.load('/textures/europa_8k.jpg?v=' + Date.now(),
+        const europaTexture = textureLoader.load('/textures/jupiter/europa/europa_8k.jpg?v=' + Date.now(),
             (texture) => {
                 texture.anisotropy = 16;
                 texture.colorSpace = THREE.SRGBColorSpace;
@@ -50,8 +49,9 @@ export class Europa extends CelestialBody {
             map: europaTexture,
             bumpMap: europaTexture,
             bumpScale: 0.005, // Smooth icy surface
-            shininess: 12, // High reflectivity due to ice
-            specular: new THREE.Color(0x888888)
+            shininess: 0.3,
+            specular: new THREE.Color(0x111111),
+            baseColor: new THREE.Color(0xffffff)
         });
     }
 
