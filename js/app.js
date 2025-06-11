@@ -710,71 +710,60 @@ export default class App {
       }
     });
 
-    // Add Safari-compatible hover logic for the dropdown
-    let hideTimeout = null;
-    let tooltipTimeout = null;
+    // Implement the specified behavior rules:
+    // 1. On hover - show the tooltip label
+    // 2. On click - show extended menu & hide tooltip
+    // 3. On click again or outside the extended menu - hide extended menu
+    // 4. On hover again - show the tooltip
     
-    const showDropdown = () => {
-      if (hideTimeout) {
-        clearTimeout(hideTimeout);
-        hideTimeout = null;
-      }
+    // Helper function to hide menu and restore tooltip capability
+    const hideMenu = () => {
+      focusContainer.classList.remove("show");
+      focusButton.classList.remove("active");
+      focusButton.classList.remove("hide-tooltip");
       
-      // Show tooltip briefly on initial hover, then hide when dropdown opens
-      if (tooltipTimeout) {
-        clearTimeout(tooltipTimeout);
-      }
-      
-      tooltipTimeout = setTimeout(() => {
-        focusButton.classList.add("hide-tooltip");
-        focusContainer.classList.add("show");
-        focusButton.classList.add("active");
-      }, 800); // Allow tooltip to show for 800ms before opening dropdown
+      // Hide all submenus when main dropdown closes
+      document.querySelectorAll('.submenu.show-submenu').forEach(submenu => {
+        submenu.classList.remove('show-submenu');
+      });
     };
     
-    const hideDropdown = () => {
-      if (tooltipTimeout) {
-        clearTimeout(tooltipTimeout);
-        tooltipTimeout = null;
-      }
-      
-      hideTimeout = setTimeout(() => {
-        focusContainer.classList.remove("show");
-        focusButton.classList.remove("active");
-        focusButton.classList.remove("hide-tooltip");
-        
-        // Hide all submenus when main dropdown closes
-        document.querySelectorAll('.submenu.show-submenu').forEach(submenu => {
-          submenu.classList.remove('show-submenu');
-        });
-      }, 150);
+    // Helper function to show menu and hide tooltip
+    const showMenu = () => {
+      focusButton.classList.add("hide-tooltip");
+      focusContainer.classList.add("show");
+      focusButton.classList.add("active");
     };
     
-    // Button hover events
-    focusButton.addEventListener("mouseenter", showDropdown);
-    focusButton.addEventListener("mouseleave", hideDropdown);
+    // Helper function to check if menu is open
+    const isMenuOpen = () => {
+      return focusContainer.classList.contains("show");
+    };
     
-    // Container hover events
-    focusContainer.addEventListener("mouseenter", showDropdown);
-    focusContainer.addEventListener("mouseleave", hideDropdown);
-    
-    // Click to toggle for touch devices
+    // Rule 2: On click - toggle extended menu
     focusButton.addEventListener("click", (e) => {
+      e.preventDefault();
       e.stopPropagation();
-      if (focusContainer.classList.contains("show")) {
-        focusContainer.classList.remove("show");
-        focusButton.classList.remove("active");
+      
+      if (!isMenuOpen()) {
+        // Show menu and hide tooltip
+        showMenu();
       } else {
-        showDropdown();
+        // Rule 3: Click again - hide extended menu
+        hideMenu();
       }
     });
     
-    // Close dropdown when clicking outside
+    // Rule 3: Close menu when clicking outside
     document.addEventListener("click", (e) => {
-      if (!focusButton.contains(e.target)) {
-        focusContainer.classList.remove("show");
-        focusButton.classList.remove("active");
+      if (isMenuOpen() && !focusButton.contains(e.target) && !focusContainer.contains(e.target)) {
+        hideMenu();
       }
+    });
+    
+    // Prevent clicks on the container from bubbling to the button
+    focusContainer.addEventListener("click", (e) => {
+      e.stopPropagation();
     });
 
     // Append the dropdown to the focus button

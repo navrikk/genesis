@@ -168,10 +168,7 @@ canvas {
     position: relative;
 }
 
-#focusButton:hover .focus-container,
-#focusButton:focus .focus-container,
 #focusButton.active .focus-container,
-.focus-container:hover,
 .focus-container.show {
     display: block;
 }
